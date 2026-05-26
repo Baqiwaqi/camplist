@@ -1,0 +1,26 @@
+package views
+
+import "camplist/internal/packing"
+
+
+templ PackingListPage(name string, lists []packing.PackingList) {
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<title>{ name }</title>
+		</head>
+		<body>
+			<h1>{ name }</h1>
+			<p>Your packing list UI is working.</p>
+			<ul>
+				for _, list := range lists {
+				<h1>{ list.Name }</h1>
+				<p>{list.Description}</p>
+				<a href={ "/list/" + list.ID }>Details</a>
+				<hr/>
+				}
+			</ul>
+		</body>
+	</html>
+}

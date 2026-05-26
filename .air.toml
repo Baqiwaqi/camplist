@@ -1,0 +1,19 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # regenerate templ files, then build
+  pre_cmd = ["templ generate"]
+  cmd = "go build -o ./tmp/camplist ./cmd/web"
+  bin = "./tmp/camplist"
+  delay = 1000
+  include_ext = ["go", "templ", "html", "env"]
+  exclude_dir = ["tmp", "assets", "vendor"]
+  exclude_regex = ["_templ.go"]
+  stop_on_error = true
+
+[misc]
+  clean_on_exit = true
+
+[screen]
+  clear_on_rebuild = true

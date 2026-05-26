@@ -1,0 +1,21 @@
+package views
+
+import "camplist/internal/packing"
+
+
+templ PackingDetails(name string, list packing.PackingList) {
+   <!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<title>{ name }</title>
+		</head>
+		<body>
+            <h1>{ list.Name }</h1>
+            <p>{ list.Description}</p>
+            for _, item := range list.Items {
+                <li>{item.Name}</li>
+            }
+		</body>
+	</html>
+}			

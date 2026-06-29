@@ -14,6 +14,8 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/csrf"
+	"github.com/gorilla/schema"
 	"github.com/joho/godotenv"
 )
 
@@ -122,6 +124,9 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
+	fileServer := http.FileServer(http.Dir("static"))
+	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello, World!"))
 	})
@@ -152,6 +157,54 @@ func main() {
 		if err := views.PackingDetails("Packing details", list).Render(r.Context(), w); err != nil {
 			log.Printf("render details: %v", err)
 		}
+	})
+
+	r.Get("/new-list", func(w http.ResponseWriter, r *http.Request) {
+		form := packing.NewCreatePackingListForm()
+		if err := views.NewPackingListPage("New Packing List", form, csrf.Token(r)).Render(r.Context(), w); err != nil {
+			log.Printf("render new list: %v", err)
+		}
+	})
+
+	r.Post("/new-list", func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		var form packing.CreatePackingListForm
+
+		// decode the form
+		dec := schema.NewDecoder()
+		dec.IgnoreUnknownKeys(true)
+		err = dec.Decode(&form, r.PostForm)
+		if err != nil {
+			http.Error(w, "invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		form.Initial = false
+
+		// validate the input
+		if errs := form.Validate(); len(errs) > 0 {
+			form.Error = errs
+			if err := views.NewPackingListPage("New Packing List", form, csrf.Token(r)).Render(r.Context(), w); err != nil {
+				log.Printf("render new list: %v", err)
+			}
+			return
+		}
+
+		list := packing.NewList(packing.DemoUserID, form.Name, form.Description)
+
+		err = packingStore.SavePackingList(r.Context(), list)
+		if err != nil {
+			form.Error = []string{"Storing packing list failed"}
+			http.Error(w, "Storing packing list failed", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/ui", http.StatusSeeOther)
 	})
 
 	r.Post("/packing-list", func(w http.ResponseWriter, r *http.Request) {
@@ -212,6 +265,20 @@ func main() {
 		fmt.Fprintln(w, "item removed")
 	})
 
-	http.ListenAndServe(":3000", r)
+	csrfKey := os.Getenv("CSRF_KEY")
+
+	if csrfKey == "" {
+		log.Fatal("CSRF_KEY is required")
+	}
+
+	csrfMiddleware := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false), // dev only: allow the CSRF cookie over http://localhost
+		csrf.TrustedOrigins([]string{
+			"localhost:3000",
+		}),
+		csrf.FieldName("_csrf"),
+	)
+	http.ListenAndServe(":3000", csrfMiddleware(r))
 
 }

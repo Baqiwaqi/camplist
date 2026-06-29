@@ -41,7 +41,7 @@ func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingLi
 }
 
 func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {
-	pk := azcosmos.NewPartitionKeyString(DemoUserID)
+	pk := azcosmos.NewPartitionKeyString(list.UserID)
 
 	list.UpdatedAt = time.Now().UTC()
 

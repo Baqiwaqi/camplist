@@ -1,0 +1,10 @@
+{
+  "[templ]": {
+    "editor.defaultFormatter": "a-h.templ",
+    "editor.formatOnSave": true
+  },
+  "templ.pprof": false,
+  "gopls": {
+    "ui.semanticTokens": true
+  }
+}

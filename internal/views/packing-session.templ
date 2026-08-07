@@ -1,0 +1,36 @@
+package views 
+
+import "camplist/internal/packing"
+
+templ PackingSessionPage(name string, session packing.PackingSession, csrfToken string) {
+	@Layout(name) {
+		<section>
+			<h1>Packing Session</h1>
+			<p>Session ID: { session.ID }</p>
+			<p>List Name: { session.List.Name }</p>
+			<p>List Description: { session.List.Description }</p>
+			<ul>
+				for _, item := range session.List.Items {
+					@PackingSessionItem(session.ID, item, csrfToken)
+				}
+			</ul>
+		</section>
+	}
+}
+
+templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
+	<li>
+		<span>{ item.Name } - { item.Category }</span>
+		<button
+			hx-post={ "/packing-session/toggle-item" }
+			hx-vals={ `{"sessionId":"` + sessionID + `","itemId":"` + item.ID + `"}` }
+			hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+		>
+			if item.Checked {
+				<span>Uncheck</span>
+			} else {
+				<span>Check</span>
+			}
+		</button>
+	</li>
+}

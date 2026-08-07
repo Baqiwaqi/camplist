@@ -2,20 +2,42 @@ package views
 
 import "camplist/internal/packing"
 
+templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
+	@Layout(name) {
+		<section>
+			<div style="display: flex; justify-content: space-between; align-items: center;">
+				<div>
+					<h1>{ list.Name }</h1>
+					<p>{ list.Description }</p>
+				</div>
+				<a href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
+				<button
+					hx-post="/packing-list/start-session"
+					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+					hx-vals={ `{"listId":"` + list.ID + `"}` }
+				>Start session</button>
+			</div>
+			for _, item := range list.Items {
+				<li>{ item.Name } - { item.Category }</li>
+				<button
+					hx-delete={ "/packing-list/" + list.ID + "/remove-item/" + item.ID }
+					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+					hx-confirm="Delete this item?"
+				>Delete</button>
+			}
+		</section>
+		@ListItemForm(form, csrfToken)
+	}
+}
 
-templ PackingDetails(name string, list packing.PackingList) {
-   <!doctype html>
-	<html lang="en">
-		<head>
-			<meta charset="utf-8"/>
-			<title>{ name }</title>
-		</head>
-		<body>
-            <h1>{ list.Name }</h1>
-            <p>{ list.Description}</p>
-            for _, item := range list.Items {
-                <li>{item.Name}</li>
-            }
-		</body>
-	</html>
-}			
+templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
+	<h1>Add Item forms</h1>
+	<form action={ form.Action } method="POST">
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<label for="name">Name</label>
+		<input type="text" id="name" name="name" value={ form.Name }/>
+		<label for="category">Category</label>
+		<input type="text" id="category" name="category" value={ form.Category }/>
+		<button type="submit">{ form.SubmitButtonText }</button>
+	</form>
+}

@@ -2,16 +2,22 @@ package views
 
 import "camplist/internal/packing"
 
-templ PackingListPage(name string, lists []packing.PackingList) {
+templ PackingListPage(name string, lists []packing.PackingList, csrfToken string) {
 	@Layout(name) {
 		<section>
 			<h1>{ name }</h1>
 			<p>Here you can find all you lists</p>
-			<a href="/new-list">Create</a>
+			<a href="/packing-list/new">Create</a>
 			for _, list := range lists {
 				<h1>{ list.Name }</h1>
 				<p>{ list.Description }</p>
-				<a href={ "/list/" + list.ID }>Details</a>
+				<a href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
+				<a href={ "/packing-list/" + list.ID }>Details</a>
+				<button
+					hx-delete={ "/packing-list/" + list.ID }
+					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+					hx-confirm="Delete this list?"
+				>Delete</button>
 				<hr/>
 			}
 		</section>

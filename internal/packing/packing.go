@@ -6,6 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
+func NewPackingSession(list PackingList) PackingSession {
+	return PackingSession{
+		ID:        uuid.NewString(),
+		UserID:    list.UserID,
+		Type:      "packing-session",
+		CreatedAt: time.Now().UTC(),
+		List:      list,
+	}
+}
+
 func NewList(userId string, name string, description string) PackingList {
 	now := time.Now().UTC()
 	id := uuid.NewString()
@@ -13,6 +23,7 @@ func NewList(userId string, name string, description string) PackingList {
 	return PackingList{
 		ID:          id,
 		UserID:      userId,
+		Type:        "packing-list",
 		Name:        name,
 		Description: description,
 		Items:       []PackingItem{},

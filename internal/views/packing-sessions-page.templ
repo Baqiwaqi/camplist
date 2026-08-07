@@ -1,0 +1,26 @@
+package views
+
+import (
+	"camplist/internal/packing"
+	"strconv"
+)
+
+templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession, csrfToken string) {
+	@Layout(name) {
+		<section>
+			<h1>{ name }</h1>
+			for _, s := range sessions {
+				<h1>{ s.List.Name }</h1>
+				<h2>{ s.CreatedAt.Format("Jan 2, 2006") }</h2>
+				<p>checked items: { strconv.Itoa(s.List.CountChecked()) } / { strconv.Itoa(len(s.List.Items)) }</p>
+				<button
+					hx-delete={ "/packing-session/" + s.ID }
+					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+					hx-confirm="Delete this session"
+				>
+					Delete Session
+				</button>
+			}
+		</section>
+	}
+}

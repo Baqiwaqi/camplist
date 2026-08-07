@@ -14,7 +14,7 @@ templ NewPackingListPage(name string, form packing.CreatePackingListForm, csrfTo
 }
 
 templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
-	<form method="post" action="/new-list" hx-boost="true">
+	<form method="post" action={ form.Action } hx-boost="true">
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<div>
 			<label for="name">Name</label>
@@ -44,7 +44,7 @@ templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
 				</ul>
 			</div>
 		}
-		<a href="/ui">Cancel</a>
-		<button type="submit">Create List</button>
+		<a href="/">Cancel</a>
+		<button type="submit">{ form.SubmitButtonText }</button>
 	</form>
 }

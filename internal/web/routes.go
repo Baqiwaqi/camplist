@@ -26,26 +26,33 @@ func Routes(cfg Config) *chi.Mux {
 	// Auth
 	r.Get("/auth/login", cfg.Auth.LoginHandler)
 	r.Get("/auth/callback", cfg.Auth.CallbackHandler)
+	r.Get("/auth/signout", cfg.Auth.DeleteHandler)
+
+	r.Get("/login", h.LoginPage)
 
 	// Pages
-	r.Get("/", h.MainPage)
-	r.Get("/sessions", h.SessionsPage)
-	r.Get("/packing-list/new", h.NewListPage)
-	r.Post("/packing-list/new", h.NewListHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(cfg.Auth.RequireAuth)
 
-	r.Get("/packing-list/{id}/edit", h.EditListPage)
-	r.Post("/packing-list/{id}/edit", h.EditListHandler)
+		r.Get("/", h.MainPage)
+		r.Get("/sessions", h.SessionsPage)
+		r.Get("/packing-list/new", h.NewListPage)
+		r.Post("/packing-list/new", h.NewListHandler)
 
-	r.Get("/packing-list/{id}", h.ListDetailsPage)
+		r.Get("/packing-list/{id}/edit", h.EditListPage)
+		r.Post("/packing-list/{id}/edit", h.EditListHandler)
 
-	r.Post("/packing-list/{id}/add-item", h.AddItemHandler)
-	r.Delete("/packing-list/{id}/remove-item/{itemId}", h.RemoveItemHandler)
+		r.Get("/packing-list/{id}", h.ListDetailsPage)
 
-	r.Delete("/packing-list/{id}", h.DeleteListHandler)
+		r.Post("/packing-list/{id}/add-item", h.AddItemHandler)
+		r.Delete("/packing-list/{id}/remove-item/{itemId}", h.RemoveItemHandler)
 
-	r.Post("/packing-list/start-session", h.CreateSessionHandler)
-	r.Get("/packing-session/{id}", h.SessionDetailsPage)
-	r.Delete("/packing-session/{id}", h.DeletePackingSession)
-	r.Post("/packing-session/toggle-item", h.ToggleSessionItemHandler)
+		r.Delete("/packing-list/{id}", h.DeleteListHandler)
+
+		r.Post("/packing-list/start-session", h.CreateSessionHandler)
+		r.Get("/packing-session/{id}", h.SessionDetailsPage)
+		r.Delete("/packing-session/{id}", h.DeletePackingSession)
+		r.Post("/packing-session/toggle-item", h.ToggleSessionItemHandler)
+	})
 	return r
 }

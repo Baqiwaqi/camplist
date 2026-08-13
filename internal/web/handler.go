@@ -4,8 +4,6 @@ import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/views"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -17,6 +15,10 @@ import (
 type handler struct {
 	packingStore *packing.Store
 	auth         *auth.Auth
+}
+
+func (h *handler) LoginPage(w http.ResponseWriter, r *http.Request) {
+	render(w, r, views.Login("login page"))
 }
 
 func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
@@ -158,26 +160,6 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func (h *handler) SaveListHandler(w http.ResponseWriter, r *http.Request) {
-	var req packing.CreatePackingList
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	list := packing.NewList(packing.DemoUserID, req.Name, req.Description)
-
-	err := h.packingStore.SavePackingList(r.Context(), list)
-	if err != nil {
-		log.Printf("save packing list: %v", err)
-		http.Error(w, "Storing packing list failed", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "packing list saved")
 }
 
 func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {

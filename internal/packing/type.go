@@ -14,11 +14,6 @@ type PackingSession struct {
 	List      PackingList `json:"list"`
 }
 
-type CreatePackingList struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
 type PackingList struct {
 	ID          string        `json:"id"`
 	UserID      string        `json:"userId"`
@@ -39,17 +34,6 @@ func (l PackingList) CountChecked() int {
 		}
 	}
 	return checked
-}
-
-type AddPackingItem struct {
-	PackingID string `json:"packingId"`
-	Name      string `json:"name"`
-	Category  string `json:"category"`
-}
-
-type RemovePackingItem struct {
-	PackingID string `json:"packingId"`
-	ItemID    string `json:"itemId"`
 }
 
 type PackingItem struct {

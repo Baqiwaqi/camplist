@@ -25,6 +25,10 @@ type Config struct {
 	SessionKey   string
 }
 
+const SESSION_COOKIE_KEY = "auth-session"
+const USER_ID_KEY = "userID"
+const USER_NAME_KEY = "userName"
+
 func New(cfg Config) (*Auth, error) {
 	store := sessions.NewCookieStore([]byte(cfg.SessionKey))
 	store.Options = &sessions.Options{
@@ -64,6 +68,27 @@ func New(cfg Config) (*Auth, error) {
 	return auth, nil
 }
 
+func (a *Auth) RequireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+
+		if _, ok := ses.Values[USER_ID_KEY].(string); !ok {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		name, _ := ses.Values["name"].(string)
+		ctx := context.WithValue(r.Context(), USER_NAME_KEY, name)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func UserName(ctx context.Context) string {
+	name, _ := ctx.Value(USER_NAME_KEY).(string)
+	return name
+}
+
 func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	state, err := generateRandomState()
 	if err != nil {
@@ -72,7 +97,8 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ses, _ := a.cookieStore.Get(r, "auth-session")
+	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+
 	ses.Values["state"] = state
 	if err := ses.Save(r, w); err != nil {
 		log.Printf("Saveing session errorr: %v", err)
@@ -83,6 +109,25 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, a.oauthCfg.AuthCodeURL(state), http.StatusFound)
 }
 
+func (a *Auth) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	ses, err := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+	if err != nil {
+		log.Printf("Error getting cookie store %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	ses.Options.MaxAge = -1
+
+	if err := ses.Save(r, w); err != nil {
+		log.Printf("Error getting cookie store %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/login", http.StatusFound)
+}
+
 func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	authErr := r.URL.Query().Get("error")
 	if authErr != "" {
@@ -91,7 +136,7 @@ func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	state := r.URL.Query().Get("state")
-	ses, _ := a.cookieStore.Get(r, "auth-session")
+	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 	if state != ses.Values["state"] {
 		log.Printf("state no eque state %v, %v ", state, ses.Values["state"])
 		return
@@ -128,9 +173,9 @@ func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("claims %v", claims)
-	ses.Values["userID"] = claims.Sub
+	ses.Values[USER_ID_KEY] = claims.Sub
 
-	_, ok = ses.Values["userID"].(string)
+	_, ok = ses.Values[USER_ID_KEY].(string)
 	if !ok {
 		//handle err
 

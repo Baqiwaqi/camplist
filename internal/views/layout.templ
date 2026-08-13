@@ -1,5 +1,7 @@
 package views
 
+import "camplist/internal/auth"
+
 templ Layout(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -15,7 +17,10 @@ templ Layout(title string) {
 				<nav>
 					<a href="/">Camplist</a>
 					<a href="/sessions">Sessions</a>
-					<a href="/auth/login">Login</a>
+					<a href="/auth/signout">signout</a>
+					<div>
+						{ auth.UserName(ctx) }
+					</div>
 				</nav>
 			</header>
 			<main>

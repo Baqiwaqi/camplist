@@ -5,8 +5,6 @@ import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/web"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -65,45 +63,6 @@ func main() {
 	r := web.Routes(web.Config{
 		PackingStore: packingStore,
 		Auth:         auth,
-	})
-
-	r.Post("/add-packing-item", func(w http.ResponseWriter, r *http.Request) {
-		var req packing.AddPackingItem
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		item := packing.NewItem(req.Name, req.Category)
-
-		err := packingStore.AddItem(r.Context(), req.PackingID, packing.DemoUserID, item)
-		if err != nil {
-			log.Printf("add item to packing list: %v", err)
-			http.Error(w, "Storing item on packing list failed", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprintln(w, "add item to packing list")
-	})
-
-	r.Post("/remove-packing-item", func(w http.ResponseWriter, r *http.Request) {
-		var req packing.RemovePackingItem
-
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		err := packingStore.RemoveItem(r.Context(), req.PackingID, packing.DemoUserID, req.ItemID)
-		if err != nil {
-			log.Printf("remove item from packing list: %v", err)
-			http.Error(w, "Removing item off packing list failed", http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "item removed")
 	})
 
 	csrfKey := os.Getenv("CSRF_KEY")

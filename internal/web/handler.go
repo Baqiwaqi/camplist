@@ -1,6 +1,7 @@
 package web
 
 import (
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/views"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 
 type handler struct {
 	packingStore *packing.Store
+	auth         *auth.Auth
 }
 
 func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {

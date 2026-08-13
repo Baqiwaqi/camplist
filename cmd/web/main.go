@@ -2,6 +2,7 @@ package main
 
 import (
 	db "camplist/internal"
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/web"
 	"encoding/json"
@@ -35,7 +36,36 @@ func main() {
 	}
 	packingStore := packing.NewStore(client.Container())
 
-	r := web.Routes(*packingStore)
+	clientID := os.Getenv("GOOGLE_CLIENT_ID")
+	clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	if clientID == "" || clientSecret == "" {
+		log.Fatal("Missing auth client credentials")
+	}
+
+	redirectURL := os.Getenv("REDIRECT_URL")
+	if redirectURL == "" {
+		log.Fatal("redirect url is missing from environment variables")
+	}
+
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		log.Fatal("session key missing from environment variables")
+	}
+
+	auth, err := auth.New(auth.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  redirectURL,
+		SessionKey:   sessionKey,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := web.Routes(web.Config{
+		PackingStore: packingStore,
+		Auth:         auth,
+	})
 
 	r.Post("/add-packing-item", func(w http.ResponseWriter, r *http.Request) {
 		var req packing.AddPackingItem

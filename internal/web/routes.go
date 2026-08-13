@@ -1,6 +1,7 @@
 package web
 
 import (
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"net/http"
 
@@ -8,14 +9,23 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
-func Routes(store packing.Store) *chi.Mux {
+type Config struct {
+	PackingStore *packing.Store
+	Auth         *auth.Auth
+}
+
+func Routes(cfg Config) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
 	fileServer := http.FileServer(http.Dir("static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
 
-	h := handler{packingStore: &store}
+	h := handler{packingStore: cfg.PackingStore}
+
+	// Auth
+	r.Get("/auth/login", cfg.Auth.LoginHandler)
+	r.Get("/auth/callback", cfg.Auth.CallbackHandler)
 
 	// Pages
 	r.Get("/", h.MainPage)

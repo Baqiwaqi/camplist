@@ -22,7 +22,14 @@ func (h *handler) LoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
-	lists, err := h.packingStore.GetPackingLists(r.Context(), packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	lists, err := h.packingStore.GetPackingLists(r.Context(), userID)
 	if err != nil {
 		log.Printf("list packing lists: %v", err)
 		http.Error(w, "Listing packing lists failed", http.StatusInternalServerError)
@@ -33,7 +40,14 @@ func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
-	sessions, err := h.packingStore.ListPackingSession(r.Context(), packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	sessions, err := h.packingStore.ListPackingSession(r.Context(), userID)
 	if err != nil {
 
 		log.Printf("list packing lists: %v", err)
@@ -48,7 +62,14 @@ func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	list, err := h.packingStore.GetPackingList(r.Context(), id, packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	list, err := h.packingStore.GetPackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
 		http.Error(w, "getting the list failed", http.StatusInternalServerError)
@@ -67,7 +88,14 @@ func (h *handler) NewListPage(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	list, err := h.packingStore.GetPackingList(r.Context(), id, packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	list, err := h.packingStore.GetPackingList(r.Context(), id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
 		http.Error(w, "getting the list failed", http.StatusInternalServerError)
@@ -104,10 +132,16 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 		render(w, r, views.NewPackingListPage("New Packing List", form, csrf.Token(r)))
 		return
 	}
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	list := packing.NewList(packing.DemoUserID, form.Name, form.Description)
+	list := packing.NewList(userID, form.Name, form.Description)
 
-	err = h.packingStore.SavePackingList(r.Context(), list)
+	err = h.packingStore.SavePackingList(ctx, list)
 	if err != nil {
 		form.Error = []string{"Storing packing list failed"}
 		render(w, r, views.NewPackingListPage("New Packing List", form, csrf.Token(r)))
@@ -119,7 +153,14 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	list, err := h.packingStore.GetPackingList(r.Context(), id, packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	list, err := h.packingStore.GetPackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
 		http.Error(w, "getting the list failed", http.StatusInternalServerError)
@@ -152,7 +193,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	list.Name = form.Name
 	list.Description = form.Description
 
-	err = h.packingStore.SavePackingList(r.Context(), list)
+	err = h.packingStore.SavePackingList(ctx, list)
 	if err != nil {
 		form.Error = []string{"Storing packing list failed"}
 		render(w, r, views.NewPackingListPage("Edit Packing List", form, csrf.Token(r)))
@@ -164,7 +205,14 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	err := h.packingStore.DeletePackingList(r.Context(), id, packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err = h.packingStore.DeletePackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("delete packing list: %v", err)
 		http.Error(w, "Deleting packing list failed", http.StatusInternalServerError)
@@ -179,6 +227,13 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	listID := chi.URLParam(r, "id")
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 		return
@@ -187,7 +242,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	var form packing.CreateItemForm
 	dec := schema.NewDecoder()
 	dec.IgnoreUnknownKeys(true)
-	err := dec.Decode(&form, r.PostForm)
+	err = dec.Decode(&form, r.PostForm)
 	if err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 		return
@@ -197,7 +252,8 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		list, err := h.packingStore.GetPackingList(r.Context(), listID, packing.DemoUserID)
+
+		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
 		if err != nil {
 			log.Printf("render ui: %v", err)
 			http.Error(w, "getting the list failed", http.StatusInternalServerError)
@@ -210,7 +266,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	item := packing.NewItem(form.Name, form.Category)
 
-	err = h.packingStore.AddItem(r.Context(), listID, packing.DemoUserID, item)
+	err = h.packingStore.AddItem(ctx, listID, userID, item)
 	if err != nil {
 		log.Printf("add item to packing list: %v", err)
 		http.Error(w, "Storing item on packing list failed", http.StatusInternalServerError)
@@ -223,8 +279,14 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 	listID := chi.URLParam(r, "id")
 	itemID := chi.URLParam(r, "itemId")
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	err := h.packingStore.RemoveItem(r.Context(), listID, packing.DemoUserID, itemID)
+	err = h.packingStore.RemoveItem(ctx, listID, userID, itemID)
 	if err != nil {
 		log.Printf("remove item from packing list: %v", err)
 		http.Error(w, "Removing item off packing list failed", http.StatusInternalServerError)
@@ -238,6 +300,13 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 // Packing Session
 
 func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 		return
@@ -248,7 +317,7 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ses, err := h.packingStore.CreatePackingSession(r.Context(), listID, packing.DemoUserID)
+	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID)
 	if err != nil {
 		log.Printf("create packing session: %v", err)
 		http.Error(w, "Creating packing session failed", http.StatusInternalServerError)
@@ -261,7 +330,14 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	ses, err := h.packingStore.GetPackingSession(r.Context(), id, packing.DemoUserID)
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	ses, err := h.packingStore.GetPackingSession(r.Context(), id, userID)
 	if err != nil {
 		log.Printf("get packing session: %v", err)
 		http.Error(w, "Getting packing session failed", http.StatusInternalServerError)
@@ -272,6 +348,13 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) ToggleSessionItemHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form data", http.StatusBadRequest)
 		return
@@ -282,7 +365,7 @@ func (h *handler) ToggleSessionItemHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "sessionId and itemId are required", http.StatusBadRequest)
 		return
 	}
-	_, err := h.packingStore.ToggleSessionItem(r.Context(), sessionID, packing.DemoUserID, itemID)
+	_, err = h.packingStore.ToggleSessionItem(ctx, sessionID, userID, itemID)
 	if err != nil {
 		log.Printf("toggle session item: %v", err)
 		http.Error(w, "Toggling session item failed", http.StatusInternalServerError)
@@ -295,13 +378,19 @@ func (h *handler) ToggleSessionItemHandler(w http.ResponseWriter, r *http.Reques
 
 func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	if id == "" {
 		http.Error(w, "Missing session Id to delete packing session", http.StatusBadRequest)
 		return
 	}
 
-	err := h.packingStore.DeletePackingSession(r.Context(), id, packing.DemoUserID)
+	err = h.packingStore.DeletePackingSession(ctx, id, userID)
 	if err != nil {
 		http.Error(w, "Error deleting packing session from db", http.StatusInternalServerError)
 		return

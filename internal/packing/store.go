@@ -10,8 +10,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 )
 
-const DemoUserID = "demo-user-id"
-
 type Store struct {
 	container *azcosmos.ContainerClient
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -72,16 +73,28 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 
-		if _, ok := ses.Values[USER_ID_KEY].(string); !ok {
+		id, ok := ses.Values[USER_ID_KEY].(string)
+		if !ok {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
-		name, _ := ses.Values["name"].(string)
+		name, _ := ses.Values[USER_NAME_KEY].(string)
+
 		ctx := context.WithValue(r.Context(), USER_NAME_KEY, name)
+		ctx = context.WithValue(ctx, USER_ID_KEY, id)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func UserID(ctx context.Context) (string, error) {
+	id, ok := ctx.Value(USER_ID_KEY).(string)
+	if !ok {
+		return "", fmt.Errorf("Error getting userID")
+	}
+
+	return id, nil
 }
 
 func UserName(ctx context.Context) string {
@@ -129,8 +142,10 @@ func (a *Auth) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	authErr := r.URL.Query().Get("error")
-	if authErr != "" {
+	err := r.URL.Query().Get("error")
+	if err != "" {
+		log.Printf("exchange code: %v", err)
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		log.Printf("err state in callback")
 		return
 	}
@@ -139,53 +154,53 @@ func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 	if state != ses.Values["state"] {
 		log.Printf("state no eque state %v, %v ", state, ses.Values["state"])
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
-	oauthToken, err := a.oauthCfg.Exchange(r.Context(), r.URL.Query().Get("code"))
-	if err != nil {
-		log.Printf("exchnage code error")
+	oauthToken, exErr := a.oauthCfg.Exchange(r.Context(), r.URL.Query().Get("code"))
+	if exErr != nil {
+		log.Printf("exchange code: %v", exErr)
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok {
 		log.Printf("get id_token error")
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
-	idToken, err := a.verifier.Verify(r.Context(), rawIDToken)
-	if err != nil {
+	idToken, vErr := a.verifier.Verify(r.Context(), rawIDToken)
+	if vErr != nil {
 		// handle error
+		log.Printf("Verify token error: %v", vErr)
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
-	var claims struct {
-		Sub           string `json:"sub"`
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-		Name          string `json:"name"`
-		Picture       string `json:"picture"`
-	}
+	var claims Claims
+
 	if err := idToken.Claims(&claims); err != nil {
 		// handle error
+		log.Printf("populate claims %v", err)
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("claims %v", claims)
+	if err := claims.Valid(); err != nil {
+		log.Print(err)
+		http.Error(w, "Login failed", http.StatusInternalServerError)
+		return
+	}
 	ses.Values[USER_ID_KEY] = claims.Sub
-
-	_, ok = ses.Values[USER_ID_KEY].(string)
-	if !ok {
-		//handle err
-
-		return
-	}
-	ses.Values["name"] = claims.Name
+	ses.Values[USER_NAME_KEY] = claims.Name
 
 	delete(ses.Values, "state")
 	if err := ses.Save(r, w); err != nil {
-		// handle error
+		log.Printf("error setting userID")
+		http.Error(w, "Login failed", http.StatusInternalServerError)
 		return
 	}
 

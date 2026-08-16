@@ -1,0 +1,9 @@
+# secrets / local config
+.env
+
+# build output
+/camplist
+tmp/
+
+# editor
+.vscode/

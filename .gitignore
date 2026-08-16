@@ -3,6 +3,7 @@
 
 # build output
 /camplist
+/web
 tmp/
 
 # editor

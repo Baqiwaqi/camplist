@@ -156,7 +156,7 @@ func NavLinks(csrfToken string) templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"/sessions\">Sessions</a> <a href=\"/offline\">Saved offline</a><form method=\"post\" action=\"/auth/signout\" data-signout><input type=\"hidden\" name=\"_csrf\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"/sessions\">Sessions</a> <a href=\"/offline\">On this device</a><form method=\"post\" action=\"/auth/signout\" data-signout><input type=\"hidden\" name=\"_csrf\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

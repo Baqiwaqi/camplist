@@ -50,6 +50,8 @@ updates the existing app, and checks `/healthz` and `/login` over HTTPS. It keep
 application secrets and resource sizing unchanged. Deployments are serialized.
 Actions and container base images are pinned; update those pins intentionally.
 
+The first successful end-to-end release was [run 34692865892](https://github.com/Baqiwaqi/camplist/actions/runs/34692865892), including tests, OIDC login, image push, ACA revision update, and HTTPS smoke checks.
+
 GitHub environment variables:
 
 - `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`

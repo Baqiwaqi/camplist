@@ -123,10 +123,28 @@ rm /tmp/camplist-emulator-validation.key
 Do not force-kill the live test: that bypasses Go test cleanup. The account
 partition names are logged for recovery if the process is interrupted.
 
+## Production follow-up (2026-09-12)
+
+The app was deployed to Azure Container Apps with HTTPS ingress and health probes.
+The production Google OAuth callback was added alongside localhost. A real Google
+sign-in completed successfully on the deployed domain and displayed the signed-in
+user's existing lists from Cosmos. No existing list was changed during this check.
+Public `/healthz` and `/login` returned 200; unauthenticated `/api/identity`
+returned 401. See [deployment setup](deployment.md) for resources and CI.
+
+## Automatic packing follow-up
+
+The ordinary packing screen now persists checks locally, automatically saves
+opened trips, and synchronizes without Save/Sync buttons. Chromium validation
+against a disposable live Cosmos partition confirmed an offline check updated
+progress immediately, reopening the same trip URL loaded the public offline
+shell and preserved the check, and a second offline check synchronized after a
+reconnect event. Both server item revisions advanced once. The worker upgrade
+path now waits for installation before reporting offline readiness.
+
 ## Remaining deployment checks
 
-- Real Google login/callback on the deployed HTTPS domain.
-- HTTPS ingress, health probes, cold start, scale-to-zero wakeup, and stable secrets across container revisions.
+- Cold start, scale-to-zero wakeup, and authenticated session continuity across container revisions.
 - Safari/Firefox, physical phones, browser-process restart, storage eviction, and installed-app behavior.
 - Lost-response, transaction-failure, and concurrent export/cleanup cases remain covered by module tests; they were not all fault-injected in the real browser.
 - Real usage measurements for Cosmos RU/document growth and Azure Container Apps cost.

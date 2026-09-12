@@ -80,6 +80,22 @@ templ Layout(title string, csrfToken string) {
 			</div>
 			{ children... }
 		</main>
+		<dialog
+			id="confirm-dialog"
+			class="dialog"
+			x-data="{ question: '', detail: '', action: 'Delete', issue: null }"
+			x-on:htmx:confirm.window="if (!$event.detail.question) return; $event.preventDefault(); question = $event.detail.question; detail = $event.detail.elt.dataset.confirmDetail || ''; action = $event.detail.elt.dataset.confirmAction || 'Delete'; issue = $event.detail.issueRequest; $el.showModal()"
+			x-on:close="issue = null"
+		>
+			<form method="dialog">
+				<p class="dialog-title" x-text="question"></p>
+				<p class="muted" x-show="detail" x-text="detail"></p>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-secondary">Cancel</button>
+					<button type="button" class="btn btn-danger-solid" x-on:click="const go = issue; $el.closest('dialog').close(); if (go) go(true)" x-text="action">Delete</button>
+				</div>
+			</form>
+		</dialog>
 	}
 }
 
@@ -87,7 +103,7 @@ templ Layout(title string, csrfToken string) {
 // The stylesheet shows only one copy at a time.
 templ NavLinks(csrfToken string) {
 	<a href="/sessions">Sessions</a>
-	<a href="/offline">Saved offline</a>
+	<a href="/offline">On this device</a>
 	<form method="post" action="/auth/signout" data-signout>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<button type="submit" class="nav-button">Sign out</button>

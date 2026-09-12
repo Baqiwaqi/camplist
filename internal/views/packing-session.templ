@@ -23,8 +23,9 @@ templ PackingSessionPage(name string, session packing.PackingSession, csrfToken 
 				</div>
 			</div>
 			<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
-			<button class="btn btn-primary" type="button" data-save-offline={ session.ID }>Save for offline packing</button>
-			<p class="muted">Save while connected, then use Saved offline to pack without a connection. Offline support is experimental.</p>
+			@templ.JSONScript("packing-snapshot", session)
+			<p class="muted" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
+			<noscript><p>Packing requires a connection when JavaScript is disabled.</p></noscript>
 			<section class="card">
 				<h2>Before this trip</h2>
 				<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>

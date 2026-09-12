@@ -117,10 +117,13 @@ list was deleted, the review offers to create a new list from that trip.
 
 ## Experimental offline packing
 
-While connected, open an existing session and choose **Save for offline packing**.
-After saving succeeds, use **Saved offline** to reopen that session, check items,
-and see pending synchronization. Keep using that screen while offline. Creating
-sessions, editing lists, and trip reviews require a connection.
+Open an existing packing session while connected. It saves to this browser
+in the background; keep using the regular checklist when the connection drops.
+The status confirms when offline reopening is ready. Reopen the same trip URL
+or use **On this device** to find saved trips. Changes sync automatically on
+reconnect, returning to the app, or a periodic retry while pending. No Save or
+Sync button is needed. Creating sessions, editing lists, and trip reviews still
+require a connection.
 
 Changes persist in this browser and synchronize while the app is open, connected,
 and signed into the same account. Conflicting changes offer a choice between this

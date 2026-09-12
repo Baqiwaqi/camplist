@@ -4,7 +4,7 @@ import { transport, downloadJSON } from './transport.mjs';
 
 const byId=id=>document.getElementById(id);
 let db,packing,owner;
-const selected=()=>{try{return decodeURIComponent(location.hash.slice(1));}catch{return '';}};
+const selected=()=>{try{return decodeURIComponent(location.hash.slice(1)||location.pathname.match(/^\/packing-session\/([^/]+)$/)?.[1]||'');}catch{return '';}};
 function message(text){const element=byId('offline-message');element.textContent=text;element.hidden=!text;element.className='error';}
 function button(text,action){const element=document.createElement('button');element.textContent=text;element.className='btn btn-secondary btn-sm';element.onclick=async()=>{try{await action();}catch(error){message('Could not save that change. '+error.message);await render();}};return element;}
 async function render(){
@@ -12,14 +12,14 @@ async function render(){
  const records=account?await db.list(account):[];
  if(account!==owner)return;
  const list=byId('saved-sessions');list.replaceChildren();
- if(!records.length){const p=document.createElement('p');p.textContent='No saved sessions for this account. Open a session online and choose “Save for offline packing”.';list.append(p);}
+ if(!records.length){const p=document.createElement('p');p.textContent='No trips saved on this device yet. Open a packing session while connected and it will be saved automatically.';list.append(p);}
  for(const record of records){const p=document.createElement('p');const a=document.createElement('a');a.href='#'+encodeURIComponent(record.id);a.textContent=record.session.list.name;p.append(a);list.append(p);}
  const view=account&&id?await packing.open(account,id):null;
  if(account!==owner||id!==selected())return;
  byId('offline-trip').hidden=!view;if(!view)return;
  byId('trip-name').textContent=view.session.list.name;
  const issues={signin:'Sign in to synchronize. Your changes are saved on this device.',account:'Sign in to the account that saved this trip. Pending changes are preserved.',deleted:'This session was deleted online. Export your local copy; it will not be recreated.',network:'Connection unavailable. Your changes are saved on this device.'};
- byId('sync-status').textContent=issues[view.issue]||(Object.keys(view.conflicts).length?'Needs a decision: another device changed an item.':view.pending?`Waiting to sync ${view.pending} change(s). Saved on this device.`:'Saved on this device · Synchronized.');
+ byId('sync-status').textContent=issues[view.issue]||(Object.keys(view.conflicts).length?'Needs a decision: another device changed an item.':view.pending?`Saved on this device · ${view.pending} change(s) will sync automatically.`:navigator.onLine?'All changes saved':'Offline · Changes saved on this device. We’ll sync automatically when connected.');
  byId('packing-progress').textContent=`${view.session.list.items.filter(item=>item.checked).length} of ${view.session.list.items.length} items packed`;
  byId('review-trip').href='/packing-session/'+encodeURIComponent(id)+'/review';
  const active=document.activeElement?.id;
@@ -56,6 +56,13 @@ byId('sync-now').onclick=load;
 byId('export-session').onclick=async()=>{try{downloadJSON(await packing.export(owner,selected()),'camplist-session.json');}catch(error){message(error.message);}};
 window.addEventListener('hashchange',()=>render().catch(error=>message(error.message)));
 window.addEventListener('online',load);
+window.addEventListener('offline',()=>render().catch(error=>message(error.message)));
+// Some outages end without an online event (for example, the server recovers).
+setInterval(async()=>{
+ if(!db||!owner||document.visibilityState!=='visible')return;
+ try{if((await db.list(owner)).some(record=>Object.keys(record.pending).length||record.issue==='network'))await synchronize();}
+ catch(error){message(error.message);}
+},15000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load();});
 load();
 

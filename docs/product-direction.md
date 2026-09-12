@@ -32,11 +32,11 @@ Validate with five to eight repeat campers over two actual trips. Look for wheth
 
 ## Selected offline scope
 
-**A session explicitly saved on this device can be reopened and checked off without connectivity. Changes synchronize when the app is open and connectivity and authentication are available.**
+**A session opened and automatically saved on this device can be reopened and checked off without connectivity. Changes synchronize when the app is open and connectivity and authentication are available.**
 
 The first offline release will support:
 
-- Save an existing session while online, after local storage and required app files are successfully written.
+- Automatically save an existing session when it is opened online. Confirm offline readiness only after local storage and required app files are successfully written. Keep the regular checklist usable as connectivity changes.
 - Read the session, pack/unpack items, and view locally calculated progress offline.
 - Retain pending changes across closing and reopening the app.
 - Show distinct states: saved on this device, waiting to sync, synchronized, sign-in required, or needs a decision.
@@ -66,16 +66,16 @@ The existing `SetSessionItem` writes a desired Boolean, which helps retries, but
 
 ### Authentication and device behavior
 
-Cache a generic offline shell and intentionally saved session data, rather than indiscriminately caching authenticated HTML or login responses. Keep local records separated by account. While authentication is expired, an already saved local session can remain usable, but synchronization pauses until the same account signs in and a fresh CSRF token is obtained.
+Cache a generic offline shell and automatically saved session data for trips the user opens, rather than indiscriminately caching authenticated HTML or login responses. Keep local records separated by account. While authentication is expired, an already saved local session can remain usable, but synchronization pauses until the same account signs in and a fresh CSRF token is obtained.
 
 Do not synchronize one account's pending changes after a different account signs in. Define sign-out to remove local account data, with an explicit opportunity to sync or export pending changes first. Offline access is a device feature and must not be presented as continuing server authentication.
 
-Attempt synchronization on app opening, successful reconnect, and a manual retry. Do not promise that synchronization occurs while the app is closed; background execution is not a prerequisite of this design.
+Attempt synchronization after each packing edit, on app opening, successful reconnect, returning to the app, and periodic retries of pending work. Keep manual retry and export under recovery options. Do not promise that synchronization occurs while the app is closed; background execution is not a prerequisite of this design.
 
 ## Delivery sequence and acceptance checks
 
 1. **Post-trip review:** record observations, propose changes, and apply selected changes once. Verify old sessions remain intact and review proposals are useful on a second trip.
-2. **Offline persistence:** explicitly download a session, then disable connectivity, close/reopen the app, and check/uncheck items. Verify progress and pending changes survive.
+2. **Offline persistence:** open a session and wait for automatic offline readiness, then disable connectivity, close/reopen the app, and check/uncheck items. Verify progress and pending changes survive.
 3. **Synchronization:** reconnect and verify the same session on another device. Test lost acknowledgements, repeated requests, rapid local changes, and conflicting changes to the same item.
 4. **Account and recovery cases:** test expired login, another account signing in, session deletion, storage failure, sign-out with pending changes, and app upgrades with queued operations.
 

@@ -1,3 +1,4 @@
+import { mountSession } from './session.mjs';
 import { openDatabase } from './db.mjs';
 import { OfflinePacking } from './packing.mjs';
 import { transport, downloadJSON } from './transport.mjs';
@@ -11,7 +12,17 @@ function message(text) {
 }
 async function readyForOffline() {
  if (!('serviceWorker' in navigator)) throw new Error('This browser cannot save sessions for offline use.');
- await navigator.serviceWorker.register('/sw.js');
+ const installed=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});
+ if(installed.active)await installed.update();
+ const updating=installed.installing||installed.waiting;
+ if(updating && updating.state!=='activated')await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(new Error('Offline update is still installing.')),15000);
+  const check=()=>{
+   if(updating.state==='activated'){clearTimeout(timer);resolve();}
+   if(updating.state==='redundant'){clearTimeout(timer);reject(new Error('Offline update failed.'));}
+  };
+  updating.addEventListener('statechange',check);check();
+ });
  const registration=await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Offline files are not ready. Try again while connected.')),15000))]);
  await new Promise((resolve,reject)=>{
   const channel=new MessageChannel();
@@ -21,17 +32,9 @@ async function readyForOffline() {
  });
 }
 
-document.addEventListener('click',async event=>{
- const button=event.target.closest('[data-save-offline]');if(!button)return;
- button.disabled=true;
- try {
-  await readyForOffline();
-  const identity=await transport.identity();
-  const session=await transport.getSession(identity.userId,button.dataset.saveOffline);
-  const {packing}=await module();await packing.save(identity.userId,session);
-  location.assign('/offline#'+encodeURIComponent(session.id));
- }catch(error){message('Not saved for offline use. '+error.message);button.disabled=false;}
-});
+if(document.getElementById('packing-snapshot')) {
+ module().then(({packing})=>mountSession(packing,readyForOffline)).catch(error=>message('Offline saving unavailable. Packing requires a connection. '+error.message));
+}
 
 // Ask before removing a local queue. Export and sync are explicit choices.
 document.addEventListener('submit',async event=>{

@@ -70,7 +70,7 @@ func TestNewSessionPageSurfacesPreparationAndRecentImprovements(t *testing.T) {
 	w := httptest.NewRecorder()
 	h := handler{packingStore: store}
 	h.SessionDetailsPage(w, r)
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "Buy fuel") || !strings.Contains(w.Body.String(), "Added spare matches") || strings.Contains(w.Body.String(), "Already repaired") {
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Buy fuel") || !strings.Contains(w.Body.String(), "Added spare matches") || strings.Contains(w.Body.String(), "<li>Already repaired</li>") {
 		t.Fatalf("preparation absent or completed work resurfaced: %s", w.Body.String())
 	}
 }

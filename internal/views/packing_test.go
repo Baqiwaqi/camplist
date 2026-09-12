@@ -23,10 +23,33 @@ func TestListDeleteURL(t *testing.T) {
 func TestSessionsCanBeReopened(t *testing.T) {
 	session := packing.NewPackingSession(packing.NewList("user", "Camping", ""))
 	var out bytes.Buffer
-	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, "token").Render(context.Background(), &out); err != nil {
+	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, 0, "token").Render(context.Background(), &out); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out.String(), `href="/trips/`+session.ID+`"`) {
 		t.Fatal("no link to reopen session")
+	}
+}
+
+func TestTripsOverviewLinksToSeparateArchive(t *testing.T) {
+	session := packing.NewPackingSession(packing.NewList("user", "Camping", ""))
+	var overview bytes.Buffer
+	if err := PackingSessionsOverviewPage("Sessions", nil, 2, "token").Render(context.Background(), &overview); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`href="/trips/archive"`, "Archive (2)"} {
+		if !strings.Contains(overview.String(), want) {
+			t.Fatalf("overview missing %q", want)
+		}
+	}
+
+	var archive bytes.Buffer
+	if err := ArchivedPackingSessionsPage("Trip archive", []packing.PackingSession{session}, "token").Render(context.Background(), &archive); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"Trip archive", `href="/trips"`, session.DisplayName()} {
+		if !strings.Contains(archive.String(), want) {
+			t.Fatalf("archive missing %q", want)
+		}
 	}
 }

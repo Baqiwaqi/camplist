@@ -3,10 +3,11 @@ package views
 import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+	"fmt"
 	"time"
 )
 
-templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession, csrfToken string) {
+templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession, archivedCount int, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section id="trips-overview">
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
@@ -15,14 +16,46 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 					<h1>Trips in progress</h1>
 					<p class="text-muted max-w-[60ch]">Prepare and pack together. Your reusable packing lists stay separate.</p>
 				</div>
+				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+					<a class="btn btn-secondary max-sm:flex-auto" href="/trips/archive">Archive ({ fmt.Sprint(archivedCount) })</a>
+				</div>
 			</div>
 			if len(sessions) == 0 {
 				<div class="card">
-					<p class="text-muted">No trips yet. <a href="/packing-lists">Choose a list</a> to start packing.</p>
+					<p class="text-muted">No trips in progress. <a href="/packing-lists">Choose a list</a> to start packing.</p>
 				</div>
 			}
-			for _, s := range sessions {
-				<article class="card" data-saved-trip={ s.ID }>
+			@PackingSessionCards(sessions, csrfToken)
+		</section>
+	}
+}
+
+templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession, csrfToken string) {
+	@Layout(name, csrfToken) {
+		<section id="trips-archive">
+			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
+				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
+					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trips</p>
+					<h1>Trip archive</h1>
+					<p class="text-muted max-w-[60ch]">Fully packed trips move here automatically after 24 hours.</p>
+				</div>
+				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+					<a class="btn btn-secondary max-sm:flex-auto" href="/trips">Current trips</a>
+				</div>
+			</div>
+			if len(sessions) == 0 {
+				<div class="card">
+					<p class="text-muted">No archived trips yet.</p>
+				</div>
+			}
+			@PackingSessionCards(sessions, csrfToken)
+		</section>
+	}
+}
+
+templ PackingSessionCards(sessions []packing.PackingSession, csrfToken string) {
+	for _, s := range sessions {
+		<article class="card" data-saved-trip={ s.ID }>
 					if s.IsShared() {
 						<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
 					}
@@ -48,8 +81,6 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 						</div>
 					</div>
 					@ProgressBar(s.List.CountChecked(), len(s.List.Items), "")
-				</article>
-			}
-		</section>
+		</article>
 	}
 }

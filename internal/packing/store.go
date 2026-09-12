@@ -180,7 +180,7 @@ func (s *Store) SetSessionItem(ctx context.Context, sessionID, userID, itemID st
 
 func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingList, error) {
 	pk := azcosmos.NewPartitionKeyString(userID)
-	query := "SELECT * FROM lists l WHERE l.userId = @userID AND l.type = 'packing-list' AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt))"
+	query := "SELECT * FROM lists l WHERE l.userId = @userID AND l.type = 'packing-list' AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt)) ORDER BY l.createdAt DESC"
 	queryOptions := azcosmos.QueryOptions{
 		QueryParameters: []azcosmos.QueryParameter{
 			{Name: "@userID", Value: userID},

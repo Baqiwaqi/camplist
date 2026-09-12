@@ -14,7 +14,7 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 	session := packing.NewPackingSession(packing.NewList("user", "Camping", ""))
 	ctx := context.WithValue(context.Background(), auth.USER_ID_KEY, "user")
 	var out bytes.Buffer
-	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, "token").Render(ctx, &out); err != nil {
+	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, 0, "token").Render(ctx, &out); err != nil {
 		t.Fatal(err)
 	}
 	body := out.String()
@@ -41,7 +41,7 @@ func TestVisitorsOfSharedSessionsCannotSeeOwnerActions(t *testing.T) {
 	session := packing.NewPackingSession(packing.NewList("owner", "Camping", ""))
 	ctx := context.WithValue(context.Background(), auth.USER_ID_KEY, "guest")
 	var out bytes.Buffer
-	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, "token").Render(ctx, &out); err != nil {
+	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, 0, "token").Render(ctx, &out); err != nil {
 		t.Fatal(err)
 	}
 	body := out.String()

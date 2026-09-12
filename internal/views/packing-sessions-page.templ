@@ -2,24 +2,47 @@ package views
 
 import (
 	"camplist/internal/packing"
-	"strconv"
+	"time"
 )
 
 templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession, csrfToken string) {
-	@Layout(name) {
+	@Layout(name, csrfToken) {
 		<section>
-			<h1>{ name }</h1>
+			<div class="page-head">
+				<div>
+					<p class="eyebrow">Sessions</p>
+					<h1>Trips in progress</h1>
+					<p class="muted lede">Each session is a snapshot of a list. Check things off without touching the list.</p>
+				</div>
+			</div>
+			if len(sessions) == 0 {
+				<div class="card">
+					<p class="muted">No packing sessions yet. <a href="/">Choose a list</a> to start packing.</p>
+				</div>
+			}
 			for _, s := range sessions {
-				<h1>{ s.List.Name }</h1>
-				<h2>{ s.CreatedAt.Format("Jan 2, 2006") }</h2>
-				<p>checked items: { strconv.Itoa(s.List.CountChecked()) } / { strconv.Itoa(len(s.List.Items)) }</p>
-				<button
-					hx-delete={ "/packing-session/" + s.ID }
-					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-					hx-confirm="Delete this session"
-				>
-					Delete Session
-				</button>
+				<article class="card">
+					<div class="card-head">
+						<div>
+							<h2>{ s.List.Name }</h2>
+							<p class="muted">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
+						</div>
+						<div class="actions">
+							if allPacked(s.List.CountChecked(), len(s.List.Items)) {
+								<a class="btn btn-secondary btn-sm" href={ "/packing-session/" + s.ID }>Open</a>
+							} else {
+								<a class="btn btn-accent btn-sm" href={ "/packing-session/" + s.ID }>Keep packing</a>
+							}
+							<button
+								class="btn btn-danger btn-sm"
+								hx-delete={ "/packing-session/" + s.ID }
+								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+								hx-confirm="Delete this session?"
+							>Delete</button>
+						</div>
+					</div>
+					@ProgressBar(s.List.CountChecked(), len(s.List.Items), "")
+				</article>
 			}
 		</section>
 	}

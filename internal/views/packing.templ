@@ -3,22 +3,50 @@ package views
 import "camplist/internal/packing"
 
 templ PackingListPage(name string, lists []packing.PackingList, csrfToken string) {
-	@Layout(name) {
+	@Layout(name, csrfToken) {
 		<section>
-			<h1>{ name }</h1>
-			<p>Here you can find all you lists</p>
-			<a href="/packing-list/new">Create</a>
+			<div class="page-head">
+				<div>
+					<p class="eyebrow">Your lists</p>
+					<h1>Where to next?</h1>
+					<p class="muted lede">Keep reusable lists for your camping trips. Start a fresh packing session each time you go.</p>
+				</div>
+				<div class="actions">
+					<a class="btn btn-primary" href="/packing-list/new">Create list</a>
+				</div>
+			</div>
+			if len(lists) == 0 {
+				<div class="card">
+					<p class="muted">No packing lists yet. Create one with the gear you regularly take.</p>
+				</div>
+			}
 			for _, list := range lists {
-				<h1>{ list.Name }</h1>
-				<p>{ list.Description }</p>
-				<a href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
-				<a href={ "/packing-list/" + list.ID }>Details</a>
-				<button
-					hx-delete={ "/packing-list" + list.ID }
-					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-					hx-confirm="Delete this list?"
-				>Delete</button>
-				<hr/>
+				<article class="card">
+					<div class="card-head">
+						<div>
+							<h2>{ list.Name }</h2>
+							if list.Description != "" {
+								<p class="muted">{ list.Description }</p>
+							}
+							<div class="categories">
+								<span class="tag">{ itemSummary(list.Items) }</span>
+								for _, category := range categories(list.Items, 4) {
+									<span>{ category }</span>
+								}
+							</div>
+						</div>
+						<div class="actions">
+							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
+							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID }>Details</a>
+							<button
+								class="btn btn-danger btn-sm"
+								hx-delete={ "/packing-list/" + list.ID }
+								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+								hx-confirm="Delete this list?"
+							>Delete</button>
+						</div>
+					</div>
+				</article>
 			}
 		</section>
 	}

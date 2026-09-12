@@ -1,43 +1,111 @@
 package views
 
 import "camplist/internal/packing"
+import "strconv"
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
-	@Layout(name) {
+	@Layout(name, csrfToken) {
 		<section>
-			<div style="display: flex; justify-content: space-between; align-items: center;">
-				<div>
-					<h1>{ list.Name }</h1>
-					<p>{ list.Description }</p>
+			<div class="card card-brand hero">
+				<div class="page-head">
+					<div>
+						<p class="eyebrow">Packing list</p>
+						<h1>{ list.Name }</h1>
+						if list.Description != "" {
+							<p class="hero-lede">{ list.Description }</p>
+						}
+						<p class="hero-meta">{ itemSummary(list.Items) }</p>
+					</div>
+					<div class="actions">
+						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
+						<button
+							class="btn btn-accent btn-lg"
+							hx-post="/packing-list/start-session"
+							hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+							hx-vals={ `{"listId":"` + list.ID + `"}` }
+						>Start session</button>
+					</div>
 				</div>
-				<a href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
-				<button
-					hx-post="/packing-list/start-session"
-					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-					hx-vals={ `{"listId":"` + list.ID + `"}` }
-				>Start session</button>
 			</div>
-			for _, item := range list.Items {
-				<li>{ item.Name } - { item.Category }</li>
-				<button
-					hx-delete={ "/packing-list/" + list.ID + "/remove-item/" + item.ID }
-					hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-					hx-confirm="Delete this item?"
-				>Delete</button>
-			}
+			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
+			<div class="card">
+				if len(list.Items) == 0 {
+					<p class="muted">No items yet. Add your first one below.</p>
+				}
+				<ul class="item-list columns">
+					for _, item := range list.Items {
+						<li class="item-row">
+							<span class="item-name">{ item.Name }</span>
+							if item.Category != "" {
+								<span class="tag">{ item.Category }</span>
+							}
+							<button
+								class="btn btn-danger btn-sm"
+								hx-delete={ "/packing-list/" + list.ID + "/remove-item/" + item.ID }
+								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+								hx-confirm="Delete this item?"
+							>Delete</button>
+						</li>
+					}
+				</ul>
+			</div>
 		</section>
-		@ListItemForm(form, csrfToken)
+		<section>
+			<section class="card">
+				<h2>Prepare before your next trip</h2>
+				for _, task := range list.Tasks {
+					<form method="post" action={ "/packing-list/" + list.ID + "/preparation" }>
+						<input type="hidden" name="_csrf" value={ csrfToken }/>
+						<input type="hidden" name="taskId" value={ task.ID }/>
+						<input type="hidden" name="revision" value={ list.Revision() }/>
+						<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
+						<span>{ task.Name }</span>
+						<button type="submit">
+							if task.Done {
+								Reopen task
+							} else {
+								Mark prepared
+							}
+						</button>
+					</form>
+				}
+				if len(list.Tasks) == 0 {
+					<p>No preparation tasks. Add them from a trip review.</p>
+				}
+				<p class="muted">Preparation and packing are separate: buying fuel does not mark your stove as packed.</p>
+				<h3>Improvements from trip reviews</h3>
+				<ul>
+					for _, change := range list.Changes {
+						<li>{ change }</li>
+					}
+				</ul>
+			</section>
+			@ListItemForm(form, csrfToken)
+		</section>
 	}
 }
 
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
-	<h1>Add Item forms</h1>
-	<form action={ form.Action } method="POST">
-		<input type="hidden" name="_csrf" value={ csrfToken }/>
-		<label for="name">Name</label>
-		<input type="text" id="name" name="name" value={ form.Name }/>
-		<label for="category">Category</label>
-		<input type="text" id="category" name="category" value={ form.Category }/>
-		<button type="submit">{ form.SubmitButtonText }</button>
-	</form>
+	<h2 class="section-title">Add an item</h2>
+	<div class="card">
+		<form action={ form.Action } method="POST">
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<div class="field-grid">
+				<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
+					<label for="name">Name</label>
+					<input type="text" id="name" name="name" placeholder="Headlamp" value={ form.Name }/>
+				</div>
+				<div class="field">
+					<label for="category">Category</label>
+					<input type="text" id="category" name="category" placeholder="Light" value={ form.Category }/>
+				</div>
+			</div>
+			if len(form.Error) > 0 {
+				@ErrorBanner(form.Error)
+			}
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
+			</div>
+		</form>
+	</div>
 }

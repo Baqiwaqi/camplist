@@ -3,18 +3,33 @@ package packing
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
+	"github.com/google/uuid"
 )
 
-type Store struct {
-	container *azcosmos.ContainerClient
+var ErrNotFound = errors.New("packing record not found")
+
+// containerClient is the Cosmos boundary used by the packing store.
+type containerClient interface {
+	CreateItem(context.Context, azcosmos.PartitionKey, []byte, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
+	ReplaceItem(context.Context, azcosmos.PartitionKey, string, []byte, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
+	ReadItem(context.Context, azcosmos.PartitionKey, string, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
+	DeleteItem(context.Context, azcosmos.PartitionKey, string, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
+	PatchItem(context.Context, azcosmos.PartitionKey, string, azcosmos.PatchOperations, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error)
+	NewQueryItemsPager(string, azcosmos.PartitionKey, *azcosmos.QueryOptions) *runtime.Pager[azcosmos.QueryItemsResponse]
 }
 
-func NewStore(container *azcosmos.ContainerClient) *Store {
+type Store struct {
+	container containerClient
+}
+
+func NewStore(container containerClient) *Store {
 	return &Store{
 		container,
 	}
@@ -45,7 +60,7 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 
 func (s *Store) ListPackingSession(ctx context.Context, userID string) ([]PackingSession, error) {
 	pk := azcosmos.NewPartitionKeyString(userID)
-	query := "SELECT * FROM sessions s WHERE s.userId = @userID AND (NOT IS_DEFINED(s.deletedAt) OR IS_NULL(s.deletedAt))"
+	query := "SELECT * FROM sessions s WHERE s.userId = @userID AND s.type = 'packing-session' AND (NOT IS_DEFINED(s.deletedAt) OR IS_NULL(s.deletedAt))"
 	queryOptions := azcosmos.QueryOptions{
 		QueryParameters: []azcosmos.QueryParameter{
 			{Name: "@userID", Value: userID},
@@ -55,7 +70,7 @@ func (s *Store) ListPackingSession(ctx context.Context, userID string) ([]Packin
 
 	sessions, err := mapPackingSessions(ctx, pager)
 	if err != nil {
-		return []PackingSession{}, fmt.Errorf("Unable to map packing sessions")
+		return []PackingSession{}, fmt.Errorf("map packing sessions: %w", err)
 	}
 
 	return sessions, nil
@@ -74,46 +89,42 @@ func (s *Store) GetPackingSession(ctx context.Context, id string, userID string)
 		return PackingSession{}, fmt.Errorf("unmarshal packing session: %w", err)
 	}
 
+	if session.Type != "packing-session" || session.UserID != userID {
+		return PackingSession{}, ErrNotFound
+	}
+	session.etag = string(res.ETag)
 	return session, nil
 }
 
 func (s *Store) DeletePackingSession(ctx context.Context, id string, userId string) error {
+	if _, err := s.GetPackingSession(ctx, id, userId); err != nil {
+		return err
+	}
 	pk := azcosmos.NewPartitionKeyString(userId)
 
 	_, err := s.container.DeleteItem(ctx, pk, id, nil)
 	if err != nil {
-		return fmt.Errorf("Error during packing session deletion")
+		return fmt.Errorf("delete packing session: %w", err)
 	}
 	return nil
 }
 
-func (s *Store) ToggleSessionItem(ctx context.Context, sessionID string, userID string, itemID string) (PackingItem, error) {
+// SetSessionItem uses the same revision protocol as offline packing.
+func (s *Store) SetSessionItem(ctx context.Context, sessionID, userID, itemID string, checked bool) (PackingSession, error) {
 	session, err := s.GetPackingSession(ctx, sessionID, userID)
 	if err != nil {
-		return PackingItem{}, fmt.Errorf("get packing session: %w", err)
+		return PackingSession{}, err
 	}
-
-	// toggle item
 	i, err := getItemIndexById(session.List, itemID)
 	if err != nil {
-		return PackingItem{}, fmt.Errorf("get item index by id: %w", err)
+		return PackingSession{}, ErrNotFound
 	}
-
-	ops := azcosmos.PatchOperations{}
-	ops.AppendReplace(fmt.Sprintf("/list/items/%d/checked", i), !session.List.Items[i].Checked)
-
-	pk := azcosmos.NewPartitionKeyString(userID)
-	_, err = s.container.PatchItem(ctx, pk, sessionID, ops, nil)
-	if err != nil {
-		return PackingItem{}, fmt.Errorf("replace packing session: %w", err)
-	}
-
-	return session.List.Items[i], nil
+	return s.SyncSessionItem(ctx, sessionID, userID, PackingOperation{ID: uuid.NewString(), ItemID: itemID, Checked: checked, ExpectedRevision: session.List.Items[i].Revision})
 }
 
 func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingList, error) {
 	pk := azcosmos.NewPartitionKeyString(userID)
-	query := "SELECT * FROM lists l WHERE l.userId = @userID AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt))"
+	query := "SELECT * FROM lists l WHERE l.userId = @userID AND l.type = 'packing-list' AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt))"
 	queryOptions := azcosmos.QueryOptions{
 		QueryParameters: []azcosmos.QueryParameter{
 			{Name: "@userID", Value: userID},
@@ -139,7 +150,12 @@ func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {
 		return err
 	}
 
-	_, err = s.container.UpsertItem(ctx, pk, bytes, nil)
+	if list.etag == "" {
+		_, err = s.container.CreateItem(ctx, pk, bytes, nil)
+	} else {
+		etag := azcore.ETag(list.etag)
+		_, err = s.container.ReplaceItem(ctx, pk, list.ID, bytes, &azcosmos.ItemOptions{IfMatchEtag: &etag})
+	}
 	if err != nil {
 		return err
 	}
@@ -160,6 +176,10 @@ func (s *Store) GetPackingList(ctx context.Context, id string, userId string) (P
 		return PackingList{}, err
 	}
 
+	if list.Type != "packing-list" || list.UserID != userId || list.DeletedAt != nil {
+		return PackingList{}, ErrNotFound
+	}
+	list.etag = string(res.ETag)
 	return list, nil
 }
 
@@ -167,6 +187,7 @@ func (s *Store) DeletePackingList(ctx context.Context, id string, userId string)
 	pk := azcosmos.NewPartitionKeyString(userId)
 
 	ops := azcosmos.PatchOperations{}
+	ops.SetCondition("FROM c WHERE c.type = 'packing-list' AND (NOT IS_DEFINED(c.deletedAt) OR IS_NULL(c.deletedAt))")
 	ops.AppendSet("/deletedAt", time.Now().UTC())
 	_, err := s.container.PatchItem(ctx, pk, id, ops, nil)
 	if err != nil {
@@ -180,6 +201,7 @@ func (s *Store) AddItem(ctx context.Context, id string, userId string, item Pack
 	pk := azcosmos.NewPartitionKeyString(userId)
 
 	ops := azcosmos.PatchOperations{}
+	ops.SetCondition("FROM c WHERE c.type = 'packing-list' AND (NOT IS_DEFINED(c.deletedAt) OR IS_NULL(c.deletedAt))")
 	ops.AppendAdd("/items/-", item)
 	ops.AppendReplace("/updatedAt", time.Now().UTC())
 

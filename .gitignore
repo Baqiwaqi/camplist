@@ -8,3 +8,6 @@ tmp/
 
 # editor
 .vscode/
+
+# browser test dependencies
+node_modules/

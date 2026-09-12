@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/coreos/go-oidc"
 	"github.com/gorilla/sessions"
@@ -24,6 +25,7 @@ type Config struct {
 	ClientSecret string
 	RedirectURL  string
 	SessionKey   string
+	CookieSecure bool
 }
 
 const SESSION_COOKIE_KEY = "auth-session"
@@ -35,7 +37,7 @@ func New(cfg Config) (*Auth, error) {
 	store.Options = &sessions.Options{
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // dev only: http://localhost
+		Secure:   cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   600,
 	}
@@ -74,7 +76,19 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 		ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 
 		id, ok := ses.Values[USER_ID_KEY].(string)
-		if !ok {
+		if !ok || id == "" {
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Cache-Control", "no-store")
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"code":"signin"}`))
+				return
+			}
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", "/login")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}

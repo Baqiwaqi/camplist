@@ -1,12 +1,14 @@
 package packing
 
+import "strings"
+
 type CreatePackingListForm struct {
-	Action           string
-	Initial          bool
-	SubmitButtonText string
+	Action           string `schema:"-"`
+	Initial          bool   `schema:"-"`
+	SubmitButtonText string `schema:"-"`
 	Name             string
 	Description      string
-	Error            []string
+	Error            []string `schema:"-"`
 }
 
 func NewCreatePackingListForm() CreatePackingListForm {
@@ -33,7 +35,7 @@ func (f CreatePackingListForm) ValidateName() []string {
 	}
 
 	var msgs []string
-	if f.Name == "" {
+	if strings.TrimSpace(f.Name) == "" {
 		msgs = append(msgs, "Name is required")
 	}
 	return msgs
@@ -55,12 +57,12 @@ func (f CreatePackingListForm) Validate() []string {
 }
 
 type CreateItemForm struct {
-	Action           string
-	Initial          bool
-	SubmitButtonText string
+	Action           string `schema:"-"`
+	Initial          bool   `schema:"-"`
+	SubmitButtonText string `schema:"-"`
 	Name             string
 	Category         string
-	Error            []string
+	Error            []string `schema:"-"`
 }
 
 func NewCreateItemForm(listId string) CreateItemForm {
@@ -87,7 +89,7 @@ func (f CreateItemForm) ValidateName() []string {
 	}
 
 	var msgs []string
-	if f.Name == "" {
+	if strings.TrimSpace(f.Name) == "" {
 		msgs = append(msgs, "Name is required")
 	}
 	return msgs

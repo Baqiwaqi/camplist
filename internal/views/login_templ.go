@@ -29,7 +29,25 @@ func Login(title string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div><a href=\"/auth/login\">Login with google</a></div>")
+		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"login\"><section class=\"login-panel\"><a class=\"brand brand-inverse\" href=\"/\"><img src=\"/static/logomark-white.svg\" alt=\"\" width=\"28\" height=\"28\"> Camplist</a><div><h1>Pack once.<br>Go every weekend.</h1><p class=\"login-lede\">Keep your camping kit as a list, start a session for each trip, and get out the door faster than last time.</p></div></section><section class=\"login-form\" aria-labelledby=\"login-heading\"><div><p class=\"eyebrow\">Sign in</p><h2 id=\"login-heading\">Let's get packing.</h2><a class=\"btn btn-secondary btn-lg btn-block\" href=\"/auth/login\">Sign in with Google</a><p class=\"muted login-note\">Your lists and sessions stay with your Google account.</p></div></section></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = Shell(title).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

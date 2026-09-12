@@ -1,14 +1,16 @@
-
 package views
 
 import "camplist/internal/packing"
 
-templ NewPackingListPage(name string, form packing.CreatePackingListForm, csrfToken string) {
-	@Layout(name) {
-		<section>
-			<h1>Create a new list</h1>
-			<p>Start simple and adjust overtime. Keep is simple!</p>
-			@PackingListForm(form, csrfToken)
+templ NewPackingListPage(name string, heading string, form packing.CreatePackingListForm, csrfToken string) {
+	@Layout(name, csrfToken) {
+		<section class="narrow">
+			<p class="eyebrow">{ name }</p>
+			<h1>{ heading }</h1>
+			<p class="muted lede">Save your regular gear here and reuse it for future trips.</p>
+			<div class="card">
+				@PackingListForm(form, csrfToken)
+			</div>
 		</section>
 	}
 }
@@ -16,35 +18,20 @@ templ NewPackingListPage(name string, form packing.CreatePackingListForm, csrfTo
 templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
 	<form method="post" action={ form.Action } hx-boost="true">
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
-		<div>
+		<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
 			<label for="name">Name</label>
-			<input
-				id="name"
-				name="name"
-				type="text"
-				placeholder="Camping"
-				value={ form.Name }
-			/>
+			<input id="name" name="name" type="text" placeholder="Camping" value={ form.Name }/>
 		</div>
-		<div>
+		<div class="field">
 			<label for="description">Description</label>
-			<textarea
-				id="description"
-				name="description"
-				placeholder="A short description of your list"
-			>{ form.Description }</textarea>
+			<textarea id="description" name="description" placeholder="A short description of your list">{ form.Description }</textarea>
 		</div>
-		// errors
 		if len(form.Error) > 0 {
-			<div class="error">
-				<ul>
-					for _, err := range form.Error {
-						<li>{ err }</li>
-					}
-				</ul>
-			</div>
+			@ErrorBanner(form.Error)
 		}
-		<a href="/">Cancel</a>
-		<button type="submit">{ form.SubmitButtonText }</button>
+		<div class="form-actions">
+			<a class="btn btn-link" href="/">Cancel</a>
+			<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
+		</div>
 	</form>
 }

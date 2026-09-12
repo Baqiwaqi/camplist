@@ -7,23 +7,31 @@ type CreatePackingSession struct {
 }
 
 type PackingSession struct {
-	ID        string      `json:"id"`
-	UserID    string      `json:"userId"`
-	Type      string      `json:"type"`
-	CreatedAt time.Time   `json:"createdAt"`
-	List      PackingList `json:"list"`
+	Operations     map[string]PackingOperation `json:"operations,omitempty"`
+	ReviewTargetID string                      `json:"reviewTargetId,omitempty"`
+	etag           string
+	Review         []ReviewEntry `json:"review,omitempty"`
+	ID             string        `json:"id"`
+	UserID         string        `json:"userId"`
+	Type           string        `json:"type"`
+	CreatedAt      time.Time     `json:"createdAt"`
+	List           PackingList   `json:"list"`
 }
 
 type PackingList struct {
-	ID          string        `json:"id"`
-	UserID      string        `json:"userId"`
-	Type        string        `json:"type"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Items       []PackingItem `json:"items"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
-	DeletedAt   *time.Time    `json:"deletedAt,omitempty"`
+	Tasks          []PreparationTask `json:"tasks,omitempty"`
+	AppliedReviews []string          `json:"appliedReviews,omitempty"`
+	Changes        []string          `json:"changes,omitempty"`
+	etag           string
+	ID             string        `json:"id"`
+	UserID         string        `json:"userId"`
+	Type           string        `json:"type"`
+	Name           string        `json:"name"`
+	Description    string        `json:"description"`
+	Items          []PackingItem `json:"items"`
+	CreatedAt      time.Time     `json:"createdAt"`
+	UpdatedAt      time.Time     `json:"updatedAt"`
+	DeletedAt      *time.Time    `json:"deletedAt,omitempty"`
 }
 
 func (l PackingList) CountChecked() int {
@@ -37,6 +45,7 @@ func (l PackingList) CountChecked() int {
 }
 
 type PackingItem struct {
+	Revision  int64      `json:"revision"`
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
 	Category  string     `json:"category"`
@@ -44,4 +53,14 @@ type PackingItem struct {
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+}
+
+// Revision identifies the template version shown to the camper.
+func (l PackingList) Revision() string { return l.etag }
+
+func (s PackingSession) TemplateID() string {
+	if s.ReviewTargetID != "" {
+		return s.ReviewTargetID
+	}
+	return s.List.ID
 }

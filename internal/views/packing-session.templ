@@ -1,36 +1,102 @@
-package views 
+package views
 
-import "camplist/internal/packing"
+import (
+	"camplist/internal/packing"
+	"strconv"
+	"time"
+)
 
 templ PackingSessionPage(name string, session packing.PackingSession, csrfToken string) {
-	@Layout(name) {
+	@Layout(name, csrfToken) {
 		<section>
-			<h1>Packing Session</h1>
-			<p>Session ID: { session.ID }</p>
-			<p>List Name: { session.List.Name }</p>
-			<p>List Description: { session.List.Description }</p>
-			<ul>
-				for _, item := range session.List.Items {
-					@PackingSessionItem(session.ID, item, csrfToken)
-				}
-			</ul>
+			<div class="page-head">
+				<div>
+					<p class="eyebrow">Packing session</p>
+					<h1>{ session.List.Name }</h1>
+					<p class="muted lede">
+						Started <time datetime={ session.CreatedAt.Format(time.RFC3339) }>{ session.CreatedAt.Format("Jan 2, 2006") }</time>.
+						Your reusable list stays unchanged.
+					</p>
+				</div>
+				<div class="actions">
+					<a class="btn btn-secondary btn-sm" href="/sessions">All sessions</a>
+				</div>
+			</div>
+			<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
+			<button class="btn btn-primary" type="button" data-save-offline={ session.ID }>Save for offline packing</button>
+			<p class="muted">Save while connected, then use Saved offline to pack without a connection. Offline support is experimental.</p>
+			@PackingChecklist(session, csrfToken)
 		</section>
 	}
 }
 
-templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
-	<li>
-		<span>{ item.Name } - { item.Category }</span>
-		<button
-			hx-post={ "/packing-session/toggle-item" }
-			hx-vals={ `{"sessionId":"` + sessionID + `","itemId":"` + item.ID + `"}` }
-			hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-		>
-			if item.Checked {
-				<span>Uncheck</span>
+templ PackingChecklist(session packing.PackingSession, csrfToken string) {
+	<section id="packing-checklist" aria-label="Packing checklist">
+		if allPacked(session.List.CountChecked(), len(session.List.Items)) {
+			<div class="card card-brand">
+				<p class="display">All packed. Go!</p>
+				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "")
+			</div>
+		} else {
+			<div class="card">
+				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "Keep packing")
+			</div>
+		}
+		<div class="card">
+			if len(session.List.Items) == 0 {
+				<p class="muted">This session has no items. Add gear to your reusable list and start a new session.</p>
 			} else {
-				<span>Check</span>
+				<div class="columns pack-columns">
+					for _, group := range groupByCategory(session.List.Items) {
+						<div class="pack-group">
+							if group.Name != "" {
+								<p class="group-label">{ group.Name }</p>
+							}
+							<ul class="item-list pack-list">
+								for _, item := range group.Items {
+									@PackingSessionItem(session.ID, item, csrfToken)
+								}
+							</ul>
+						</div>
+					}
+				</div>
 			}
-		</button>
+		</div>
+	</section>
+}
+
+templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
+	<li class="item-row">
+		<form
+			method="post"
+			action="/packing-session/set-item"
+			class="pack-form"
+			hx-post="/packing-session/set-item"
+			hx-target="#packing-checklist"
+			hx-swap="outerHTML"
+			hx-disabled-elt="#packing-checklist button"
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="sessionId" value={ sessionID }/>
+			<input type="hidden" name="itemId" value={ item.ID }/>
+			<input type="hidden" name="checked" value={ strconv.FormatBool(!item.Checked) }/>
+			<button
+				id={ "pack-" + item.ID }
+				type="submit"
+				class={ "pack-row", templ.KV("packed", item.Checked) }
+				aria-pressed={ strconv.FormatBool(item.Checked) }
+				aria-label={ "Toggle packed status for " + item.Name }
+			>
+				<span class="tick" aria-hidden="true"></span>
+				<span class="pack-name">{ item.Name }</span>
+				<span class="pack-action">
+					if item.Checked {
+						Unpack
+					} else {
+						Pack
+					}
+				</span>
+			</button>
+		</form>
 	</li>
 }

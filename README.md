@@ -19,17 +19,18 @@ For example, you can keep a “Weekend camping” list and start a new session e
 - Google sign-in and sign-out.
 - Create and edit list names and descriptions.
 - Add and remove items from a list.
-- Start packing sessions and toggle their items between checked and unchecked.
+- Start fresh packing sessions, reopen them from the overview, and mark items packed or unpacked.
+- Update the checklist and progress in place, with visible feedback if saving fails.
 - View packing progress across sessions.
 - Delete lists and sessions. Lists are soft-deleted; sessions are permanently removed.
 
 Lists and sessions are stored in Cosmos DB, with database operations scoped to the signed-in user's ID. Both document types share a container and have a `type` field identifying their kind.
 
-This is an evolving learning project. The functionality above describes the implemented flows; it is not a guarantee that every flow has been tested end to end. There are currently no automated tests in the repository.
+This is an evolving learning project. The functionality above describes the implemented flows; it is not a guarantee that every flow has been tested end to end. Automated regression tests cover form validation, session independence, database request contracts, authentication redirects, and checklist responses. Live Google login and Cosmos DB integration still need end-to-end verification.
 
 ## Architecture
 
-The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Several actions currently refresh the page after updating the database.
+The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Packing check-off replaces the checklist section with HTML from the server; deletion actions currently refresh the page. Normal packing forms also work without HTMX.
 
 | Location | Purpose |
 | --- | --- |
@@ -39,7 +40,8 @@ The Go server renders HTML using templ. HTMX adds form navigation and actions su
 | `internal/auth/` | Google OAuth/OpenID Connect login and cookie-based sessions |
 | `internal/views/` | templ page templates and generated Go code |
 | `internal/db.go` | Cosmos DB client setup |
-| `static/` | Styles and the bundled HTMX script |
+| `static/` | Stylesheet, logo marks, the request-error script, and the bundled HTMX script |
+| `.claude/skills/camplist-design/` | Design system: tokens, guidelines, logo assets, and a click-through UI kit |
 
 ## Run locally
 
@@ -69,7 +71,7 @@ go run ./cmd/web
 
 Open <http://localhost:3000>. You will be redirected to the login page if you are not signed in.
 
-The current cookie and CSRF settings are configured for local HTTP development. Deployment over HTTPS requires updating those settings.
+Cookie security and the trusted CSRF origin are derived from `REDIRECT_URL`: use an HTTPS callback URL for deployment behind HTTPS, and an HTTP localhost callback for local development. The server includes request timeouts and graceful shutdown. Authentication sessions currently last ten minutes.
 
 ## Development
 
@@ -89,9 +91,52 @@ Use the templ CLI version matching `go.mod`. Edit `.templ` source files rather t
 
 An `.air.toml` configuration is included for optional live reload with Air. It regenerates templates and rebuilds the server when source files change.
 
-For collaboration on this learning project, see [CLAUDE.md](CLAUDE.md), which describes the preference for explanations and guided changes.
+Run the automated checks:
+
+```sh
+go test ./...
+go vet ./...
+```
+
+For collaboration on this project, see [CLAUDE.md](CLAUDE.md). Requested changes are implemented directly, with explanations and appropriate verification.
 
 ## Research
 
+- [Product direction](docs/product-direction.md): the selected focus on improving each trip and offline check-off for saved sessions, with the proposed implementation and acceptance criteria.
+
 - [Market research](docs/market-research.md): similar apps, their positioning and features, and opportunities to validate for Camplist.
 - [Technical research](docs/technical-research.md): how Go, templ, and HTMX fit the app, current implementation findings, and suggested next steps.
+
+## Improve your next trip
+
+Open a packing session and choose **Review this trip**. Record forgotten or unused
+gear and repairs or replacements. Select additions, removals, and preparation
+tasks to apply to the reusable list. Old sessions keep their original checklist.
+Preparation tasks are completed separately from packing items. If the original
+list was deleted, the review offers to create a new list from that trip.
+
+## Experimental offline packing
+
+While connected, open an existing session and choose **Save for offline packing**.
+After saving succeeds, use **Saved offline** to reopen that session, check items,
+and see pending synchronization. Keep using that screen while offline. Creating
+sessions, editing lists, and trip reviews require a connection.
+
+Changes persist in this browser and synchronize while the app is open, connected,
+and signed into the same account. Conflicting changes offer a choice between this
+device and the online state. Expired login or a deleted session keeps the local
+copy available for export. Sign-out offers sync or export before clearing this
+account's local records. Browser storage can be evicted; local changes are not a
+cloud backup. Offline support requires HTTPS (or localhost), IndexedDB, service
+workers, and JavaScript. Cross-browser acceptance remains pending.
+
+Browser module checks use Node.js 22 or later:
+
+```sh
+npm ci
+npm run check
+npm test
+```
+
+See [the implementation plan](docs/implementation-plan.md) for test seams and
+remaining environment validation.

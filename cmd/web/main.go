@@ -5,9 +5,15 @@ import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/web"
+	"context"
+	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"github.com/joho/godotenv"
@@ -45,6 +51,12 @@ func main() {
 		log.Fatal("redirect url is missing from environment variables")
 	}
 
+	callbackURL, err := url.Parse(redirectURL)
+	if err != nil || callbackURL.Host == "" || (callbackURL.Scheme != "http" && callbackURL.Scheme != "https") {
+		log.Fatal("REDIRECT_URL must be an absolute http or https URL")
+	}
+	secureCookies := callbackURL.Scheme == "https"
+
 	sessionKey := os.Getenv("SESSION_KEY")
 	if sessionKey == "" {
 		log.Fatal("session key missing from environment variables")
@@ -55,6 +67,7 @@ func main() {
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
 		SessionKey:   sessionKey,
+		CookieSecure: secureCookies,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -73,12 +86,36 @@ func main() {
 
 	csrfMiddleware := csrf.Protect(
 		[]byte(csrfKey),
-		csrf.Secure(false), // dev only: allow the CSRF cookie over http://localhost
+		csrf.Secure(secureCookies),
 		csrf.TrustedOrigins([]string{
-			"localhost:3000",
+			callbackURL.Host,
 		}),
 		csrf.FieldName("_csrf"),
 	)
-	http.ListenAndServe(":3000", csrfMiddleware(r))
+	server := &http.Server{
+		Addr:              ":3000",
+		Handler:           csrfMiddleware(r),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	serverErrors := make(chan error, 1)
+	go func() { serverErrors <- server.ListenAndServe() }()
+	log.Println("Camplist listening on :3000")
+	select {
+	case err := <-serverErrors:
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Printf("server shutdown: %v", err)
+		}
+	}
 
 }

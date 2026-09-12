@@ -1,0 +1,51 @@
+:root{
+/* base — lifted verbatim from camplist/static/style.css */
+--sand-50:#f6f5f2;
+--sand-100:#eee7dd;
+--sand-200:#e5ded3;
+--sand-300:#ddd6cc;
+--white:#ffffff;
+--ink-900:#1f2933;
+--gray-500:#6b7280;
+--red-100:#fee2e2;
+--red-300:#fca5a5;
+--red-700:#b91c1c;
+/* brand accent — added with user approval (source had none) */
+--pine-100:#e3ede4;
+--pine-500:#3f7a4c;
+--pine-700:#2f5d3a;
+--pine-900:#1f3f28;
+/* ember — the "go" accent: sunrise orange for the one action that gets you outside */
+--ember-100:#fdebd9;
+--ember-500:#e8762b;
+--ember-700:#c4581a;
+/* semantic */
+--surface-page:var(--sand-50);
+--surface-card:var(--white);
+--surface-header:var(--white);
+--text-body:var(--ink-900);
+--text-muted:var(--gray-500);
+--text-link:var(--ink-900);
+--border-header:var(--sand-300);
+--border-card:var(--sand-200);
+--border-row:var(--sand-100);
+--error-bg:var(--red-100);
+--error-border:var(--red-300);
+--error-text:var(--red-700);
+--brand:var(--pine-700);
+--brand-hover:var(--pine-900);
+--brand-soft:var(--pine-100);
+--accent:var(--ember-500);
+--accent-hover:var(--ember-700);
+--accent-soft:var(--ember-100);
+--text-eyebrow:var(--ember-700);
+--progress-track:var(--sand-100);
+--progress-fill:var(--pine-500);
+--progress-done:var(--ember-500);
+/* intentional additions (not in source; buttons are browser-default there) */
+--button-primary-bg:var(--pine-700);
+--button-primary-text:var(--white);
+--button-secondary-bg:var(--white);
+--button-secondary-border:var(--sand-300);
+--button-danger-text:var(--red-700);
+}

@@ -2,30 +2,56 @@ package views
 
 import "camplist/internal/auth"
 
-templ Layout(title string) {
+// Shell is the document frame shared by every page: head, fonts, scripts, body.
+templ Shell(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
-			<script src="/static/htmx.min.js"></script>
+			<meta name="theme-color" content="#2f5d3a"/>
+			<title>{ title } – Camplist</title>
+			<link rel="icon" type="image/svg+xml" href="/static/logomark.svg"/>
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap"/>
 			<link rel="stylesheet" href="/static/style.css"/>
-			<title>{ title }</title>
+			<script src="/static/htmx.min.js"></script>
+			<script src="/static/app.js" defer></script>
+			<script type="module" src="/static/offline/account.mjs"></script>
 		</head>
 		<body>
-			<header>
-				<nav>
-					<a href="/">Camplist</a>
-					<a href="/sessions">Sessions</a>
-					<a href="/auth/signout">signout</a>
-					<div>
-						{ auth.UserName(ctx) }
-					</div>
-				</nav>
-			</header>
-			<main>
-				{ children... }
-			</main>
+			{ children... }
 		</body>
 	</html>
+}
+
+// Layout adds the app header and the content column around a signed-in page.
+templ Layout(title string, csrfToken string) {
+	@Shell(title) {
+		<header class="site-header">
+			<nav class="site-nav" aria-label="Main">
+				<a class="brand" href="/">
+					<img src="/static/logomark.svg" alt="" width="22" height="22"/>
+					Camplist
+				</a>
+				<a href="/sessions">Sessions</a>
+				<a href="/offline">Saved offline</a>
+				<form method="post" action="/auth/signout" data-signout>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<button type="submit" class="nav-button">Sign out</button>
+				</form>
+				<span class="site-user">{ auth.UserName(ctx) }</span>
+			</nav>
+		</header>
+		<main>
+			<div id="request-error" class="error" role="alert" hidden>
+				<div>
+					<p class="error-title">Couldn't save that change</p>
+					<p id="request-error-message"></p>
+				</div>
+			</div>
+			{ children... }
+		</main>
+	}
 }

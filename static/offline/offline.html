@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>Saved packing sessions · Camplist</title>
+ <link rel="stylesheet" href="/static/style.css">
+ <script type="module" src="/static/offline/ui.mjs"></script>
+</head>
+<body class="offline-page">
+ <header class="site-header"><nav class="site-nav"><a href="/">Camplist online</a><a href="/offline">Saved offline</a><a href="/login">Sign in</a></nav></header>
+ <main class="container">
+  <h1>Saved packing sessions</h1>
+  <p class="muted">Experimental offline packing. Save a session while connected before taking it offline. Local copies are not a cloud backup.</p>
+  <p id="offline-message" role="alert" hidden></p>
+  <section id="saved-sessions" aria-label="Sessions saved on this device"></section>
+  <section id="offline-trip" class="card" hidden>
+   <h2 id="trip-name"></h2><p id="sync-status" role="status"></p>
+   <button class="btn btn-primary" id="sync-now">Sync now</button> <button class="btn btn-secondary" id="export-session">Export this session</button>
+   <p id="packing-progress" role="status"></p>
+   <ul id="offline-items" class="item-list"></ul>
+   <a id="review-trip">Review this trip online</a>
+  </section>
+  <noscript>JavaScript is required for offline packing. Use the online app while connected.</noscript>
+ </main>
+</body>
+</html>

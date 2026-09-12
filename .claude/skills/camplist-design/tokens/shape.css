@@ -1,0 +1,10 @@
+:root{
+--radius-sm:4px;
+--radius-card:12px;
+--border-width:1px;
+/* no shadows anywhere in the product; elevation is border-only */
+--shadow-none:none;
+--radius-pill:999px;
+--motion-fast:120ms ease; /* @kind other */
+--lift-hover:translateY(-1px); /* @kind other */
+}

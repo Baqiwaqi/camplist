@@ -2,6 +2,12 @@
 
 Research date: 2026-09-12. Scope: repository inspection and current primary documentation, not a production audit. Recommendations are proposed learning exercises; application code was not changed. Related: [market research](market-research.md).
 
+## Implementation follow-up
+
+The initial findings below are preserved as the research baseline. The implementation now filters document types, validates point reads, fixes forms/deletion, starts independent unchecked sessions, supports reopening sessions and in-place checklist updates, and uses explicit packed state rather than toggle requests. Sign-out is a CSRF-protected POST; expired HTMX sessions trigger full login navigation. List replacements use ETags, session patches guard item identity, routing uses chi v5, and the server has timeouts, shutdown handling, and cookie security derived from the callback URL. Regression tests have been added. See [README](../README.md) for current usage.
+
+Offline editing, household collaboration, reusable kits, and post-trip reviews remain product hypotheses. Storage tests verify calls and serialization using test doubles; live Cosmos behavior and browser interactions have not been verified in this implementation pass.
+
 ## Recommendation
 
 Keep Go, chi, templ, and HTMX for the current online packing-list workflow. My assessment is that forms, lists, and individual check-off actions fit server-rendered HTML well. HTMX's own guidance identifies CRUD and updates to bounded page regions as good fits, while identifying full offline operation as difficult. [HTMX architecture guidance](https://htmx.org/essays/when-to-use-hypermedia/)

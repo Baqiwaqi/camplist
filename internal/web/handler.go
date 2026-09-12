@@ -4,21 +4,43 @@ import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"camplist/internal/views"
+	"context"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 )
 
+// packingStore describes the operations the HTTP layer needs.
+type packingStore interface {
+	AddReviewEntry(context.Context, string, string, packing.ReviewEntry) (packing.PackingSession, error)
+	ApplyReview(context.Context, string, string, string, []string) (packing.PackingList, error)
+	RecoverReviewTemplate(context.Context, string, string) (packing.PackingList, error)
+	SetPreparationTask(context.Context, string, string, string, bool, string) (packing.PackingList, error)
+	SyncSessionItem(context.Context, string, string, packing.PackingOperation) (packing.PackingSession, error)
+	GetPackingLists(context.Context, string) ([]packing.PackingList, error)
+	ListPackingSession(context.Context, string) ([]packing.PackingSession, error)
+	GetPackingList(context.Context, string, string) (packing.PackingList, error)
+	SavePackingList(context.Context, packing.PackingList) error
+	DeletePackingList(context.Context, string, string) error
+	AddItem(context.Context, string, string, packing.PackingItem) error
+	RemoveItem(context.Context, string, string, string) error
+	CreatePackingSession(context.Context, string, string) (packing.PackingSession, error)
+	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
+	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
+	DeletePackingSession(context.Context, string, string) error
+}
+
 type handler struct {
-	packingStore *packing.Store
-	auth         *auth.Auth
+	packingStore packingStore
 }
 
 func (h *handler) LoginPage(w http.ResponseWriter, r *http.Request) {
-	render(w, r, views.Login("login page"))
+	render(w, r, views.Login("Sign in"))
 }
 
 func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
@@ -32,11 +54,11 @@ func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
 	lists, err := h.packingStore.GetPackingLists(r.Context(), userID)
 	if err != nil {
 		log.Printf("list packing lists: %v", err)
-		http.Error(w, "Listing packing lists failed", http.StatusInternalServerError)
+		storeError(w, err, "Listing packing lists failed")
 		return
 	}
 
-	render(w, r, views.PackingListPage("Camping", lists, csrf.Token(r)))
+	render(w, r, views.PackingListPage("Your lists", lists, csrf.Token(r)))
 }
 
 func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
@@ -51,11 +73,11 @@ func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		log.Printf("list packing lists: %v", err)
-		http.Error(w, "Listing packing lists failed", http.StatusInternalServerError)
+		storeError(w, err, "Listing packing lists failed")
 		return
 	}
 
-	v := views.PackingSessionsOverviewPage("Packing Sessions", sessions, csrf.Token(r))
+	v := views.PackingSessionsOverviewPage("Sessions", sessions, csrf.Token(r))
 
 	render(w, r, v)
 }
@@ -72,18 +94,18 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	list, err := h.packingStore.GetPackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
-		http.Error(w, "getting the list failed", http.StatusInternalServerError)
+		storeError(w, err, "getting the list failed")
 		return
 	}
 
 	form := packing.NewCreateItemForm(id)
 
-	render(w, r, views.PackingDetails("Packing details", list, form, csrf.Token(r)))
+	render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
 }
 
 func (h *handler) NewListPage(w http.ResponseWriter, r *http.Request) {
 	form := packing.NewCreatePackingListForm()
-	render(w, r, views.NewPackingListPage("New Packing List", form, csrf.Token(r)))
+	render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
 }
 
 func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
@@ -98,12 +120,12 @@ func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
 	list, err := h.packingStore.GetPackingList(r.Context(), id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
-		http.Error(w, "getting the list failed", http.StatusInternalServerError)
+		storeError(w, err, "getting the list failed")
 		return
 	}
 
 	form := packing.EditPackingListForm(list)
-	render(w, r, views.NewPackingListPage("Edit Packing List", form, csrf.Token(r)))
+	render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
 }
 
 func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +135,7 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var form packing.CreatePackingListForm
+	form := packing.NewCreatePackingListForm()
 
 	// decode the form
 	dec := schema.NewDecoder()
@@ -125,11 +147,12 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form.Initial = false
+	form.Name = strings.TrimSpace(form.Name)
 
 	// validate the input
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		render(w, r, views.NewPackingListPage("New Packing List", form, csrf.Token(r)))
+		render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
 		return
 	}
 	ctx := r.Context()
@@ -143,8 +166,9 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = h.packingStore.SavePackingList(ctx, list)
 	if err != nil {
-		form.Error = []string{"Storing packing list failed"}
-		render(w, r, views.NewPackingListPage("New Packing List", form, csrf.Token(r)))
+		_, message := storeErrorDetails(err, "Storing packing list failed")
+		form.Error = []string{message}
+		render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
 		return
 	}
 
@@ -163,7 +187,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	list, err := h.packingStore.GetPackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("render ui: %v", err)
-		http.Error(w, "getting the list failed", http.StatusInternalServerError)
+		storeError(w, err, "getting the list failed")
 		return
 	}
 
@@ -173,7 +197,10 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var form packing.CreatePackingListForm
+	form := packing.EditPackingListForm(list)
+	// Decode editable values from the submission, retaining only server-owned metadata.
+	form.Name = ""
+	form.Description = ""
 	dec := schema.NewDecoder()
 	dec.IgnoreUnknownKeys(true)
 	err = dec.Decode(&form, r.PostForm)
@@ -183,10 +210,11 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form.Initial = false
+	form.Name = strings.TrimSpace(form.Name)
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		render(w, r, views.NewPackingListPage("Edit Packing List", form, csrf.Token(r)))
+		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
 		return
 	}
 
@@ -195,8 +223,9 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = h.packingStore.SavePackingList(ctx, list)
 	if err != nil {
-		form.Error = []string{"Storing packing list failed"}
-		render(w, r, views.NewPackingListPage("Edit Packing List", form, csrf.Token(r)))
+		_, message := storeErrorDetails(err, "Storing packing list failed")
+		form.Error = []string{message}
+		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
 		return
 	}
 
@@ -215,7 +244,7 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	err = h.packingStore.DeletePackingList(ctx, id, userID)
 	if err != nil {
 		log.Printf("delete packing list: %v", err)
-		http.Error(w, "Deleting packing list failed", http.StatusInternalServerError)
+		storeError(w, err, "Deleting packing list failed")
 		return
 	}
 
@@ -239,7 +268,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var form packing.CreateItemForm
+	form := packing.NewCreateItemForm(listID)
 	dec := schema.NewDecoder()
 	dec.IgnoreUnknownKeys(true)
 	err = dec.Decode(&form, r.PostForm)
@@ -249,6 +278,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form.Initial = false
+	form.Name = strings.TrimSpace(form.Name)
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
@@ -256,11 +286,10 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
 		if err != nil {
 			log.Printf("render ui: %v", err)
-			http.Error(w, "getting the list failed", http.StatusInternalServerError)
+			storeError(w, err, "getting the list failed")
 			return
 		}
-		form := packing.NewCreateItemForm(listID)
-		render(w, r, views.PackingDetails("Packing details", list, form, csrf.Token(r)))
+		render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
 		return
 	}
 
@@ -269,7 +298,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	err = h.packingStore.AddItem(ctx, listID, userID, item)
 	if err != nil {
 		log.Printf("add item to packing list: %v", err)
-		http.Error(w, "Storing item on packing list failed", http.StatusInternalServerError)
+		storeError(w, err, "Storing item on packing list failed")
 		return
 	}
 
@@ -289,7 +318,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 	err = h.packingStore.RemoveItem(ctx, listID, userID, itemID)
 	if err != nil {
 		log.Printf("remove item from packing list: %v", err)
-		http.Error(w, "Removing item off packing list failed", http.StatusInternalServerError)
+		storeError(w, err, "Removing item off packing list failed")
 		return
 	}
 
@@ -320,7 +349,7 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID)
 	if err != nil {
 		log.Printf("create packing session: %v", err)
-		http.Error(w, "Creating packing session failed", http.StatusInternalServerError)
+		storeError(w, err, "Creating packing session failed")
 		return
 	}
 
@@ -340,14 +369,14 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 	ses, err := h.packingStore.GetPackingSession(r.Context(), id, userID)
 	if err != nil {
 		log.Printf("get packing session: %v", err)
-		http.Error(w, "Getting packing session failed", http.StatusInternalServerError)
+		storeError(w, err, "Getting packing session failed")
 		return
 	}
 
-	render(w, r, views.PackingSessionPage("Packing Session", ses, csrf.Token(r)))
+	render(w, r, views.PackingSessionPage(ses.List.Name, ses, csrf.Token(r)))
 }
 
-func (h *handler) ToggleSessionItemHandler(w http.ResponseWriter, r *http.Request) {
+func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
@@ -365,15 +394,23 @@ func (h *handler) ToggleSessionItemHandler(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "sessionId and itemId are required", http.StatusBadRequest)
 		return
 	}
-	_, err = h.packingStore.ToggleSessionItem(ctx, sessionID, userID, itemID)
+	checked, err := strconv.ParseBool(r.FormValue("checked"))
 	if err != nil {
-		log.Printf("toggle session item: %v", err)
-		http.Error(w, "Toggling session item failed", http.StatusInternalServerError)
+		http.Error(w, "checked must be true or false", http.StatusBadRequest)
+		return
+	}
+	session, err := h.packingStore.SetSessionItem(ctx, sessionID, userID, itemID, checked)
+	if err != nil {
+		log.Printf("set session item: %v", err)
+		storeError(w, err, "Updating packed item failed")
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusOK)
+	if r.Header.Get("HX-Request") == "true" {
+		render(w, r, views.PackingChecklist(session, csrf.Token(r)))
+		return
+	}
+	http.Redirect(w, r, "/packing-session/"+sessionID, http.StatusSeeOther)
 }
 
 func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
@@ -392,7 +429,7 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 
 	err = h.packingStore.DeletePackingSession(ctx, id, userID)
 	if err != nil {
-		http.Error(w, "Error deleting packing session from db", http.StatusInternalServerError)
+		storeError(w, err, "Error deleting packing session from db")
 		return
 	}
 

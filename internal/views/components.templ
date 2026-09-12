@@ -1,0 +1,41 @@
+package views
+
+import "strconv"
+
+// ErrorBanner is the only semantic colour in the product: a solid red block
+// with a display heading and the messages beneath.
+templ ErrorBanner(messages []string) {
+	<div class="error" role="alert">
+		<div>
+			<p class="error-title">That didn't save</p>
+			<ul>
+				for _, message := range messages {
+					<li>{ message }</li>
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+// ProgressBar shows packing progress: pine while packing, ember once everything
+// is packed. An empty label leaves only the count above the bar.
+templ ProgressBar(checked int, total int, label string) {
+	<div class={ "progress", templ.KV("progress-done", allPacked(checked, total)) }>
+		<div class="progress-head">
+			if label != "" {
+				<span class="progress-label">{ label }</span>
+			}
+			<span class="progress-count" role="status">{ strconv.Itoa(checked) } of { strconv.Itoa(total) } items packed</span>
+		</div>
+		<div
+			class="progress-track"
+			role="progressbar"
+			aria-label="Packing progress"
+			aria-valuemin="0"
+			aria-valuemax={ strconv.Itoa(total) }
+			aria-valuenow={ strconv.Itoa(checked) }
+		>
+			<div class="progress-fill" style={ progressWidth(checked, total) }></div>
+		</div>
+	</div>
+}

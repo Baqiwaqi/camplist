@@ -7,6 +7,14 @@ import (
 )
 
 func NewPackingSession(list PackingList) PackingSession {
+	list.Tasks = append([]PreparationTask{}, list.Tasks...)
+	list.AppliedReviews = append([]string{}, list.AppliedReviews...)
+	list.Changes = append([]string{}, list.Changes...)
+	list.Items = append([]PackingItem{}, list.Items...)
+	for i := range list.Items {
+		list.Items[i].Checked = false
+		list.Items[i].Revision = 0
+	}
 	return PackingSession{
 		ID:        uuid.NewString(),
 		UserID:    list.UserID,

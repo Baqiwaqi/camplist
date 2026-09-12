@@ -149,3 +149,18 @@ remaining environment validation.
 
 [Azure Container Apps setup](docs/deployment.md) documents the production URL,
 GitHub Actions workflow, Azure resources, costs, secrets, and rollback commands.
+
+## Sharing lists and trips
+
+Open **Sharing and access** on a list or session to create a copyable invitation.
+The recipient signs in with Google and requests access; the owner approves their
+account. Share reusable templates and individual trips separately. Template
+editors can change equipment/preparation and create their own private trips.
+Trip packers can check equipment without gaining access to its template.
+
+Shared offline packing shows pending changes, last sync time, and stale-view
+warnings. Conflicts keep the shared state until you deliberately choose a
+resolution. Removing a member blocks future server access; local copies already
+on a disconnected device cannot be recalled.
+
+See [sharing behavior and validation](docs/shared-lists-implementation.md).

@@ -44,11 +44,11 @@ func (h *handler) SessionAPI(w http.ResponseWriter, r *http.Request) {
 	session, err := h.packingStore.GetPackingSession(r.Context(), chi.URLParam(r, "id"), user)
 	if err != nil {
 		status, message := storeErrorDetails(err, "Could not read session")
-		jsonResponse(w, status, map[string]string{"code": "unavailable", "message": message})
+		jsonResponse(w, status, map[string]string{"code": accessErrorCode(err), "message": message})
 		return
 	}
 	session.Operations = nil
-	jsonResponse(w, 200, map[string]any{"session": session})
+	jsonResponse(w, 200, map[string]any{"session": session.Snapshot(user)})
 }
 func (h *handler) SyncSessionAPI(w http.ResponseWriter, r *http.Request) {
 	user, ok := apiUser(w, r)
@@ -76,13 +76,20 @@ func (h *handler) SyncSessionAPI(w http.ResponseWriter, r *http.Request) {
 	session, err := h.packingStore.SyncSessionItem(r.Context(), chi.URLParam(r, "id"), user, op)
 	session.Operations = nil
 	if errors.Is(err, packing.ErrConflict) && session.ID != "" {
-		jsonResponse(w, 409, map[string]any{"code": "conflict", "session": session})
+		jsonResponse(w, 409, map[string]any{"code": "conflict", "session": session.Snapshot(user)})
 		return
 	}
 	if err != nil {
 		status, message := storeErrorDetails(err, "Could not synchronize")
-		jsonResponse(w, status, map[string]string{"code": "unavailable", "message": message})
+		jsonResponse(w, status, map[string]string{"code": accessErrorCode(err), "message": message})
 		return
 	}
-	jsonResponse(w, 200, map[string]any{"operationId": op.ID, "session": session})
+	jsonResponse(w, 200, map[string]any{"operationId": op.ID, "session": session.Snapshot(user)})
+}
+
+func accessErrorCode(err error) string {
+	if errors.Is(err, packing.ErrAccessRemoved) {
+		return "access_removed"
+	}
+	return "unavailable"
 }

@@ -1,7 +1,6 @@
 package views
 
 import "camplist/internal/packing"
-import "strconv"
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout(name, csrfToken) {
@@ -27,6 +26,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 					</div>
 				</div>
 			</div>
+			<p><a href={ "/sharing/packing-list/" + list.ID }>Sharing and access</a></p>
 			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
 		<section>
@@ -39,18 +39,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				}
 				<ul class="item-list columns">
 					for _, item := range list.Items {
-						<li class="item-row">
-							<span class="item-name">{ item.Name }</span>
-							if item.Category != "" {
-								<span class="tag">{ item.Category }</span>
-							}
-							<button
-								class="btn btn-danger btn-sm"
-								hx-delete={ "/packing-list/" + list.ID + "/remove-item/" + item.ID }
-								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-								hx-confirm="Delete this item?"
-							>Delete</button>
-						</li>
+						@ItemRow(list.ID, item, csrfToken)
 					}
 				</ul>
 			</div>
@@ -59,24 +48,18 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 			<section class="card">
 				<h2>Prepare before your next trip</h2>
 				for _, task := range list.Tasks {
-					<form method="post" action={ "/packing-list/" + list.ID + "/preparation" }>
-						<input type="hidden" name="_csrf" value={ csrfToken }/>
-						<input type="hidden" name="taskId" value={ task.ID }/>
-						<input type="hidden" name="revision" value={ list.Revision() }/>
-						<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
-						<span>{ task.Name }</span>
-						<button class="btn btn-primary btn-sm" type="submit">
-							if task.Done {
-								Reopen task
-							} else {
-								Mark prepared
-							}
-						</button>
+					<form class="card" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+						<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/><input type="hidden" name="taskId" value={ task.ID }/>
+						<label for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
+						<label><input type="checkbox" name="done" value="true" checked?={ task.Done }/>Prepared</label>
+						<button class="btn btn-secondary" name="action" value="save">Save task</button><button class="btn btn-danger" name="action" value="remove" formnovalidate>Remove task</button>
 					</form>
 				}
-				if len(list.Tasks) == 0 {
-					<p>No preparation tasks. Add them from a trip review.</p>
-				}
+				<form method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
+					<div class="field"><label for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Buy fuel" required maxlength="200"/></div>
+					<button class="btn btn-secondary">Add task</button>
+				</form>
 				<p class="muted">Preparation and packing are separate: buying fuel does not mark your stove as packed.</p>
 				<h3>Improvements from trip reviews</h3>
 				<ul>
@@ -94,16 +77,7 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<div class="card">
 		<form action={ form.Action } method="POST" hx-boost="true">
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			<div class="field-grid">
-				<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
-					<label for="name">Name</label>
-					<input type="text" id="name" name="name" placeholder="Headlamp" value={ form.Name }/>
-				</div>
-				<div class="field">
-					<label for="category">Category</label>
-					<input type="text" id="category" name="category" placeholder="Light" value={ form.Category }/>
-				</div>
-			</div>
+			@ItemFields(form, "new")
 			if len(form.Error) > 0 {
 				@ErrorBanner(form.Error)
 			}
@@ -112,4 +86,98 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 			</div>
 		</form>
 	</div>
+}
+
+// ItemFields is the name and category pair shared by the add and edit forms.
+templ ItemFields(form packing.CreateItemForm, suffix string) {
+	<input type="hidden" name="revision" value={ form.Revision }/>
+	<div class="field-grid">
+		<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
+			<label for={ "item-name-" + suffix }>Name</label>
+			<input type="text" id={ "item-name-" + suffix } name="name" placeholder="Headlamp" value={ form.Name }/>
+		</div>
+		<div class="field">
+			<label for={ "item-category-" + suffix }>Category</label>
+			<input type="text" id={ "item-category-" + suffix } name="category" placeholder="Light" value={ form.Category }/>
+		</div>
+	</div>
+}
+
+// ItemRow is one item on the details page. Edit swaps it for ItemEditRow in place.
+templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
+	<li class="item-row" id={ "item-" + item.ID }>
+		<span class="item-name">{ item.Name }</span>
+		if item.Category != "" {
+			<span class="tag">{ item.Category }</span>
+		}
+		<div class="actions">
+			<a
+				class="btn btn-secondary btn-sm"
+				href={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
+				hx-get={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
+				hx-target="closest li"
+				hx-swap="outerHTML"
+			>Edit</a>
+			<button
+				class="btn btn-danger btn-sm"
+				hx-delete={ "/packing-list/" + listID + "/remove-item/" + item.ID }
+				hx-headers={ templ.JSONString(map[string]string{"X-CSRF-Token": csrfToken, "X-Camplist-Revision": item.SourceRevision}) }
+				hx-confirm="Delete this item?"
+				data-confirm-action="Delete item"
+			>Delete</button>
+		</div>
+	</li>
+}
+
+// ItemEditRow replaces ItemRow while an item is being edited.
+templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csrfToken string) {
+	<li class="item-row item-row-edit" id={ "item-" + itemID }>
+		<form
+			class="item-edit-form"
+			action={ form.Action }
+			method="POST"
+			hx-post={ form.Action }
+			hx-target="closest li"
+			hx-swap="outerHTML"
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			@ItemFields(form, itemID)
+			if len(form.Error) > 0 {
+				@ErrorBanner(form.Error)
+			}
+			<div class="form-actions">
+				<a
+					class="btn btn-secondary btn-sm"
+					href={ "/packing-list/" + listID }
+					hx-get={ "/packing-list/" + listID + "/items/" + itemID }
+					hx-target="closest li"
+					hx-swap="outerHTML"
+				>Cancel</a>
+				<button type="submit" class="btn btn-primary btn-sm">{ form.SubmitButtonText }</button>
+			</div>
+		</form>
+	</li>
+}
+
+// EditItemPage is the fallback for editing an item without scripts.
+templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
+	@Layout("Edit item", csrfToken) {
+		<section class="narrow">
+			<p class="eyebrow">{ list.Name }</p>
+			<h1>Edit item</h1>
+			<div class="card">
+				<form action={ form.Action } method="POST" hx-boost="true">
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					@ItemFields(form, "edit")
+					if len(form.Error) > 0 {
+						@ErrorBanner(form.Error)
+					}
+					<div class="form-actions">
+						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID }>Cancel</a>
+						<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
+					</div>
+				</form>
+			</div>
+		</section>
+	}
 }

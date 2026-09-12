@@ -62,7 +62,7 @@ func (s *Store) updateSession(ctx context.Context, id, user string, change func(
 			return session, err
 		}
 		etag := azcore.ETag(session.etag)
-		_, err = s.container.ReplaceItem(ctx, azcosmos.NewPartitionKeyString(user), id, data, &azcosmos.ItemOptions{IfMatchEtag: &etag})
+		_, err = s.container.ReplaceItem(ctx, azcosmos.NewPartitionKeyString(session.UserID), id, data, &azcosmos.ItemOptions{IfMatchEtag: &etag})
 		if preconditionFailed(err) {
 			continue
 		}
@@ -85,6 +85,9 @@ func (s *Store) AddReviewEntry(ctx context.Context, id, user string, entry Revie
 		return PackingSession{}, ErrInvalid
 	}
 	return s.updateSession(ctx, id, user, func(session *PackingSession) (bool, error) {
+		if session.UserID != user {
+			return false, ErrForbidden
+		}
 		for _, existing := range session.Review {
 			if existing.ID == entry.ID {
 				if existing != entry {
@@ -203,6 +206,9 @@ func (s *Store) RecoverReviewTemplate(ctx context.Context, sessionID, user strin
 	session, err := s.GetPackingSession(ctx, sessionID, user)
 	if err != nil {
 		return PackingList{}, err
+	}
+	if session.UserID != user {
+		return PackingList{}, ErrForbidden
 	}
 	if session.ReviewTargetID != "" {
 		return s.GetPackingList(ctx, session.ReviewTargetID, user)

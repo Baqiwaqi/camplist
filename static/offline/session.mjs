@@ -1,3 +1,4 @@
+import { packingStatus } from './status.mjs';
 import { AutomaticPacking } from './automatic.mjs';
 
 // Enhance the existing forms only after local persistence succeeds. Without it,
@@ -11,12 +12,12 @@ export async function mountSession(packing, readyForOffline) {
  function render(view,error) {
   if(error){status.textContent='Could not save on this device. '+error.message;return;}
   if(!view)return;
-  const issues={signin:'Sign in again to sync. Your changes are saved on this device.',account:'Sign in to the original account to sync. Your changes are saved on this device.',deleted:'This trip was deleted online. Your local copy is available under On this device.'};
-  status.textContent=issues[view.issue] || (Object.keys(view.conflicts).length ? 'Another device changed an item. Choose which version to keep below.' :
-   !navigator.onLine||view.issue==='network' ? 'Offline · Changes saved on this device. We’ll sync automatically when connected.' :
-   view.pending ? 'Saved on this device · Syncing…' :
-   filesReady ? 'All changes saved · Available offline on this device' :
-   filesError ? 'Changes saved · Offline reopening unavailable in this browser' : 'All changes saved · Preparing offline access…');
+  const state=packingStatus(view,navigator.onLine);
+  status.textContent=state.text;
+  status.classList.toggle('card',view.session.shared&&state.warning);
+  if(!view.session.shared&&!view.issue&&!view.pending&&!Object.keys(view.conflicts).length&&navigator.onLine){
+   status.textContent+=filesReady?' · Available offline on this device':filesError?' · Offline reopening unavailable in this browser':' · Preparing offline access…';
+  }
   const checklist=document.getElementById('packing-checklist');
   for(const item of view.session.list.items){
    const button=document.getElementById('pack-'+item.id);if(!button)continue;
@@ -24,14 +25,15 @@ export async function mountSession(packing, readyForOffline) {
    button.setAttribute('aria-pressed',String(item.checked));
    button.querySelector('.pack-action').textContent=item.checked?'Unpack':'Pack';
    button.form.elements.checked.value=String(!item.checked);
+   button.form.elements.expectedRevision.value=String(item.revision||0);
    const row=button.closest('li');row.querySelector('[data-conflict]')?.remove();
    const remote=view.conflicts[item.id];
    if(remote){
     const conflict=document.createElement('div');conflict.dataset.conflict='';
-    const explanation=document.createElement('p');explanation.textContent=`This device: ${item.checked?'packed':'unpacked'}. Other device: ${remote.checked?'packed':'unpacked'}.`;conflict.append(explanation);
-    for(const [label,choice] of [['Keep this device’s choice','mine'],['Use other device’s choice','server']]){
+    const explanation=document.createElement('p');explanation.textContent=`${remote.changedBy||'Another camper'} marked this ${remote.checked?'packed':'unpacked'}. Your waiting change would mark it ${item.checked?'packed':'unpacked'}.`;conflict.append(explanation);
+    for(const [label,choice] of [['Keep shared state','server'],[item.checked?'Mark packed instead':'Mark unpacked instead','mine']]){
      const action=document.createElement('button');action.type='button';action.className='btn btn-secondary btn-sm';action.textContent=label;
-     action.onclick=async()=>{try{await packing.resolve(session.userId,session.id,item.id,choice);await automatic.notify();await automatic.sync();}catch(error){render(null,error);}};
+     action.onclick=async()=>{try{await packing.resolve(session.accountId||session.userId,session.id,item.id,choice);await automatic.notify();await automatic.sync();}catch(error){render(null,error);}};
      conflict.append(action);
     }
     row.append(conflict);
@@ -59,6 +61,7 @@ export async function mountSession(packing, readyForOffline) {
   try {await automatic.set(form.elements.itemId.value,form.elements.checked.value==='true');}
   catch(error){await automatic.notify();render(null,error);}
  },true);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')automatic.sync().catch(error=>render(null,error));});
  window.addEventListener('pagehide',()=>automatic.stop(),{once:true});
  window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
 }

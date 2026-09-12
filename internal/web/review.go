@@ -27,16 +27,22 @@ func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry pac
 	}
 	list, err := h.packingStore.GetPackingList(r.Context(), session.TemplateID(), user)
 	available := err == nil
+	recoverable := false
 	if err != nil {
 		code, _ := storeErrorDetails(err, "")
-		if code != 404 {
+		recoverable = code == 404
+		if code != 404 && code != 403 {
 			storeError(w, err, "Could not read template")
 			return
 		}
 	}
+	if session.UserID != user && !available {
+		storeError(w, packing.ErrForbidden, "")
+		return
+	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
-	render(w, r, views.ReviewPage(session, list, available, entry, message, csrf.Token(r)))
+	render(w, r, views.ReviewPage(session, list, available, recoverable, entry, message, csrf.Token(r)))
 }
 func parsePackingForm(w http.ResponseWriter, r *http.Request) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)

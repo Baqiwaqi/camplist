@@ -3,6 +3,7 @@ package packing
 import "strings"
 
 type CreatePackingListForm struct {
+	Revision         string
 	Action           string `schema:"-"`
 	Initial          bool   `schema:"-"`
 	SubmitButtonText string `schema:"-"`
@@ -22,6 +23,7 @@ func NewCreatePackingListForm() CreatePackingListForm {
 func EditPackingListForm(list PackingList) CreatePackingListForm {
 	return CreatePackingListForm{
 		Action:           "/packing-list/" + list.ID + "/edit",
+		Revision:         list.Revision(),
 		Initial:          false,
 		SubmitButtonText: "Save",
 		Name:             list.Name,
@@ -57,6 +59,7 @@ func (f CreatePackingListForm) Validate() []string {
 }
 
 type CreateItemForm struct {
+	Revision         string
 	Action           string `schema:"-"`
 	Initial          bool   `schema:"-"`
 	SubmitButtonText string `schema:"-"`
@@ -76,6 +79,7 @@ func NewCreateItemForm(listId string) CreateItemForm {
 func EditItemForm(listId string, item PackingItem) CreateItemForm {
 	return CreateItemForm{
 		Action:           "/packing-list/" + listId + "/edit-item/" + item.ID,
+		Revision:         item.SourceRevision,
 		Initial:          false,
 		SubmitButtonText: "Save",
 		Name:             item.Name,

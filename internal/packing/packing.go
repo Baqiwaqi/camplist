@@ -7,6 +7,8 @@ import (
 )
 
 func NewPackingSession(list PackingList) PackingSession {
+	list.Sharing = Sharing{}
+	list.actor = ""
 	list.Tasks = append([]PreparationTask{}, list.Tasks...)
 	list.AppliedReviews = append([]string{}, list.AppliedReviews...)
 	list.Changes = append([]string{}, list.Changes...)

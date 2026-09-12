@@ -54,3 +54,34 @@ func TestIdentityTokenCanBeUsedAtSignoutPath(t *testing.T) {
 		t.Fatal("CSRF cookie missing at signout path")
 	}
 }
+
+func TestNoReferrerFormsRequireSameOriginMetadataAndValidToken(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			io.WriteString(w, csrf.Token(r))
+			return
+		}
+		w.WriteHeader(204)
+	})
+	protected := CSRFProtection([]byte("01234567890123456789012345678901"), false, "camplist.test")(handler)
+	get := httptest.NewRecorder()
+	protected.ServeHTTP(get, httptest.NewRequest("GET", "https://camplist.test/join/example", nil))
+	token := get.Body.String()
+	for _, tc := range []struct {
+		site, token string
+		want        int
+	}{{"same-origin", token, 204}, {"cross-site", token, 403}, {"", token, 403}, {"same-origin", "", 403}} {
+		request := httptest.NewRequest("POST", "https://camplist.test/join/example", nil)
+		request.Header.Set("Origin", "null")
+		request.Header.Set("Sec-Fetch-Site", tc.site)
+		request.Header.Set("X-CSRF-Token", tc.token)
+		for _, cookie := range get.Result().Cookies() {
+			request.AddCookie(cookie)
+		}
+		response := httptest.NewRecorder()
+		protected.ServeHTTP(response, request)
+		if response.Code != tc.want {
+			t.Fatalf("site %q token-present %v: got %d want %d", tc.site, tc.token != "", response.Code, tc.want)
+		}
+	}
+}

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Config struct {
@@ -16,7 +15,8 @@ type Config struct {
 
 func Routes(cfg Config) *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	r.Use(requestLog)
+	r.Use(sharingProtection())
 	// Process health only: probes must not consume Cosmos request units.
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
@@ -45,6 +45,12 @@ func Routes(cfg Config) *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(cfg.Auth.RequireAuth)
 
+		r.Get("/join/{owner}/{kind}/{id}/{token}", h.JoinPage)
+		r.Post("/join/{owner}/{kind}/{id}/{token}", h.RequestAccess)
+		r.Get("/sharing/{kind}/{id}", h.SharingPage)
+		r.Post("/sharing/{kind}/{id}/invitations", h.CreateInvitation)
+		r.Post("/sharing/{kind}/{id}/invitations/{hash}", h.DecideInvitation)
+		r.Post("/sharing/{kind}/{id}/members/{subject}/remove", h.RemoveMember)
 		r.Get("/api/identity", h.IdentityAPI)
 		r.Get("/api/sessions/{id}", h.SessionAPI)
 		r.Post("/api/sessions/{id}/sync", h.SyncSessionAPI)
@@ -60,6 +66,9 @@ func Routes(cfg Config) *chi.Mux {
 
 		r.Post("/packing-list/{id}/add-item", h.AddItemHandler)
 		r.Delete("/packing-list/{id}/remove-item/{itemId}", h.RemoveItemHandler)
+		r.Get("/packing-list/{id}/items/{itemId}", h.ItemRowHandler)
+		r.Get("/packing-list/{id}/items/{itemId}/edit", h.EditItemPage)
+		r.Post("/packing-list/{id}/edit-item/{itemId}", h.EditItemHandler)
 
 		r.Delete("/packing-list/{id}", h.DeleteListHandler)
 
@@ -70,6 +79,7 @@ func Routes(cfg Config) *chi.Mux {
 		r.Post("/packing-session/{id}/review/apply", h.ApplyReviewHandler)
 		r.Post("/packing-session/{id}/review/recover", h.RecoverReviewHandler)
 		r.Post("/packing-list/{id}/preparation", h.PreparationHandler)
+		r.Post("/packing-list/{id}/preparation/edit", h.EditPreparationTask)
 		r.Delete("/packing-session/{id}", h.DeletePackingSession)
 		r.Post("/packing-session/set-item", h.SetSessionItemHandler)
 	})

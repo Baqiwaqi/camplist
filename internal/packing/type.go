@@ -7,6 +7,7 @@ type CreatePackingSession struct {
 }
 
 type PackingSession struct {
+	Sharing        Sharing                     `json:"sharing,omitempty"`
 	Improvements   []string                    `json:"improvements,omitempty"`
 	Operations     map[string]PackingOperation `json:"operations,omitempty"`
 	ReviewTargetID string                      `json:"reviewTargetId,omitempty"`
@@ -20,6 +21,8 @@ type PackingSession struct {
 }
 
 type PackingList struct {
+	Sharing        Sharing `json:"sharing,omitempty"`
+	actor          string
 	Tasks          []PreparationTask `json:"tasks,omitempty"`
 	AppliedReviews []string          `json:"appliedReviews,omitempty"`
 	Changes        []string          `json:"changes,omitempty"`
@@ -46,14 +49,16 @@ func (l PackingList) CountChecked() int {
 }
 
 type PackingItem struct {
-	Revision  int64      `json:"revision"`
-	ID        string     `json:"id"`
-	Name      string     `json:"name"`
-	Category  string     `json:"category"`
-	Checked   bool       `json:"checked"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+	SourceRevision string     `json:"-"`
+	ChangedBy      string     `json:"changedBy,omitempty"`
+	Revision       int64      `json:"revision"`
+	ID             string     `json:"id"`
+	Name           string     `json:"name"`
+	Category       string     `json:"category"`
+	Checked        bool       `json:"checked"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	DeletedAt      *time.Time `json:"deletedAt,omitempty"`
 }
 
 // Revision identifies the template version shown to the camper.

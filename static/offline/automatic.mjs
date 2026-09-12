@@ -6,16 +6,17 @@ export class AutomaticPacking {
   this.disconnected=()=>{this.notify().catch(error=>this.changed(null,error));};
  }
  async save(session) {
-  this.owner=session.userId;this.id=session.id;
+  this.owner=session.accountId||session.userId;this.id=session.id;
   await this.packing.save(this.owner,session);
   await this.notify();
   this.events.addEventListener('online',this.reconnect);
   this.events.addEventListener('offline',this.disconnected);
   this.events.addEventListener('focus',this.reconnect);
   this.timer=setInterval(async()=>{
+   if(typeof document!=="undefined"&&document.visibilityState!=="visible")return;
    try {
     const view=await this.packing.open(this.owner,this.id);
-    if(view?.pending||view?.issue==='network')await this.sync();
+    if(view?.issue==='network'||(!view?.issue&&(view?.pending||view?.session.shared)))await this.sync();
    }catch(error){this.changed(null,error);}
   },15000);
   this.reconnect();

@@ -18,6 +18,7 @@ templ NewPackingListPage(name string, heading string, form packing.CreatePacking
 templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
 	<form method="post" action={ form.Action } hx-boost="true">
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<input type="hidden" name="revision" value={ form.Revision }/>
 		<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
 			<label for="name">Name</label>
 			<input id="name" name="name" type="text" placeholder="Camping" value={ form.Name }/>

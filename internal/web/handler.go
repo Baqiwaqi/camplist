@@ -11,12 +11,20 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 )
 
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
+	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) error
+	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
+	CreateInvitation(context.Context, string, string, string) (packing.InvitationLink, error)
+	InvitationStatus(context.Context, packing.InvitationLink, string) (string, error)
+	RequestAccess(context.Context, packing.InvitationLink, packing.Member) error
+	DecideInvitation(context.Context, string, string, string, string, bool) error
+	RemoveMember(context.Context, string, string, string, string) error
 	AddReviewEntry(context.Context, string, string, packing.ReviewEntry) (packing.PackingSession, error)
 	ApplyReview(context.Context, string, string, string, []string) (packing.PackingList, error)
 	RecoverReviewTemplate(context.Context, string, string) (packing.PackingList, error)
@@ -28,7 +36,8 @@ type packingStore interface {
 	SavePackingList(context.Context, packing.PackingList) error
 	DeletePackingList(context.Context, string, string) error
 	AddItem(context.Context, string, string, packing.PackingItem) error
-	RemoveItem(context.Context, string, string, string) error
+	RemoveItem(context.Context, string, string, string, ...string) error
+	UpdateItem(context.Context, string, string, packing.PackingItem) error
 	CreatePackingSession(context.Context, string, string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
@@ -200,6 +209,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	form := packing.EditPackingListForm(list)
 	// Decode editable values from the submission, retaining only server-owned metadata.
 	form.Name = ""
+	form.Revision = ""
 	form.Description = ""
 	dec := schema.NewDecoder()
 	dec.IgnoreUnknownKeys(true)
@@ -218,6 +228,11 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if list.IsShared() && form.Revision != list.Revision() {
+		form.Error = []string{"This list changed. Reload it and review the current version before saving."}
+		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
+		return
+	}
 	list.Name = form.Name
 	list.Description = form.Description
 
@@ -315,7 +330,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.packingStore.RemoveItem(ctx, listID, userID, itemID)
+	err = h.packingStore.RemoveItem(ctx, listID, userID, itemID, r.Header.Get("X-Camplist-Revision"))
 	if err != nil {
 		log.Printf("remove item from packing list: %v", err)
 		storeError(w, err, "Removing item off packing list failed")
@@ -373,7 +388,12 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, views.PackingSessionPage(ses.List.Name, ses, csrf.Token(r)))
+	canReview := ses.UserID == userID
+	if !canReview {
+		_, templateErr := h.packingStore.GetPackingList(ctx, ses.TemplateID(), userID)
+		canReview = templateErr == nil
+	}
+	render(w, r, views.PackingSessionPage(ses.List.Name, ses, canReview, csrf.Token(r)))
 }
 
 func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) {
@@ -399,7 +419,17 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "checked must be true or false", http.StatusBadRequest)
 		return
 	}
-	session, err := h.packingStore.SetSessionItem(ctx, sessionID, userID, itemID, checked)
+	var session packing.PackingSession
+	if raw := r.PostForm.Get("expectedRevision"); raw != "" {
+		revision, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil || revision < 0 {
+			http.Error(w, "Invalid item revision", 400)
+			return
+		}
+		session, err = h.packingStore.SyncSessionItem(ctx, sessionID, userID, packing.PackingOperation{ID: uuid.NewString(), ItemID: itemID, Checked: checked, ExpectedRevision: revision})
+	} else {
+		session, err = h.packingStore.SetSessionItem(ctx, sessionID, userID, itemID, checked)
+	}
 	if err != nil {
 		log.Printf("set session item: %v", err)
 		storeError(w, err, "Updating packed item failed")

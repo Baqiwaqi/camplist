@@ -14,6 +14,12 @@ func storeError(w http.ResponseWriter, err error, fallback string) {
 }
 
 func storeErrorDetails(err error, fallback string) (int, string) {
+	if errors.Is(err, packing.ErrAccessRemoved) {
+		return http.StatusForbidden, "Your access was removed. Local changes will not be uploaded. You can export or remove your local copy."
+	}
+	if errors.Is(err, packing.ErrForbidden) {
+		return http.StatusForbidden, "Only the owner can do that."
+	}
 	if errors.Is(err, packing.ErrInvalid) {
 		return http.StatusBadRequest, "Please check the submitted values."
 	}

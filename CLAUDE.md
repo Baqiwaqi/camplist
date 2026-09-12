@@ -23,7 +23,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   Never hand-edit the generated `*_templ.go` files.
 - Frontend: `htmx` plus `Alpine.js` (both vendored in `static/`, loaded in
   `internal/views/layout.templ`). Client-side state lives in `x-data` on the
-  element that needs it (menu, error toast); there is no separate app script. Packing updates return
+  element that needs it (menu, error toast, confirm dialog); packing persistence/sync lives in the explicit
+  `static/offline/` modules. Deletes keep `hx-confirm`; the dialog in the layout
+  intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
+  on the button supply the label and explanation. Packing updates return
   a checklist fragment; other mutations may redirect or refresh.
 - CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`.
   Note: Go's `ParseForm` ignores request bodies for `DELETE`, so send the CSRF
@@ -52,3 +55,16 @@ The teaching-only phase is complete. Default to **implementing requested changes
   actions, red only for errors and delete; border-only elevation (no shadows);
   pills for buttons and tags; flat colour, no icons, images or gradients;
   h1/h2 in Bricolage Grotesque 800, body in system-ui; must work on phones.
+
+## Shared resources
+
+- Keep authenticated actor identity separate from the resource's immutable storage
+  `userId`. Membership lives on the canonical resource; discovery references are
+  not access grants. Trip and template grants are independent.
+- Authorize every read/write/replay. Writes must condition on the same resource
+  ETag as the permission check. Shared template forms carry their displayed revision.
+- Send device snapshots through `PackingSession.Snapshot`; never serialize raw
+  memberships, invitations, receipts or review metadata into packing pages/APIs.
+- Preserve item revisions and operation IDs through offline retries. A reconnect
+  is not a successful sync. Shared conflicts need an explicit user decision.
+- Sharing behavior and limits: `docs/shared-lists-implementation.md`.

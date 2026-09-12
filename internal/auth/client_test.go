@@ -2,8 +2,10 @@ package auth
 
 import (
 	"github.com/gorilla/sessions"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -49,5 +51,34 @@ func TestSignoutClearsAnInvalidSessionCookie(t *testing.T) {
 	cookies := w.Result().Cookies()
 	if len(cookies) == 0 || cookies[0].MaxAge != -1 {
 		t.Fatal("signout did not remove stale cookie")
+	}
+}
+
+func TestInvitationLoginPreservesOnlyAnInternalReturnAndOffersAccountChoice(t *testing.T) {
+	a := &Auth{cookieStore: sessions.NewCookieStore([]byte("01234567890123456789012345678901")), oauthCfg: &oauth2.Config{ClientID: "client", Endpoint: oauth2.Endpoint{AuthURL: "https://accounts.google.com/auth"}}}
+	path := "/join/owner/packing-session/trip/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	w := httptest.NewRecorder()
+	a.LoginHandler(w, httptest.NewRequest("GET", "/auth/login?switch=1&returnTo="+url.QueryEscape(path), nil))
+	redirect, _ := url.Parse(w.Header().Get("Location"))
+	if redirect.Query().Get("prompt") != "select_account" {
+		t.Fatal("missing account choice")
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	for _, cookie := range w.Result().Cookies() {
+		r.AddCookie(cookie)
+	}
+	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+	if ses.Values["returnTo"] != path {
+		t.Fatal("invitation lost")
+	}
+	w = httptest.NewRecorder()
+	a.LoginHandler(w, httptest.NewRequest("GET", "/auth/login?returnTo=https://evil.example", nil))
+	r = httptest.NewRequest("GET", "/", nil)
+	for _, cookie := range w.Result().Cookies() {
+		r.AddCookie(cookie)
+	}
+	ses, _ = a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+	if ses.Values["returnTo"] != "/" {
+		t.Fatal("external return accepted")
 	}
 }

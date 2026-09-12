@@ -33,7 +33,18 @@ async function readyForOffline() {
 }
 
 if(document.getElementById('packing-snapshot')) {
- module().then(({packing})=>mountSession(packing,readyForOffline)).catch(error=>message('Offline saving unavailable. Packing requires a connection. '+error.message));
+ const previousController=navigator.serviceWorker?.controller;
+ (async()=>{
+  let filesReady=false;
+  try {
+   await readyForOffline();filesReady=true;
+   // Imports may have come from the previous worker's cache. Reload before
+   // enabling edits so shared snapshots never reach an old account model.
+   if(previousController&&navigator.serviceWorker.controller!==previousController){location.reload();return;}
+  }catch {/* Local persistence can still work; the packing status explains reopening limits. */}
+  const {packing}=await module();
+  await mountSession(packing,filesReady?async()=>{}:readyForOffline);
+ })().catch(error=>message('Offline saving unavailable. Packing requires a connection. '+error.message));
 }
 
 // Ask before removing a local queue. Export and sync are explicit choices.

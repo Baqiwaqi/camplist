@@ -2,9 +2,9 @@ export class OfflinePacking {
  constructor(database, transport) { this.db = database; this.transport = transport; this.running = new Map(); this.closing = new Set(); }
  async save(owner, session) {
   this.closing.delete(owner);
-  if (session.userId !== owner) throw new Error('Account mismatch.');
-  await this.db.update(owner, session.id, old => old || {
-   owner, id: session.id, session: structuredClone(session), pending: {}, flight: {}, conflicts: {}, issue: null
+  if ((session.accountId||session.userId) !== owner) throw new Error('Account mismatch.');
+  await this.db.update(owner, session.id, old => old ? {...old,fresh:false,session:{...old.session,shared:session.shared,accountId:session.accountId}} : {
+   owner, id: session.id, fresh:false, session: structuredClone(session), pending: {}, flight: {}, conflicts: {}, issue: null
   });
   await this.db.setOwner(owner);
   return this.open(owner, session.id);
@@ -14,7 +14,7 @@ export class OfflinePacking {
   if (!record) return null;
   const session = structuredClone(record.session);
   for (const item of session.list.items) if (record.pending[item.id]) item.checked = record.pending[item.id].checked;
-  return { session, pending: Object.keys(record.pending).length, conflicts: structuredClone(record.conflicts), issue: record.issue };
+  return { session, pending: Object.keys(record.pending).length, conflicts: structuredClone(record.conflicts), issue: record.issue, lastSyncedAt:record.lastSyncedAt||null, fresh:record.fresh===true };
  }
  async set(owner, id, itemId, checked) {
   if (this.closing.has(owner)) throw new Error("Sign-out is in progress.");
@@ -77,7 +77,7 @@ export class OfflinePacking {
     });
     if (!operation) {
      const remote = await this.transport.getSession(owner,id,identity);
-     await this.db.update(owner,id,record => mergeRemote(record,remote));
+     await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;return record;});
      return this.open(owner,id);
     }
     let result;
@@ -113,7 +113,8 @@ export class OfflinePacking {
   } catch(error) {
    await this.db.update(owner,id,record => {
     if (!record) throw error;
-    record.issue = error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
+    record.fresh=false;
+    record.issue = error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
     return record;
    });
    return this.open(owner,id);
@@ -122,7 +123,7 @@ export class OfflinePacking {
 }
 
 function mergeRemote(record, remote, advanceItem) {
- if (remote.id !== record.id || remote.userId !== record.owner) throw Object.assign(new Error('Account mismatch.'),{code:'account'});
+ if (remote.id !== record.id || (remote.accountId||remote.userId) !== record.owner || remote.userId !== record.session.userId) throw Object.assign(new Error('Account mismatch.'),{code:'account'});
  const previous = record.session;
  record.session = structuredClone(remote);
  for (let i=0;i<record.session.list.items.length;i++) {

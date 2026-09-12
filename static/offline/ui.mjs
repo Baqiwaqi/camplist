@@ -1,3 +1,4 @@
+import { packingStatus } from './status.mjs';
 import { openDatabase } from './db.mjs';
 import { OfflinePacking } from './packing.mjs';
 import { transport, downloadJSON } from './transport.mjs';
@@ -18,8 +19,9 @@ async function render(){
  if(account!==owner||id!==selected())return;
  byId('offline-trip').hidden=!view;if(!view)return;
  byId('trip-name').textContent=view.session.list.name;
- const issues={signin:'Sign in to synchronize. Your changes are saved on this device.',account:'Sign in to the account that saved this trip. Pending changes are preserved.',deleted:'This session was deleted online. Export your local copy; it will not be recreated.',network:'Connection unavailable. Your changes are saved on this device.'};
- byId('sync-status').textContent=issues[view.issue]||(Object.keys(view.conflicts).length?'Needs a decision: another device changed an item.':view.pending?`Saved on this device · ${view.pending} change(s) will sync automatically.`:navigator.onLine?'All changes saved':'Offline · Changes saved on this device. We’ll sync automatically when connected.');
+ const state=packingStatus(view,navigator.onLine);
+ byId('sync-status').textContent=state.text;
+ byId('sync-status').classList.toggle('card',view.session.shared&&state.warning);
  byId('packing-progress').textContent=`${view.session.list.items.filter(item=>item.checked).length} of ${view.session.list.items.length} items packed`;
  byId('review-trip').href='/packing-session/'+encodeURIComponent(id)+'/review';
  const active=document.activeElement?.id;
@@ -30,8 +32,8 @@ async function render(){
   input.onchange=async()=>{try{await packing.set(account,id,item.id,input.checked);message('');await render();synchronize();}catch(error){message('Not saved on this device. '+error.message);await render();}};
   label.append(input,document.createTextNode(' '+item.name+(item.category?' · '+item.category:'')));row.append(label);
   if(view.conflicts[item.id]){
-   const conflict=document.createElement('div');const text=document.createElement('p');text.textContent=`This device: ${item.checked?'packed':'unpacked'}. Online: ${view.conflicts[item.id].checked?'packed':'unpacked'}.`;conflict.append(text);
-   for(const [label,choice]of[['Keep this device’s choice','mine'],['Use online choice','server']])conflict.append(button(label,async()=>{await packing.resolve(account,id,item.id,choice);await render();await synchronize();}));
+   const conflict=document.createElement('div');const text=document.createElement('p');text.textContent=`${view.conflicts[item.id].changedBy||'Another camper'} marked this ${view.conflicts[item.id].checked?'packed':'unpacked'}. Your waiting change would mark it ${item.checked?'packed':'unpacked'}.`;conflict.append(text);
+   for(const [label,choice]of[['Keep shared state','server'],[item.checked?'Mark packed instead':'Mark unpacked instead','mine']])conflict.append(button(label,async()=>{await packing.resolve(account,id,item.id,choice);await render();await synchronize();}));
    row.append(conflict);
   }
   items.append(row);
@@ -49,6 +51,7 @@ async function load(){
   db ||= await openDatabase();packing ||= new OfflinePacking(db,transport);
   owner=await db.owner();
   try{const identity=await transport.identity();owner=identity.userId;await db.setOwner(owner);}catch(error){if(error.status&&error.status!==401)message('Could not verify the signed-in account. Saved sessions remain local.');}
+  for(const record of owner?await db.list(owner):[])await packing.save(owner,record.session);
   await render();await synchronize();
  }catch(error){message('Offline storage is unavailable. '+error.message);}
 }
@@ -60,7 +63,7 @@ window.addEventListener('offline',()=>render().catch(error=>message(error.messag
 // Some outages end without an online event (for example, the server recovers).
 setInterval(async()=>{
  if(!db||!owner||document.visibilityState!=='visible')return;
- try{if((await db.list(owner)).some(record=>Object.keys(record.pending).length||record.issue==='network'))await synchronize();}
+ try{if((await db.list(owner)).some(record=>record.issue==='network'||(!record.issue&&(Object.keys(record.pending).length||record.session.shared))))await synchronize();}
  catch(error){message(error.message);}
 },15000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load();});

@@ -149,3 +149,29 @@ test('sign-out cannot discard a change made in another tab after export', async 
  await packing.forget('camper',await db.list('camper'));
  assert.equal(await packing.open('camper','trip'),null);
 });
+
+test('shared copies belong to the signed-in member and removed access preserves pending work', async () => {
+ const db=await database(),remote=server();
+ remote.state.userId='owner';remote.state.accountId='camper';remote.state.shared=true;
+ const packing=new OfflinePacking(db,remote);
+ await packing.save('camper',remote.state);
+ await packing.set('camper','trip','stove',true);
+ assert.equal(await packing.open('owner','trip'),null);
+ let view=await packing.sync('camper','trip');
+ assert.equal(view.pending,0);assert.ok(view.lastSyncedAt);assert.equal(view.fresh,true);
+ await packing.set('camper','trip','tent',true);
+ remote.send=async()=>{throw Object.assign(new Error('removed'),{status:403,code:'access_removed'});};
+ view=await packing.sync('camper','trip');
+ assert.equal(view.issue,'access_removed');assert.equal(view.pending,1);assert.equal(view.fresh,false);
+ assert.match(await packing.export('camper','trip'),/"tent"/);
+});
+
+test('shared status does not claim freshness on reconnect until a server refresh succeeds', async()=>{
+ const {packingStatus}=await import('../static/offline/status.mjs');
+ const view={session:{shared:true},conflicts:{},pending:1,issue:'network',fresh:false,lastSyncedAt:null};
+ assert.match(packingStatus(view,true).text,/Can't sync this shared trip/);
+ assert.match(packingStatus(view,true).text,/Not synced yet/);
+ assert.match(packingStatus(view,false).text,/You're offline/);
+ assert.equal(packingStatus({...view,pending:0,issue:null},true).warning,true);
+ assert.equal(packingStatus({...view,pending:0,issue:null,fresh:true,lastSyncedAt:'2026-09-12T12:00:00Z'},true).warning,false);
+});

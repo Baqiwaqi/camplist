@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/coreos/go-oidc"
@@ -73,6 +75,7 @@ func New(cfg Config) (*Auth, error) {
 
 func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
 		ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 
 		id, ok := ses.Values[USER_ID_KEY].(string)
@@ -89,6 +92,10 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusOK)
 				return
 			}
+			if strings.HasPrefix(r.URL.Path, "/join/") {
+				http.Redirect(w, r, "/auth/login?returnTo="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+				return
+			}
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -97,6 +104,9 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), USER_NAME_KEY, name)
 		ctx = context.WithValue(ctx, USER_ID_KEY, id)
+		email, _ := ses.Values["email"].(string)
+		verified, _ := ses.Values["emailVerified"].(bool)
+		ctx = context.WithValue(ctx, profileKey{}, Profile{Subject: id, Name: name, Email: email, EmailVerified: verified})
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -127,13 +137,18 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 
 	ses.Values["state"] = state
+	ses.Values["returnTo"] = safeReturn(r.URL.Query().Get("returnTo"))
 	if err := ses.Save(r, w); err != nil {
 		log.Printf("Saveing session errorr: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, a.oauthCfg.AuthCodeURL(state), http.StatusFound)
+	options := []oauth2.AuthCodeOption{}
+	if r.URL.Query().Get("switch") == "1" {
+		options = append(options, oauth2.SetAuthURLParam("prompt", "select_account"))
+	}
+	http.Redirect(w, r, a.oauthCfg.AuthCodeURL(state, options...), http.StatusFound)
 }
 
 func (a *Auth) DeleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -207,6 +222,10 @@ func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ses.Values[USER_ID_KEY] = claims.Sub
 	ses.Values[USER_NAME_KEY] = claims.Name
+	ses.Values["email"] = claims.Email
+	ses.Values["emailVerified"] = claims.EmailVerified
+	returnTo, _ := ses.Values["returnTo"].(string)
+	delete(ses.Values, "returnTo")
 
 	delete(ses.Values, "state")
 	if err := ses.Save(r, w); err != nil {
@@ -215,7 +234,7 @@ func (a *Auth) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	http.Redirect(w, r, safeReturn(returnTo), http.StatusSeeOther)
 
 }
 
@@ -229,4 +248,28 @@ func generateRandomState() (string, error) {
 	state := base64.RawURLEncoding.EncodeToString(b)
 
 	return state, nil
+}
+
+func Subject(ctx context.Context) string { subject, _ := UserID(ctx); return subject }
+
+type profileKey struct{}
+type Profile struct {
+	Subject, Name, Email string
+	EmailVerified        bool
+}
+
+func UserProfile(ctx context.Context) Profile {
+	if p, ok := ctx.Value(profileKey{}).(Profile); ok {
+		return p
+	}
+	return Profile{Subject: Subject(ctx), Name: UserName(ctx)}
+}
+
+var invitationReturn = regexp.MustCompile(`^/join/[A-Za-z0-9_-]{1,200}/packing-(session|list)/[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_-]{43}$`)
+
+func safeReturn(path string) string {
+	if invitationReturn.MatchString(path) {
+		return path
+	}
+	return "/"
 }

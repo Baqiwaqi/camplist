@@ -1,6 +1,7 @@
 package views
 
 import (
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"time"
 )
@@ -22,6 +23,9 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 			}
 			for _, s := range sessions {
 				<article class="card">
+					if s.IsShared() {
+						<p class="tag">Shared</p>
+					}
 					<div class="card-head">
 						<div>
 							<h2><a href={ "/packing-session/" + s.ID }>{ s.List.Name }</a></h2>
@@ -33,12 +37,16 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 							} else {
 								<a class="btn btn-primary btn-sm" href={ "/packing-session/" + s.ID }>Keep packing</a>
 							}
-							<button
-								class="btn btn-danger btn-sm"
-								hx-delete={ "/packing-session/" + s.ID }
-								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-								hx-confirm="Delete this session?"
-							>Delete</button>
+							if s.UserID==auth.Subject(ctx) {
+								<button
+									class="btn btn-danger btn-sm"
+									hx-delete={ "/packing-session/" + s.ID }
+									hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+									hx-confirm="Delete this session?"
+									data-confirm-action="Delete session"
+									data-confirm-detail="Packing progress for this trip is lost. The list itself stays."
+								>Delete</button>
+							}
 						</div>
 					</div>
 					@ProgressBar(s.List.CountChecked(), len(s.List.Items), "")

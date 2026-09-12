@@ -1,12 +1,13 @@
 package views
 
 import (
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"strconv"
 	"time"
 )
 
-templ PackingSessionPage(name string, session packing.PackingSession, csrfToken string) {
+templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
 			<div class="page-head">
@@ -22,29 +23,37 @@ templ PackingSessionPage(name string, session packing.PackingSession, csrfToken 
 					<a class="btn btn-secondary" href="/sessions">All sessions</a>
 				</div>
 			</div>
-			<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
-			@templ.JSONScript("packing-snapshot", session)
+			<p><a href={ "/sharing/packing-session/" + session.ID }>Sharing and access</a></p>
+			if canReview {
+				<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
+			}
+			if session.IsShared() {
+				<p class="muted">Shared trip. Changes saved on this device are visible to others only after syncing. Offline views may miss other people’s changes.</p>
+			}
+			@templ.JSONScript("packing-snapshot", session.Snapshot(auth.Subject(ctx)))
 			<p class="muted" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
 			<noscript><p>Packing requires a connection when JavaScript is disabled.</p></noscript>
-			<section class="card">
-				<h2>Before this trip</h2>
-				<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
-				<ul>
-					for _, task := range session.List.Tasks {
-						if !task.Done {
-							<li>{ task.Name }</li>
-						}
-					}
-				</ul>
-				if len(session.Improvements) > 0 {
-					<h3>Changes since your previous outing</h3>
+			if session.UserID==auth.Subject(ctx) {
+				<section class="card">
+					<h2>Before this trip</h2>
+					<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
 					<ul>
-						for _, change := range session.Improvements {
-							<li>{ change }</li>
+						for _, task := range session.List.Tasks {
+							if !task.Done {
+								<li>{ task.Name }</li>
+							}
 						}
 					</ul>
-				}
-			</section>
+					if len(session.Improvements) > 0 {
+						<h3>Changes since your previous outing</h3>
+						<ul>
+							for _, change := range session.Improvements {
+								<li>{ change }</li>
+							}
+						</ul>
+					}
+				</section>
+			}
 			@PackingChecklist(session, csrfToken)
 		</section>
 	}
@@ -99,6 +108,7 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="sessionId" value={ sessionID }/>
 			<input type="hidden" name="itemId" value={ item.ID }/>
+			<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(item.Revision, 10) }/>
 			<input type="hidden" name="checked" value={ strconv.FormatBool(!item.Checked) }/>
 			<button
 				id={ "pack-" + item.ID }

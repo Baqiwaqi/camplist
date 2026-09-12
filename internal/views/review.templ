@@ -2,8 +2,9 @@ package views
 
 import "camplist/internal/packing"
 import "slices"
+import "camplist/internal/auth"
 
-templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
+templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, message string, csrfToken string) {
 	@Layout("Review your trip", csrfToken) {
 		<a href={ "/packing-session/" + session.ID }>Back to packing session</a>
 		<h1>Make the next trip easier</h1>
@@ -11,51 +12,57 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if message != "" {
 			<p class="error" role="alert">{ message }</p>
 		}
-		<section class="card">
-			<h2>What did you notice?</h2>
-			<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review" }>
-				<input type="hidden" name="_csrf" value={ csrfToken }/>
-				<input type="hidden" name="entryId" value={ entry.ID }/>
-				<label>
-					Existing gear (optional)
-					<select name="itemId">
-						<option value="">New or missing gear</option>
-						for _, item := range session.List.Items {
-							<option value={ item.ID } selected?={ item.ID == entry.ItemID }>{ item.Name }</option>
-						}
-					</select>
-				</label>
-				<label>Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name }/></label>
-				<label>Category <input name="category" maxlength="100" value={ entry.Category }/></label>
-				<fieldset>
-					<legend>Observations (choose at least one)</legend>
-					<label><input type="checkbox" name="forgotten" value="true" checked?={ entry.Forgotten }/>Forgotten</label>
-					<label><input type="checkbox" name="unused" value="true" checked?={ entry.Unused }/>Unused</label>
-					<label><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention }/>Needs repair or replacement</label>
-				</fieldset>
-				<label>Notes <textarea name="note" maxlength="2000">{ entry.Note }</textarea></label>
-				<label>
-					Proposed change
-					<select name="action">
-						<option value="none" selected?={ entry.Action == packing.ReviewObserve }>Keep observation only</option>
-						<option value="add" selected?={ entry.Action == packing.ReviewAdd }>Add gear to future lists</option>
-						<option value="remove" selected?={ entry.Action == packing.ReviewRemove }>Remove selected existing gear</option>
-						<option value="task" selected?={ entry.Action == packing.ReviewTask }>Create a preparation task</option>
-					</select>
-				</label>
-				<label>Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister"/></label>
-				<p class="muted">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
-				<button class="btn btn-primary" type="submit">Save observation</button>
-			</form>
-		</section>
+		if session.UserID==auth.Subject(ctx) {
+			<section class="card">
+				<h2>What did you notice?</h2>
+				<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review" }>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>
+					<input type="hidden" name="entryId" value={ entry.ID }/>
+					<label>
+						Existing gear (optional)
+						<select name="itemId">
+							<option value="">New or missing gear</option>
+							for _, item := range session.List.Items {
+								<option value={ item.ID } selected?={ item.ID == entry.ItemID }>{ item.Name }</option>
+							}
+						</select>
+					</label>
+					<label>Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name }/></label>
+					<label>Category <input name="category" maxlength="100" value={ entry.Category }/></label>
+					<fieldset>
+						<legend>Observations (choose at least one)</legend>
+						<label><input type="checkbox" name="forgotten" value="true" checked?={ entry.Forgotten }/>Forgotten</label>
+						<label><input type="checkbox" name="unused" value="true" checked?={ entry.Unused }/>Unused</label>
+						<label><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention }/>Needs repair or replacement</label>
+					</fieldset>
+					<label>Notes <textarea name="note" maxlength="2000">{ entry.Note }</textarea></label>
+					<label>
+						Proposed change
+						<select name="action">
+							<option value="none" selected?={ entry.Action == packing.ReviewObserve }>Keep observation only</option>
+							<option value="add" selected?={ entry.Action == packing.ReviewAdd }>Add gear to future lists</option>
+							<option value="remove" selected?={ entry.Action == packing.ReviewRemove }>Remove selected existing gear</option>
+							<option value="task" selected?={ entry.Action == packing.ReviewTask }>Create a preparation task</option>
+						</select>
+					</label>
+					<label>Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister"/></label>
+					<p class="muted">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
+					<button class="btn btn-primary" type="submit">Save observation</button>
+				</form>
+			</section>
+		}
 		if !available {
 			<section class="card">
-				<h2>The reusable list was deleted</h2>
+				<h2>The reusable list is unavailable</h2>
 				<p>Your trip and observations are still here.</p>
-				<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
-					<input type="hidden" name="_csrf" value={ csrfToken }/>
-					<button class="btn btn-primary" type="submit">Create a new list from this trip</button>
-				</form>
+				if recoverable {
+					<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
+						<input type="hidden" name="_csrf" value={ csrfToken }/>
+						<button class="btn btn-primary" type="submit">Create a new list from this trip</button>
+					</form>
+				} else {
+					<p>Your access to the template was removed. Your own trip observations remain available here.</p>
+				}
 			</section>
 		}
 		<section class="card">

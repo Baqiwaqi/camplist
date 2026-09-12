@@ -1,0 +1,92 @@
+package web
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+
+	"camplist/internal/auth"
+	"camplist/internal/packing"
+
+	"github.com/go-chi/chi/v5"
+)
+
+func (s *fakePackingStore) UpdateItem(_ context.Context, _ string, _ string, item packing.PackingItem) error {
+	for i := range s.list.Items {
+		if s.list.Items[i].ID == item.ID {
+			s.list.Items[i].Name = item.Name
+			s.list.Items[i].Category = item.Category
+		}
+	}
+	return nil
+}
+
+func withItemRoute(r *http.Request, listID, itemID string) *http.Request {
+	route := chi.NewRouteContext()
+	route.URLParams.Add("id", listID)
+	route.URLParams.Add("itemId", itemID)
+	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, route))
+}
+
+func TestEditItemInlineRoundTrip(t *testing.T) {
+	list := packing.NewList("user", "Camping", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter")}
+	store := &fakePackingStore{list: list}
+	h := handler{packingStore: store}
+	item := list.Items[0]
+
+	r := httptest.NewRequest("GET", "/packing-list/"+list.ID+"/items/"+item.ID+"/edit", nil)
+	r.Header.Set("HX-Request", "true")
+	r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, "user")), list.ID, item.ID)
+	w := httptest.NewRecorder()
+	h.EditItemPage(w, r)
+	body := w.Body.String()
+	for _, want := range []string{`value="Tent"`, `value="Shelter"`, `hx-post="/packing-list/` + list.ID + `/edit-item/` + item.ID + `"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("edit fragment missing %q", want)
+		}
+	}
+	if strings.Contains(body, "<html") {
+		t.Error("htmx edit request returned a full page")
+	}
+
+	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {" "}, "category": {"Sleep"}}), list.ID, item.ID)
+	r.Header.Set("HX-Request", "true")
+	w = httptest.NewRecorder()
+	h.EditItemHandler(w, r)
+	if !strings.Contains(w.Body.String(), "Name is required") || !strings.Contains(w.Body.String(), `value="Sleep"`) {
+		t.Error("invalid edit did not re-render the form with the error")
+	}
+	if store.list.Items[0].Name != "Tent" {
+		t.Error("invalid edit changed the item")
+	}
+
+	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Big tent"}, "category": {"Shelter"}}), list.ID, item.ID)
+	r.Header.Set("HX-Request", "true")
+	w = httptest.NewRecorder()
+	h.EditItemHandler(w, r)
+	if store.list.Items[0].Name != "Big tent" {
+		t.Fatal("item not updated")
+	}
+	if !strings.Contains(w.Body.String(), "Big tent") || strings.Contains(w.Body.String(), "<form") {
+		t.Error("save did not return the read-only row")
+	}
+
+	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Tent"}, "category": {""}}), list.ID, item.ID)
+	w = httptest.NewRecorder()
+	h.EditItemHandler(w, r)
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-list/"+list.ID {
+		t.Errorf("plain form got %d %q", w.Code, w.Header().Get("Location"))
+	}
+
+	r = httptest.NewRequest("GET", "/packing-list/"+list.ID+"/items/"+item.ID+"/edit", nil)
+	r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, "user")), list.ID, item.ID)
+	w = httptest.NewRecorder()
+	h.EditItemPage(w, r)
+	if !strings.Contains(w.Body.String(), "<html") || !strings.Contains(w.Body.String(), "Edit item") {
+		t.Error("plain edit request did not return the fallback page")
+	}
+}

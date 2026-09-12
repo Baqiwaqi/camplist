@@ -15,6 +15,7 @@
   --red-100: #fee2e2;
   --red-300: #fca5a5;
   --red-700: #b91c1c;
+  --red-800: #991b1b;
   --pine-100: #e3ede4;
   --pine-500: #3f7a4c;
   --pine-700: #2f5d3a;
@@ -402,8 +403,24 @@ section + section {
   overflow-wrap: anywhere;
 }
 
-.item-row > .btn {
+.item-row > .btn,
+.item-row > .actions {
   margin-left: auto;
+}
+
+/* Inline item editing: the row becomes a stacked form inside its column. */
+.item-row-edit {
+  display: block;
+}
+
+.item-edit-form {
+  width: 100%;
+}
+
+.item-row-edit .field-grid {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 /* Long lists flow into columns when there is room; each child stays whole. */
@@ -534,6 +551,17 @@ section + section {
 
 .btn-danger:not(:disabled):hover {
   background: var(--error-bg);
+}
+
+.btn-danger-solid {
+  background: var(--error-text);
+  color: var(--white);
+  border-color: var(--error-text);
+}
+
+.btn-danger-solid:not(:disabled):hover {
+  background: var(--red-800);
+  border-color: var(--red-800);
 }
 
 .btn-link {
@@ -693,6 +721,34 @@ section + section {
 .error-dismiss {
   flex: none;
   color: inherit;
+}
+
+/* ---------- confirm dialog ---------- */
+
+.dialog {
+  width: min(calc(100% - 2rem), 24rem);
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--border-card);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  color: var(--text-body);
+}
+
+.dialog::backdrop {
+  background: rgba(31, 41, 51, 0.45);
+}
+
+.dialog-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+  margin: 0 0 var(--space-2);
+}
+
+.dialog .form-actions {
+  margin-top: var(--space-4);
 }
 
 /* ---------- progress ---------- */
@@ -1063,6 +1119,36 @@ section + section {
   transition: opacity 160ms ease, transform 160ms ease;
   opacity: 0;
   transform: translate(-50%, 8px);
+}
+
+.dialog[open] {
+  animation: dialog-in 160ms ease;
+}
+
+.dialog[open]::backdrop {
+  animation: backdrop-in 160ms ease;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes toast-in {

@@ -2,6 +2,7 @@ package views
 
 import (
 	"bytes"
+	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"context"
 	"strings"
@@ -11,7 +12,7 @@ import (
 func TestListDeleteURL(t *testing.T) {
 	list := packing.NewList("user", "Camping", "")
 	var out bytes.Buffer
-	if err := PackingListPage("Lists", []packing.PackingList{list}, "token").Render(context.Background(), &out); err != nil {
+	if err := PackingListPage("Lists", []packing.PackingList{list}, "token").Render(context.WithValue(context.Background(), auth.USER_ID_KEY, "user"), &out); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(out.String(), `hx-delete="/packing-list/`+list.ID+`"`) {

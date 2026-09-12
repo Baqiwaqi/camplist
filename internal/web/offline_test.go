@@ -46,3 +46,48 @@ func TestOfflineSyncHTTPGuardsAccountAndReturnsConflictState(t *testing.T) {
 		t.Fatal("conflict response missing authoritative state")
 	}
 }
+
+func TestSharedAPIUsesMemberAccountAndHidesInvitationMetadata(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("owner", "Shared", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "")}
+	store.SavePackingList(ctx, list)
+	session, _ := store.CreatePackingSession(ctx, list.ID, "owner")
+	link, _ := store.CreateInvitation(ctx, "packing-session", session.ID, "owner")
+	store.RequestAccess(ctx, link, packing.Member{Subject: "guest", Email: "private@example.com"})
+	store.DecideInvitation(ctx, link.Kind, link.ID, "owner", link.Hash(), true)
+	h := handler{packingStore: store}
+	route := chi.NewRouteContext()
+	route.URLParams.Add("id", session.ID)
+	r := httptest.NewRequest("GET", "/api/sessions/"+session.ID, nil)
+	r = r.WithContext(context.WithValue(context.WithValue(r.Context(), chi.RouteCtxKey, route), auth.USER_ID_KEY, "guest"))
+	r.Header.Set("X-Camplist-Account", "guest")
+	w := httptest.NewRecorder()
+	h.SessionAPI(w, r)
+	if w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	var body struct {
+		Session struct {
+			AccountID string `json:"accountId"`
+			UserID    string `json:"userId"`
+			Shared    bool   `json:"shared"`
+		}
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Session.AccountID != "guest" || body.Session.UserID != "owner" || !body.Session.Shared {
+		t.Fatal("actor/owner were not separated", w.Body.String())
+	}
+	if strings.Contains(w.Body.String(), link.Hash()) || strings.Contains(w.Body.String(), "private@example.com") {
+		t.Fatal("private sharing metadata exposed")
+	}
+	store.RemoveMember(ctx, link.Kind, link.ID, "owner", "guest")
+	w = httptest.NewRecorder()
+	h.SessionAPI(w, r)
+	if w.Code != 403 || !strings.Contains(w.Body.String(), "access_removed") {
+		t.Fatal("removed access indistinguishable from login", w.Code, w.Body.String())
+	}
+}

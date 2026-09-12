@@ -1,6 +1,7 @@
 package views
 
 import "camplist/internal/packing"
+import "camplist/internal/auth"
 
 templ PackingListPage(name string, lists []packing.PackingList, csrfToken string) {
 	@Layout(name, csrfToken) {
@@ -22,6 +23,9 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 			}
 			for _, list := range lists {
 				<article class="card">
+					if list.IsShared() {
+						<p class="tag">Shared</p>
+					}
 					<div class="card-head">
 						<div>
 							<h2><a href={ "/packing-list/" + list.ID }>{ list.Name }</a></h2>
@@ -38,12 +42,16 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 						<div class="actions">
 							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
 							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID }>Details</a>
-							<button
-								class="btn btn-danger btn-sm"
-								hx-delete={ "/packing-list/" + list.ID }
-								hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-								hx-confirm="Delete this list?"
-							>Delete</button>
+							if list.UserID==auth.Subject(ctx) {
+								<button
+									class="btn btn-danger btn-sm"
+									hx-delete={ "/packing-list/" + list.ID }
+									hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
+									hx-confirm="Delete this list?"
+									data-confirm-action="Delete list"
+									data-confirm-detail="Sessions you already started keep their own copy."
+								>Delete</button>
+							}
 						</div>
 					</div>
 				</article>

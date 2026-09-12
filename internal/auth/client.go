@@ -73,13 +73,41 @@ func New(cfg Config) (*Auth, error) {
 	return auth, nil
 }
 
+// sessionContext carries the signed-in user from the cookie session into the
+// request context. ok is false when nobody is signed in.
+func (a *Auth) sessionContext(r *http.Request) (context.Context, bool) {
+	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
+
+	id, ok := ses.Values[USER_ID_KEY].(string)
+	if !ok || id == "" {
+		return r.Context(), false
+	}
+
+	name, _ := ses.Values[USER_NAME_KEY].(string)
+	email, _ := ses.Values["email"].(string)
+	verified, _ := ses.Values["emailVerified"].(bool)
+
+	ctx := context.WithValue(r.Context(), USER_NAME_KEY, name)
+	ctx = context.WithValue(ctx, USER_ID_KEY, id)
+	ctx = context.WithValue(ctx, profileKey{}, Profile{Subject: id, Name: name, Email: email, EmailVerified: verified})
+	return ctx, true
+}
+
+// OptionalAuth loads the signed-in user when there is one and lets visitors
+// through. Pages that look different for visitors and members use it.
+func (a *Auth) OptionalAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		ctx, _ := a.sessionContext(r)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
-
-		id, ok := ses.Values[USER_ID_KEY].(string)
-		if !ok || id == "" {
+		ctx, ok := a.sessionContext(r)
+		if !ok {
 			if strings.HasPrefix(r.URL.Path, "/api/") {
 				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set("Cache-Control", "no-store")
@@ -99,14 +127,6 @@ func (a *Auth) RequireAuth(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-
-		name, _ := ses.Values[USER_NAME_KEY].(string)
-
-		ctx := context.WithValue(r.Context(), USER_NAME_KEY, name)
-		ctx = context.WithValue(ctx, USER_ID_KEY, id)
-		email, _ := ses.Values["email"].(string)
-		verified, _ := ses.Values["emailVerified"].(bool)
-		ctx = context.WithValue(ctx, profileKey{}, Profile{Subject: id, Name: name, Email: email, EmailVerified: verified})
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -41,6 +41,10 @@ func Routes(cfg Config) *chi.Mux {
 
 	r.Get("/login", h.LoginPage)
 
+	// Public pages: visitors get the landing page and a demo, members their lists.
+	r.With(cfg.Auth.OptionalAuth).Get("/", h.HomePage)
+	r.Get("/demo", h.DemoPage)
+
 	// Pages
 	r.Group(func(r chi.Router) {
 		r.Use(cfg.Auth.RequireAuth)
@@ -54,7 +58,6 @@ func Routes(cfg Config) *chi.Mux {
 		r.Get("/api/identity", h.IdentityAPI)
 		r.Get("/api/sessions/{id}", h.SessionAPI)
 		r.Post("/api/sessions/{id}/sync", h.SyncSessionAPI)
-		r.Get("/", h.MainPage)
 		r.Get("/sessions", h.SessionsPage)
 		r.Get("/packing-list/new", h.NewListPage)
 		r.Post("/packing-list/new", h.NewListHandler)

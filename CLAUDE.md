@@ -28,6 +28,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
   on the button supply the label and explanation. Packing updates return
   a checklist fragment; other mutations may redirect or refresh.
+- Public pages: `/` is the landing page for visitors (members get their lists
+  there via `auth.OptionalAuth`), `/demo` is a packing session held only in
+  Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
+  `views.PublicFooter` on `Shell`; `Layout` is for signed-in pages only.
 - CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`.
   Note: Go's `ParseForm` ignores request bodies for `DELETE`, so send the CSRF
   token via the `X-CSRF-Token` header (not a form field) on htmx delete requests.

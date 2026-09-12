@@ -82,3 +82,36 @@ func TestInvitationLoginPreservesOnlyAnInternalReturnAndOffersAccountChoice(t *t
 		t.Fatal("external return accepted")
 	}
 }
+
+func TestOptionalAuthLetsVisitorsThroughAndLoadsMembers(t *testing.T) {
+	a := &Auth{cookieStore: sessions.NewCookieStore([]byte("01234567890123456789012345678901"))}
+	got := "unset"
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { got = Subject(r.Context()) })
+
+	w := httptest.NewRecorder()
+	a.OptionalAuth(next).ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
+	if w.Code != http.StatusOK || got != "" {
+		t.Fatalf("visitor was not let through: status %d, subject %q", w.Code, got)
+	}
+
+	seed := httptest.NewRequest("GET", "/", nil)
+	mint := httptest.NewRecorder()
+	ses, _ := a.cookieStore.Get(seed, SESSION_COOKIE_KEY)
+	ses.Values[USER_ID_KEY] = "member"
+	ses.Values[USER_NAME_KEY] = "Sam"
+	if err := ses.Save(seed, mint); err != nil {
+		t.Fatal(err)
+	}
+	r := httptest.NewRequest("GET", "/", nil)
+	for _, cookie := range mint.Result().Cookies() {
+		r.AddCookie(cookie)
+	}
+	w = httptest.NewRecorder()
+	a.OptionalAuth(next).ServeHTTP(w, r)
+	if got != "member" {
+		t.Fatalf("member not loaded from the session cookie: subject %q", got)
+	}
+	if w.Header().Get("Cache-Control") != "no-store" {
+		t.Error("page that varies by session is cacheable")
+	}
+}

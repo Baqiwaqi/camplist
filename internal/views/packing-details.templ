@@ -52,7 +52,18 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/><input type="hidden" name="taskId" value={ task.ID }/>
 						<label for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
 						<label><input type="checkbox" name="done" value="true" checked?={ task.Done }/>Prepared</label>
-						<button class="btn btn-secondary" name="action" value="save">Save task</button><button class="btn btn-danger" name="action" value="remove" formnovalidate>Remove task</button>
+						<button class="btn btn-secondary" name="action" value="save">Save task</button><button
+	class="btn btn-danger"
+	name="action"
+	value="remove"
+	formnovalidate
+	hx-post={ "/packing-list/" + list.ID + "/preparation/edit" }
+	hx-include="closest form"
+	hx-vals={ `{"action":"remove"}` }
+	hx-confirm="Remove this preparation task?"
+	data-confirm-action="Remove task"
+	data-confirm-detail="This removes the task from the reusable list."
+>Remove task</button>
 					</form>
 				}
 				<form method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>

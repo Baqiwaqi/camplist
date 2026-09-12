@@ -105,7 +105,8 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isHTMX(r) {
-		render(w, r, views.ItemRow(list.ID, item, csrf.Token(r)))
+		// Read the committed row so subsequent actions use its current ETag.
+		h.ItemRowHandler(w, r)
 		return
 	}
 	http.Redirect(w, r, "/packing-list/"+list.ID, http.StatusSeeOther)

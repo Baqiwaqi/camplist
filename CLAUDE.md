@@ -32,7 +32,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   Note: Go's `ParseForm` ignores request bodies for `DELETE`, so send the CSRF
   token via the `X-CSRF-Token` header (not a form field) on htmx delete requests.
 - Storage: Cosmos DB. Lists and sessions share a container; filter queries by
-  `type` as well as user ID. Lists soft-delete via a `deletedAt` patch; `deletedAt` is
+  `type` as well as user ID. Lists soft-delete via a conditional replacement setting `deletedAt`; `deletedAt` is
   `omitempty`, so active docs have **no** field — filter with
   `NOT IS_DEFINED(l.deletedAt)`, not `IS_NULL(...)`.
 

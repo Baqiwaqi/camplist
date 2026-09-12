@@ -2,6 +2,8 @@ package web
 
 import (
 	"context"
+	"encoding/json"
+	"html"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -29,6 +31,9 @@ func TestEditItemThroughRouter(t *testing.T) {
 	list := packing.NewList("user", "Camping", "")
 	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter")}
 	if err := store.SavePackingList(context.Background(), list); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.CreateInvitation(context.Background(), "packing-list", list.ID, "user"); err != nil {
 		t.Fatal(err)
 	}
 	item := list.Items[0]
@@ -94,7 +99,11 @@ func TestEditItemThroughRouter(t *testing.T) {
 		t.Fatalf("edit fragment: %d redirect=%q body=%.160s", res.StatusCode, res.Header.Get("HX-Redirect"), fragment)
 	}
 
-	res, row := do("POST", "/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"_csrf": {token[1]}, "name": {"Big tent"}, "category": {"Shelter"}}, true)
+	revision := regexp.MustCompile(`name="revision" value="([^"]+)"`).FindStringSubmatch(fragment)
+	if revision == nil {
+		t.Fatal("missing displayed revision")
+	}
+	res, row := do("POST", "/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"_csrf": {token[1]}, "name": {"Big tent"}, "category": {"Shelter"}, "revision": {html.UnescapeString(revision[1])}}, true)
 	if res.StatusCode != http.StatusOK || !strings.Contains(row, "Big tent") || strings.Contains(row, "<form") {
 		t.Fatalf("save: %d body=%.160s", res.StatusCode, row)
 	}
@@ -108,4 +117,35 @@ func TestEditItemThroughRouter(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("fallback edit page: %d", res.StatusCode)
 	}
+	headersMatch := regexp.MustCompile(`hx-headers="([^"]+)"`).FindStringSubmatch(row)
+	if headersMatch == nil {
+		t.Fatal("missing row headers")
+	}
+	var headers map[string]string
+	if err := json.Unmarshal([]byte(html.UnescapeString(headersMatch[1])), &headers); err != nil {
+		t.Fatal(err)
+	}
+	req, _ := http.NewRequest("DELETE", srv.URL+"/packing-list/"+list.ID+"/remove-item/"+item.ID, nil)
+	for name, value := range headers {
+		req.Header.Set(name, value)
+	}
+	req.Header.Set("Origin", srv.URL)
+	req.Header.Set("Referer", srv.URL+"/")
+	req.Header.Set("HX-Request", "true")
+	deleted, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer deleted.Body.Close()
+	if deleted.StatusCode >= 400 {
+		t.Fatalf("delete immediately after edit: %d", deleted.StatusCode)
+	}
+	current, err := store.GetPackingList(context.Background(), list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(current.Items) != 0 {
+		t.Fatal("edited item was not deleted")
+	}
+
 }

@@ -21,5 +21,9 @@ func (h *handler) EditPreparationTask(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not save preparation task")
 		return
 	}
+	if isHTMX(r) {
+		w.Header().Set("HX-Redirect", "/packing-list/"+chi.URLParam(r, "id"))
+		return
+	}
 	http.Redirect(w, r, "/packing-list/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }

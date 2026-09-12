@@ -126,3 +126,16 @@ accounts and physical-device Safari/Firefox offline acceptance remain unverified
 Browser storage eviction, closed-browser background sync, transfer of ownership,
 and email delivery are not promises of this release. Measure shared polling RU
 and receipt/document growth with real usage.
+
+## Final review
+
+Reviewed all changes since `4cc3376`, including item editing and the current UI.
+The standards review found two issues, both fixed and re-reviewed: inline item
+responses now reload the committed revision so immediate deletion succeeds, and
+preparation-task removal uses the established confirmation dialog. An authenticated
+shared edit-to-delete regression failed with 409 before the fix and passes after it.
+There are no remaining material standards findings. The spec review found no
+blocking gaps; the real Google-account and physical-device limitations above remain.
+
+Final checks passed: `npm run check`, all 12 Node tests, `templ generate -check`,
+`go test -race ./...`, `go vet ./...`, `go build ./...`, and `git diff --check`.

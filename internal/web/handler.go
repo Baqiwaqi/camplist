@@ -264,7 +264,9 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
+	// Redirect rather than refresh: the list's own details page can also
+	// delete it, and refreshing a deleted list would show an error.
+	w.Header().Set("HX-Redirect", "/")
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -1,6 +1,12 @@
 package db
 
-import "github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
+)
 
 type Client struct {
 	cosmos    *azcosmos.Client
@@ -31,6 +37,22 @@ func NewClient(endpoint string, key string, dbName string, containerName string)
 	container, err := client.NewContainer(database.ID(), containerName)
 	if err != nil {
 		return nil, err
+	}
+
+	// Enable per-item TTL without applying a default expiry to packing data.
+	// Share-link items carry their own seven-day ttl value.
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	response, err := container.Read(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("read Cosmos container TTL configuration: %w", err)
+	}
+	if response.ContainerProperties.DefaultTimeToLive == nil {
+		itemTTLOnly := int32(-1)
+		response.ContainerProperties.DefaultTimeToLive = &itemTTLOnly
+		if _, err = container.Replace(ctx, *response.ContainerProperties, nil); err != nil {
+			return nil, fmt.Errorf("enable per-item Cosmos TTL: %w", err)
+		}
 	}
 
 	return &Client{

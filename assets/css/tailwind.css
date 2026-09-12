@@ -1,0 +1,596 @@
+/* Camplist stylesheet, built to static/tailwind.css by `npm run css`.
+
+   Tailwind is the styling system: layout, spacing, type, colour, borders and
+   radii are utilities in the templ views and the offline shell. Preflight is
+   on; the base layer below re-adds the few document styles the design system
+   needs. The components layer keeps the patterns that carry state, pseudo
+   elements or runtime class toggles (buttons, cards, rows, progress, menu,
+   error banner, dialog, transitions) and the rules for elements the offline
+   scripts create without classes.
+
+   House rules: one ember action per screen, border-only elevation (no
+   shadows), pills for buttons and tags, flat colour only, no icons or
+   imagery. See .claude/skills/camplist-design. */
+@import "tailwindcss" source(none);
+
+@source "../../internal/views";
+@source "../../static/offline";
+
+@theme {
+  /* Only the Camplist palette exists: Tailwind's default colours and shadows
+     are removed so a pasted element cannot bring in greys, blues or shadows. */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-sand-50: #f6f5f2;
+  --color-sand-100: #eee7dd;
+  --color-sand-200: #e5ded3;
+  --color-sand-300: #ddd6cc;
+  --color-ink-900: #1f2933;
+  --color-muted: #6b7280;
+  --color-pine-100: #e3ede4;
+  --color-pine-500: #3f7a4c;
+  --color-pine-700: #2f5d3a;
+  --color-pine-900: #1f3f28;
+  --color-ember-100: #fdebd9;
+  --color-ember-500: #e8762b;
+  --color-ember-700: #c4581a;
+  --color-red-100: #fee2e2;
+  --color-red-300: #fca5a5;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: system-ui, sans-serif;
+
+  /* Body text keeps the design system's 1.5 leading at every size; display
+     type sets its own tight leading. */
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
+  --text-lg--line-height: 1.5;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.5;
+
+  --tracking-display: -0.02em;
+  --tracking-eyebrow: 0.08em;
+  --tracking-tag: 0.04em;
+
+  --radius-card: 12px;
+
+  /* The design system's cut-offs: max-sm covers phones (<= 600px) and
+     max-md the narrow layouts of the login and landing pages (<= 720px). */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 601px;
+  --breakpoint-md: 721px;
+}
+
+@layer base {
+  body {
+    @apply bg-sand-50 text-ink-900;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold leading-[1.05] tracking-display;
+  }
+
+  h1,
+  h2 {
+    @apply mb-2 wrap-anywhere;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 1.25rem + 3vw, 2.75rem);
+  }
+
+  h2 {
+    @apply text-2xl;
+  }
+
+  h3 {
+    @apply text-xl mt-4 mb-2;
+  }
+
+  a {
+    @apply text-ink-900 underline;
+  }
+
+  a:hover {
+    @apply opacity-70;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-pine-700 outline-offset-2;
+  }
+
+  input[type="checkbox"] {
+    @apply size-5 accent-pine-700;
+  }
+}
+
+@layer components {
+  /* ---------- type ---------- */
+
+  /* A display-sized paragraph; the packing scripts read it as the progress label. */
+  .display {
+    @apply font-display font-extrabold text-[2rem] leading-[1.05] tracking-display mb-2 wrap-anywhere;
+  }
+
+  /* ---------- cards and rows ---------- */
+
+  .card {
+    @apply bg-white border border-sand-200 rounded-card p-4 mb-4;
+  }
+
+  /* Solid pine card for heroes and finished sessions; toggled by scripts. */
+  .card-brand {
+    @apply bg-pine-700 border-pine-700 text-white;
+  }
+
+  .card-brand :focus-visible {
+    @apply outline-white;
+  }
+
+  .item-row {
+    @apply flex flex-wrap items-center gap-3 py-2 border-b border-sand-100 last:border-b-0 pointer-coarse:py-1;
+  }
+
+  /* ---------- buttons ---------- */
+
+  .btn {
+    @apply inline-flex items-center justify-center font-sans text-base font-bold py-2 px-4 min-h-10 rounded-full border border-transparent cursor-pointer no-underline whitespace-nowrap;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+  }
+
+  .btn:not(:disabled):hover {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+
+  .btn:not(:disabled):active {
+    transform: none;
+  }
+
+  .btn:disabled {
+    @apply cursor-wait opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-pine-700 text-white border-pine-700;
+  }
+
+  .btn-primary:not(:disabled):hover {
+    @apply bg-pine-900 border-pine-900;
+  }
+
+  .btn-accent {
+    @apply bg-ember-500 text-white border-ember-500;
+  }
+
+  .btn-accent:not(:disabled):hover {
+    @apply bg-ember-700 border-ember-700;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-ink-900 border-sand-300;
+  }
+
+  .btn-secondary:not(:disabled):hover {
+    @apply bg-sand-50;
+  }
+
+  .btn-danger {
+    @apply bg-transparent text-red-700 border-red-300;
+  }
+
+  .btn-danger:not(:disabled):hover {
+    @apply bg-red-100;
+  }
+
+  .btn-danger-solid {
+    @apply bg-red-700 text-white border-red-700;
+  }
+
+  .btn-danger-solid:not(:disabled):hover {
+    @apply bg-red-800 border-red-800;
+  }
+
+  .btn-link {
+    @apply bg-transparent text-ink-900 border-0 p-0 min-h-0 underline;
+  }
+
+  .btn-link:not(:disabled):hover {
+    opacity: 0.7;
+    transform: none;
+  }
+
+  .btn-sm {
+    @apply text-sm py-1 px-3 min-h-8 pointer-coarse:min-h-10;
+  }
+
+  .btn-lg {
+    @apply text-xl py-3 px-6 min-h-12;
+  }
+
+  /* ---------- progress ---------- */
+
+  .progress {
+    @apply grid gap-1;
+  }
+
+  .progress-head {
+    @apply flex flex-wrap justify-between items-baseline gap-x-3 gap-y-1 text-sm;
+  }
+
+  .progress-label {
+    @apply font-bold;
+  }
+
+  .progress-count {
+    @apply text-muted;
+  }
+
+  .progress-track {
+    @apply h-2 bg-sand-100 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-pine-500 rounded-full;
+    transition: width 240ms ease, background-color 240ms ease;
+  }
+
+  .progress-done .progress-fill {
+    @apply bg-ember-500;
+  }
+
+  .progress-done .progress-label {
+    @apply text-ember-700;
+  }
+
+  .card-brand .progress-track {
+    @apply bg-pine-900;
+  }
+
+  .card-brand .progress-count,
+  .card-brand .progress-done .progress-label {
+    @apply text-pine-100;
+  }
+
+  /* Progress stays in view while a long checklist scrolls. */
+  .progress-card {
+    @apply sticky top-2 z-1;
+  }
+
+  /* ---------- packing rows ---------- */
+
+  .pack-row {
+    @apply flex items-center gap-3 w-full min-h-11 py-1 text-ink-900 text-left cursor-pointer;
+  }
+
+  .pack-row:disabled {
+    @apply cursor-wait opacity-60;
+  }
+
+  .pack-name {
+    @apply flex-auto min-w-0 font-bold wrap-anywhere;
+  }
+
+  .packed .pack-name {
+    @apply line-through text-muted;
+  }
+
+  .pack-action {
+    @apply flex-none text-sm font-bold py-1 px-3 rounded-full border border-sand-300 bg-white;
+    transition: background-color 120ms ease;
+  }
+
+  .pack-row:not(:disabled):hover .pack-action {
+    @apply bg-sand-50;
+  }
+
+  .tick {
+    @apply relative flex-none size-[22px] rounded-full border-2 border-sand-300;
+  }
+
+  .packed .tick {
+    @apply bg-pine-700 border-pine-700;
+  }
+
+  .packed .tick::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid var(--color-white);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  /* ---------- dropdown menu (views.Menu, static/menu.js) ---------- */
+
+  .menu {
+    @apply relative inline-flex;
+  }
+
+  /* A quiet tinted pill, so it reads as overflow rather than one more action.
+     PageMenu steps the tint up on the sand page; inside a pine card it turns
+     pine. Hover and open darken it to tie it to the popup. */
+  .menu-trigger {
+    @apply bg-sand-100 border-sand-100;
+  }
+
+  .menu-trigger-page {
+    @apply bg-sand-200 border-sand-200;
+  }
+
+  .menu-trigger:not(:disabled):hover,
+  .menu-trigger[aria-expanded="true"] {
+    @apply bg-sand-300 border-sand-300;
+    transform: none;
+  }
+
+  .card-brand .menu-trigger {
+    @apply text-white bg-pine-900 border-pine-900;
+  }
+
+  .card-brand .menu-trigger:not(:disabled):hover,
+  .card-brand .menu-trigger[aria-expanded="true"] {
+    @apply bg-pine-500 border-pine-500;
+  }
+
+  .menu-popup {
+    @apply absolute top-[calc(100%+6px)] right-0 z-5 min-w-44 grid p-1 bg-white border border-sand-300 rounded-card;
+  }
+
+  .menu-item {
+    @apply block w-full py-2 px-3 rounded-lg font-bold text-ink-900 text-left no-underline whitespace-nowrap cursor-pointer;
+  }
+
+  .menu-item:hover,
+  .menu-item:focus-visible {
+    @apply bg-sand-50 opacity-100;
+  }
+
+  .menu-item:focus-visible {
+    @apply -outline-offset-2;
+  }
+
+  /* The popup is white even inside a pine card, so the ring stays pine. */
+  .menu-popup :focus-visible {
+    @apply outline-pine-700;
+  }
+
+  .menu-item-danger {
+    @apply text-red-700;
+  }
+
+  .menu-separator {
+    @apply h-px my-1 bg-sand-100;
+  }
+
+  /* ---------- error banner and toast ---------- */
+
+  /* The only semantic colour: a solid red block with a display heading.
+     The offline shell sets this class on its message paragraph. */
+  .error {
+    @apply flex items-start gap-3 bg-red-700 text-white py-3 px-4 rounded-card mb-4;
+  }
+
+  .error::before {
+    content: "!" / "";
+    @apply inline-flex flex-none items-center justify-center size-6 rounded-full bg-white text-red-700 font-extrabold text-[15px] leading-none;
+  }
+
+  .error > div {
+    @apply min-w-0;
+  }
+
+  .error-title {
+    @apply font-display font-extrabold text-xl leading-[1.05] tracking-display mb-[2px];
+  }
+
+  .error p,
+  .error ul {
+    @apply m-0 text-sm;
+  }
+
+  .error ul {
+    @apply p-0 list-none;
+  }
+
+  .error a {
+    @apply text-inherit;
+  }
+
+  /* Failed background requests surface as a toast near the thumb. */
+  .error-toast {
+    @apply fixed left-1/2 bottom-4 w-[min(calc(100%-2rem),calc(900px-2rem))] m-0 z-10;
+    /* transform rather than translate: the toast keyframes animate transform */
+    transform: translateX(-50%);
+  }
+
+  .error-toast > div {
+    @apply flex-auto;
+  }
+
+  .error-dismiss {
+    @apply flex-none text-inherit;
+  }
+
+  /* ---------- confirm dialog ---------- */
+
+  /* m-auto restores the centring Preflight's margin reset takes from <dialog>. */
+  .dialog {
+    @apply m-auto w-[min(calc(100%-2rem),24rem)] max-w-lg p-6 border border-sand-200 rounded-card bg-white text-ink-900;
+  }
+
+  .dialog::backdrop {
+    @apply bg-ink-900/45;
+  }
+
+  .dialog-title {
+    @apply font-display font-extrabold text-2xl leading-[1.05] tracking-display mb-2;
+  }
+
+  /* ---------- elements the offline scripts create without classes ---------- */
+
+  /* Sign-out dialogs from static/offline/account.mjs. */
+  dialog:not(.dialog) {
+    @apply m-auto max-w-lg p-[1em] border border-sand-300 rounded-card;
+  }
+
+  dialog:not(.dialog) p {
+    @apply mb-3;
+  }
+
+  dialog:not(.dialog) button {
+    @apply m-1;
+  }
+
+  /* Sync notices: the scripts toggle .card on these paragraphs. */
+  .sync-status {
+    @apply text-muted mb-3;
+  }
+
+  .sync-status.card {
+    @apply bg-ember-100 border-ember-100 text-ink-900 py-3 px-4 mb-4;
+  }
+
+  /* Conflict boxes under a packing row, on the session page and offline. */
+  [data-conflict],
+  .offline-items .item-row > div {
+    @apply basis-full flex flex-wrap items-center gap-2 mb-2 p-3 rounded-sm bg-ember-100 text-sm;
+  }
+
+  [data-conflict] p,
+  .offline-items .item-row > div p {
+    @apply basis-full m-0;
+  }
+
+  /* Offline shell (static/offline/offline.html): saved trips and item rows. */
+  .saved-sessions p {
+    @apply m-0 py-3 border-b border-sand-100 last:border-b-0;
+  }
+
+  .saved-sessions a {
+    @apply font-bold no-underline;
+  }
+
+  .offline-items .item-row > label {
+    @apply flex flex-auto items-center gap-3 min-h-11 font-bold cursor-pointer;
+  }
+
+  .offline-items label:has(input:checked) {
+    @apply text-muted line-through;
+  }
+
+  .offline-items input[type="checkbox"] {
+    @apply min-h-8 align-middle;
+  }
+
+  /* Offline actions must remain usable on narrow phone screens. */
+  .offline-page .btn {
+    @apply max-w-full whitespace-normal;
+  }
+
+  /* ---------- motion ---------- */
+
+  /* Alpine transition classes for the phone menu and dropdowns: a short fade
+     with a small drop. */
+  .drop-enter {
+    transition: opacity 160ms ease, transform 160ms ease;
+  }
+
+  .drop-leave {
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  .drop-start {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  .drop-end {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* The toast slides up when it appears and fades on dismiss. */
+  .error-toast:not([hidden]) {
+    animation: toast-in 200ms ease;
+  }
+
+  .error-toast.toast-leave {
+    transition: opacity 160ms ease, transform 160ms ease;
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  .dialog[open] {
+    animation: dialog-in 160ms ease;
+  }
+
+  .dialog[open]::backdrop {
+    animation: backdrop-in 160ms ease;
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes backdrop-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .btn:not(:disabled):hover {
+      transform: none;
+    }
+  }
+}
+
+/* Unlayered on purpose: the layout's noscript style shows the menu popup with
+   a more specific !important rule, which only beats another unlayered one. */
+[x-cloak] {
+  display: none !important;
+}

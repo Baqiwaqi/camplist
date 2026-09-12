@@ -1,6 +1,6 @@
 // Only this public shell and its static assets are cached. Never cache API/auth HTML.
-const CACHE = 'camplist-offline-v8';
-const ASSETS = ['/offline','/static/style.css','/static/logomark.svg','/static/offline/ui.mjs','/static/offline/status.mjs','/static/offline/db.mjs','/static/offline/packing.mjs','/static/offline/transport.mjs'];
+const CACHE = 'camplist-offline-v10';
+const ASSETS = ['/offline','/static/tailwind.css','/static/logomark.svg','/static/offline/ui.mjs','/static/offline/status.mjs','/static/offline/db.mjs','/static/offline/packing.mjs','/static/offline/transport.mjs'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
@@ -23,5 +23,15 @@ self.addEventListener('fetch', event => {
   return;
  }
  if (!ASSETS.includes(url.pathname)) return;
- event.respondWith(caches.open(CACHE).then(async cache=>(await cache.match(url.pathname))||fetch(event.request)));
+ // Network first so a restyled stylesheet reaches the browser at once; the
+ // cached copy is refreshed on every successful fetch and used when offline.
+ event.respondWith(caches.open(CACHE).then(async cache=>{
+  try {
+   const response=await fetch(event.request);
+   if(response.ok)await cache.put(url.pathname,response.clone());
+   return response;
+  } catch {
+   return (await cache.match(url.pathname))||Response.error();
+  }
+ }));
 });

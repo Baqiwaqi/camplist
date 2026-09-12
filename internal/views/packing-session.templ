@@ -10,29 +10,31 @@ import (
 templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
-			<div class="page-head">
-				<div>
-					<p class="eyebrow">Packing session</p>
+			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
+				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
+					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Packing session</p>
 					<h1>{ session.List.Name }</h1>
-					<p class="muted lede">
+					<p class="text-muted max-w-[60ch]">
 						Started <time datetime={ session.CreatedAt.Format(time.RFC3339) }>{ session.CreatedAt.Format("Jan 2, 2006") }</time>.
 						Your reusable list stays unchanged.
 					</p>
 				</div>
-				<div class="actions">
+				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
 					if canReview {
 						<a class="btn btn-secondary" href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a>
 					}
-					<a class="btn btn-secondary" href={ "/sharing/packing-session/" + session.ID }>Sharing</a>
-					<a class="btn btn-secondary" href="/sessions">All sessions</a>
+					@PageMenu("More") {
+						@MenuLink("/sharing/packing-session/"+session.ID, "Sharing")
+						@MenuLink("/sessions", "All sessions")
+					}
 				</div>
 			</div>
 			if session.IsShared() {
-				<p class="muted">Shared trip. Changes saved on this device are visible to others only after syncing. Offline views may miss other people’s changes.</p>
+				<p class="text-muted mb-3">Shared trip. Changes saved on this device are visible to others only after syncing. Offline views may miss other people’s changes.</p>
 			}
 			@templ.JSONScript("packing-snapshot", session.Snapshot(auth.Subject(ctx)))
-			<p class="muted" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
-			<noscript><p>Packing requires a connection when JavaScript is disabled.</p></noscript>
+			<p class="sync-status text-sm" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
+			<noscript><p class="mb-3">Packing requires a connection when JavaScript is disabled.</p></noscript>
 			if session.UserID==auth.Subject(ctx) {
 				@SessionPreparation(session, csrfToken)
 			}
@@ -45,7 +47,7 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 	<section id="packing-checklist" aria-label="Packing checklist">
 		if allPacked(session.List.CountChecked(), len(session.List.Items)) {
 			<div class="card card-brand progress-card">
-				<p class="display">All packed. Go!</p>
+				<p class="display mb-3">All packed. Go!</p>
 				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "")
 			</div>
 		} else {
@@ -55,15 +57,15 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 		}
 		<div class="card">
 			if len(session.List.Items) == 0 {
-				<p class="muted">This session has no items. Add gear to your reusable list and start a new session.</p>
+				<p class="text-muted">This session has no items. Add gear to your reusable list and start a new session.</p>
 			} else {
-				<div class="columns pack-columns">
+				<div class="columns-[14rem] gap-x-8">
 					for _, group := range groupByCategory(session.List.Items) {
-						<div class="pack-group">
+						<div class="break-inside-avoid pb-3 last:pb-0">
 							if group.Name != "" {
-								<p class="group-label">{ group.Name }</p>
+								<p class="text-xs font-bold tracking-eyebrow uppercase text-muted pb-1">{ group.Name }</p>
 							}
-							<ul class="item-list pack-list">
+							<ul>
 								for _, item := range group.Items {
 									@PackingSessionItem(session.ID, item, csrfToken)
 								}
@@ -77,11 +79,11 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 }
 
 templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
-	<li class="item-row">
+	<li class="item-row py-0">
 		<form
 			method="post"
 			action="/packing-session/set-item"
-			class="pack-form"
+			class="pack-form w-full"
 			hx-post="/packing-session/set-item"
 			hx-target="#packing-checklist"
 			hx-swap="outerHTML"
@@ -113,11 +115,13 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 	</li>
 }
 
+// SessionPreparation sits above the checklist; the extra bottom margin keeps
+// the two sections the usual 2rem apart.
 templ SessionPreparation(session packing.PackingSession, csrfToken string) {
-	<section class="card" id="session-preparation">
+	<section class="card mb-8" id="session-preparation">
 		<h2>Before this trip</h2>
-		<p class="muted">Mark preparation done for this trip. These tasks need a connection to save. <a href={ "/packing-list/" + session.TemplateID() }>Manage reusable preparation tasks</a>.</p>
-		<ul class="item-list">
+		<p class="text-muted mb-3">Mark preparation done for this trip. These tasks need a connection to save. <a href={ "/packing-list/" + session.TemplateID() }>Manage reusable preparation tasks</a>.</p>
+		<ul>
 			for _, task := range session.List.Tasks {
 				<li class="item-row">
 					<form
@@ -127,7 +131,7 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 						hx-target="#session-preparation"
 						hx-swap="outerHTML"
 						hx-disabled-elt="#session-preparation button"
-						class="pack-form"
+						class="pack-form w-full"
 					>
 						<input type="hidden" name="_csrf" value={ csrfToken }/>
 						<input type="hidden" name="taskId" value={ task.ID }/>
@@ -149,9 +153,9 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 		</ul>
 		if len(session.Improvements)>0 {
 			<h3>Changes since your previous outing</h3>
-			<ul class="task-list">
+			<ul>
 				for _, change := range session.Improvements {
-					<li>{ change }</li>
+					<li class="py-2 border-b border-sand-100 font-bold last:border-b-0">{ change }</li>
 				}
 			</ul>
 		}

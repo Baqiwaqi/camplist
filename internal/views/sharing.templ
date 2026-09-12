@@ -8,42 +8,47 @@ import (
 
 templ SharingPage(view packing.SharingView, link string, token string) {
 	@Layout("Sharing", token) {
-		<section class="narrow">
-			<p class="eyebrow">Sharing</p>
+		<section class="max-w-[560px]">
+			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Sharing</p>
 			<h1>Pack together.</h1>
-			<p><a class="btn btn-secondary btn-sm" href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
+			<p class="mb-3"><a class="btn btn-secondary btn-sm" href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
 			if view.Kind=="packing-session" {
-				<p>Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>
-				<p class="muted">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>
+				<p class="mb-3">Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>
+				<p class="text-muted mb-3">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>
 			} else {
-				<p>Editors can update the reusable list and its preparation tasks, and start their own private trips. Existing trips stay unchanged and are shared separately.</p>
+				<p class="mb-3">Editors can update the reusable list and its preparation tasks, and start their own private trips. Existing trips stay unchanged and are shared separately.</p>
 			}
 			if view.Actor==view.Owner {
 				<section class="card">
 					<h2>Invite someone</h2>
-					<p>Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
+					<p class="mb-3">Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
 					if link!="" {
-						<div class="field" x-data="{ copied: false }">
-							<label for="invitation-link">Invitation link</label>
-							<input id="invitation-link" type="text" readonly value={ link }/>
-							<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
+						<div class="grid gap-1 mb-4" x-data="{ copied: false }" data-invitation-share>
+							<label for="invitation-link" class="text-sm font-bold">Invitation link</label>
+							<input id="invitation-link" type="text" readonly value={ link } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" data-invitation-link/>
+							<div class="flex flex-wrap gap-2 justify-self-start">
+								<button type="button" class="btn btn-primary" hidden data-share-invitation>Share invitation</button>
+								<button type="button" class="btn btn-secondary" data-copy-invitation x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
+							</div>
+							<p class="text-muted text-sm" role="alert" hidden data-share-error>Couldn’t open sharing options. Copy the link instead.</p>
 						</div>
-						<p class="muted">Copy this link now. For security, it will not be shown again.</p>
+						<script type="module" src="/static/sharing.mjs"></script>
+						<p class="text-muted mb-3">Copy this link now. For security, it will not be shown again.</p>
 					}
 					<form method="post" action={ "/sharing/" + view.Kind + "/" + view.ID + "/invitations" }>
 						<input type="hidden" name="_csrf" value={ token }/>
 						<button class="btn btn-primary" type="submit">Create invitation link</button>
 					</form>
 				</section>
-				<section class="card">
+				<section class="card mt-8">
 					<h2>Invitations and requests</h2>
 					for _, invitation:= range view.Sharing.Invitations {
 						<div class="item-row">
 							<div>
-								<p>{ invitation.Status } · Expires { invitation.Expires.Format("Jan 2, 2006") }</p>
+								<p class="mb-3">{ invitation.Status } · Expires { invitation.Expires.Format("Jan 2, 2006") }</p>
 								if invitation.Applicant!=nil {
-									<p>{ invitation.Applicant.Name } · { invitation.Applicant.Email }</p>
-									<p class="muted">Google account: { invitation.Applicant.Subject }</p>
+									<p class="mb-3">{ invitation.Applicant.Name } · { invitation.Applicant.Email }</p>
+									<p class="text-muted mb-3">Google account: { invitation.Applicant.Subject }</p>
 								}
 							</div>
 							if invitation.Status=="pending"||invitation.Status=="open" {
@@ -58,11 +63,11 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 						</div>
 					}
 				</section>
-				<section class="card">
+				<section class="card mt-8">
 					<h2>Members</h2>
 					for subject,member:=range view.Sharing.Members {
 						<div class="item-row">
-							<p>{ member.Name } · { member.Email }</p>
+							<p class="mb-3">{ member.Name } · { member.Email }</p>
 							<form method="post" action={ "/sharing/" + view.Kind + "/" + view.ID + "/members/" + subject + "/remove" }>
 								<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-danger" type="submit">Remove access</button>
 							</form>
@@ -70,7 +75,7 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 					}
 				</section>
 			} else {
-				<p>The owner manages invitations and membership.</p>
+				<p class="mb-3">The owner manages invitations and membership.</p>
 				<form method="post" action={ "/sharing/" + view.Kind + "/" + view.ID + "/members/" + view.Actor + "/remove" }>
 					<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-secondary" type="submit">Leave this shared resource</button>
 				</form>
@@ -83,23 +88,23 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 templ JoinPage(link packing.InvitationLink, status string, profile auth.Profile, token string) {
 	<!DOCTYPE html>
 	<html lang="en">
-		<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Join · Camplist</title><link rel="stylesheet" href="/static/style.css"/></head>
+		<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Join · Camplist</title><link rel="stylesheet" href="/static/tailwind.css"/></head>
 		<body>
-			<main class="container narrow">
-				<p class="eyebrow">Invitation</p>
+			<main class="max-w-[560px] mx-auto px-4 py-8">
+				<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Invitation</p>
 				<h1>Join the packing.</h1>
 				<section class="card">
-					<p>Signed in as { profile.Name } · { profile.Email }</p>
-					<p class="muted">Google account: { profile.Subject }</p>
-					<p><a href={ "/auth/login?switch=1&returnTo=" + url.QueryEscape(link.Path()) }>Use another Google account</a></p>
+					<p class="mb-3">Signed in as { profile.Name } · { profile.Email }</p>
+					<p class="text-muted mb-3">Google account: { profile.Subject }</p>
+					<p class="mb-3"><a href={ "/auth/login?switch=1&returnTo=" + url.QueryEscape(link.Path()) }>Use another Google account</a></p>
 					if status=="open" {
-						<p>Request access with this account. The owner must approve you before you can see or change anything.</p>
+						<p class="mb-3">Request access with this account. The owner must approve you before you can see or change anything.</p>
 						<form method="post" action={ link.Path() }><input type="hidden" name="_csrf" value={ token }/><button class="btn btn-primary">Request access</button></form>
 					} else if status=="pending" {
-						<p role="status">Your request is waiting for the owner’s approval.</p>
+						<p role="status" class="mb-3">Your request is waiting for the owner’s approval.</p>
 						<p><a href={ link.Path() }>Check approval</a></p>
 					} else {
-						<p role="status">This request was approved. The resource is available while your membership remains active.</p><a class="btn btn-primary" href={ "/" + link.Kind + "/" + link.ID }>Open shared resource</a>
+						<p role="status" class="mb-3">This request was approved. The resource is available while your membership remains active.</p><a class="btn btn-primary" href={ "/" + link.Kind + "/" + link.ID }>Open shared resource</a>
 					}
 				</section>
 			</main>

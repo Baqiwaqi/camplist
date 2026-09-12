@@ -57,7 +57,8 @@ func validationStore(t *testing.T, owner string) *packing.Store {
 			t.Errorf("clean up validation database: %v", err)
 		}
 	})
-	_, err = database.CreateContainer(ctx, azcosmos.ContainerProperties{ID: "packing", PartitionKeyDefinition: azcosmos.PartitionKeyDefinition{Paths: []string{"/userId"}, Kind: azcosmos.PartitionKeyKindHash}}, nil)
+	itemTTLOnly := int32(-1)
+	_, err = database.CreateContainer(ctx, azcosmos.ContainerProperties{ID: "packing", PartitionKeyDefinition: azcosmos.PartitionKeyDefinition{Paths: []string{"/userId"}, Kind: azcosmos.PartitionKeyKindHash}, DefaultTimeToLive: &itemTTLOnly}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

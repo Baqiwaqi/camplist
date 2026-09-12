@@ -24,8 +24,13 @@ func Routes(cfg Config) *chi.Mux {
 		w.Write([]byte("ok\n"))
 	})
 
-	fileServer := http.FileServer(http.Dir("static"))
-	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
+	// Browsers revalidate static files on every load (304 when unchanged), so a
+	// restyle never renders against a cached stylesheet or script.
+	fileServer := http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
+	r.Handle("/static/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
+		fileServer.ServeHTTP(w, r)
+	}))
 
 	r.Get("/offline", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "static/offline/offline.html") })
 	r.Get("/sw.js", func(w http.ResponseWriter, r *http.Request) {

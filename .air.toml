@@ -2,14 +2,16 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  # regenerate templ files, then build
-  pre_cmd = ["templ generate"]
+  # regenerate templ files and the Tailwind stylesheet, then build
+  pre_cmd = ["templ generate", "npm run --silent css"]
   cmd = "go build -o ./tmp/camplist ./cmd/web"
   bin = "./tmp/camplist"
   delay = 1000
-  include_ext = ["go", "templ", "html", "env"]
-  exclude_dir = ["tmp", "assets", "vendor"]
+  include_ext = ["go", "templ", "html", "css", "env"]
+  exclude_dir = ["tmp", "vendor", "node_modules"]
   exclude_regex = ["_templ.go"]
+  # the built stylesheet must not retrigger the build
+  exclude_file = ["static/tailwind.css"]
   stop_on_error = true
 
 [misc]

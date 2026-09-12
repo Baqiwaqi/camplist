@@ -1,0 +1,22 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap");
+:root{
+/* Display: Bricolage Grotesque (Google Fonts) — punchy, trail-sign energy. Body stays the platform UI font. */
+--font-display:"Bricolage Grotesque",system-ui,sans-serif;
+--font-body:system-ui,sans-serif;
+--font-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+--text-xs:0.75rem;
+--text-sm:0.875rem;
+--text-base:1rem;
+--text-lg:1.25rem;
+--text-xl:1.5rem;
+--text-2xl:2rem;
+--text-3xl:2.75rem;
+--text-4xl:3.5rem;
+--weight-regular:400;
+--weight-bold:700;
+--weight-display:800;
+--leading-tight:1.05;
+--leading-normal:1.5;
+--tracking-display:-0.02em;
+--tracking-eyebrow:0.08em;
+}

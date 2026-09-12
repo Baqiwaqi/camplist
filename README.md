@@ -40,7 +40,8 @@ The Go server renders HTML using templ. HTMX adds form navigation and actions su
 | `internal/auth/` | Google OAuth/OpenID Connect login and cookie-based sessions |
 | `internal/views/` | templ page templates and generated Go code |
 | `internal/db.go` | Cosmos DB client setup |
-| `static/` | Stylesheet, logo marks, and the bundled htmx and Alpine.js scripts |
+| `static/` | Built stylesheet, logo marks, the dropdown menu behaviour, and the bundled htmx and Alpine.js scripts |
+| `assets/css/tailwind.css` | Tailwind input: design tokens, base styles, and component classes |
 | `.claude/skills/camplist-design/` | Design system: tokens, guidelines, logo assets, and a click-through UI kit |
 
 ## Run locally
@@ -89,7 +90,14 @@ templ generate
 
 Use the templ CLI version matching `go.mod`. Edit `.templ` source files rather than generated `*_templ.go` files.
 
-An `.air.toml` configuration is included for optional live reload with Air. It regenerates templates and rebuilds the server when source files change.
+Styling is Tailwind CSS v4: utility classes in the templ views plus a few component classes and the Camplist design tokens in `assets/css/tailwind.css`. The built file `static/tailwind.css` is not committed, so build it once after `npm install` (or keep it building while you work):
+
+```sh
+npm run css
+npm run css:watch
+```
+
+An `.air.toml` configuration is included for optional live reload with Air. It regenerates templates, rebuilds the stylesheet and the server when source files change. The Docker build runs the same stylesheet build in a Node stage.
 
 Run the automated checks:
 

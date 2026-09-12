@@ -82,3 +82,23 @@ func progressWidth(checked, total int) string {
 	}
 	return fmt.Sprintf("width: %d%%", checked*100/total)
 }
+
+func groupByParticipant(items []packing.PackingItem) []itemGroup {
+	var groups []itemGroup
+	indexes := map[string]int{}
+	for _, item := range items {
+		key := item.Assignee
+		name := item.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, itemGroup{Name: name})
+		}
+		groups[i].Items = append(groups[i].Items, item)
+	}
+	return groups
+}

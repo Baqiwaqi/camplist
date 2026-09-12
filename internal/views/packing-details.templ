@@ -1,6 +1,9 @@
 package views
 
-import "camplist/internal/packing"
+import (
+	"camplist/internal/packing"
+	"time"
+)
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout(name, csrfToken) {
@@ -17,19 +20,23 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 					</div>
 					<div class="actions">
 						<a class="btn btn-secondary" href={ "/sharing/packing-list/" + list.ID }>Sharing</a>
-						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
-						<button
-							class="btn btn-accent"
-							hx-post="/packing-list/start-session"
-							hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-							hx-vals={ `{"listId":"` + list.ID + `"}` }
-						>Start session</button>
+						<a class="btn btn-secondary" href={ "/packing-lists/" + list.ID + "/edit" }>Edit</a>
+						<form method="post" action="/packing-lists/start-session" hx-post="/packing-lists/start-session">
+							<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ list.ID }/>
+							<div class="field"><label for="trip-name">Trip name</label><input id="trip-name" name="name" value={ list.Name + " – " + time.Now().Format("Jan 2, 2006") } required maxlength="200"/></div>
+							<button class="btn btn-accent">Start trip</button>
+						</form>
 					</div>
 				</div>
 			</div>
 			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
 		<section>
+			<datalist id="list-categories">
+				for _, category := range categories(list.Items,2000) {
+					<option value={ category }></option>
+				}
+			</datalist>
 			@ListItemForm(form, csrfToken)
 		</section>
 		<section>
@@ -48,16 +55,16 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 			<section class="card">
 				<h2>Prepare before your next trip</h2>
 				for _, task := range list.Tasks {
-					<form class="task-row" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+					<form class="task-row" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 						<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/><input type="hidden" name="taskId" value={ task.ID }/>
 						<label class="sr-only" for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
-						<label><input type="checkbox" name="done" value="true" checked?={ task.Done }/>Prepared</label>
+						@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
 						<button class="btn btn-secondary btn-sm" name="action" value="save">Save task</button><button
 	class="btn btn-danger btn-sm"
 	name="action"
 	value="remove"
 	formnovalidate
-	hx-post={ "/packing-list/" + list.ID + "/preparation/edit" }
+	hx-post={ "/packing-lists/" + list.ID + "/preparation/edit" }
 	hx-include="closest form"
 	hx-vals={ `{"action":"remove"}` }
 	hx-confirm="Remove this preparation task?"
@@ -66,9 +73,10 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 >Remove task</button>
 					</form>
 				}
-				<form class="task-add" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+				<form class="task-add" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
 					<div class="field"><label for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Buy fuel" required maxlength="200"/></div>
+					@ScopeSelect("scope", "new-task-scope", "", false)
 					<button class="btn btn-secondary">Add task</button>
 				</form>
 				<p class="muted">Preparation and packing are separate: buying fuel does not mark your stove as packed.</p>
@@ -109,7 +117,10 @@ templ ItemFields(form packing.CreateItemForm, suffix string) {
 		</div>
 		<div class="field">
 			<label for={ "item-category-" + suffix }>Category</label>
-			<input type="text" id={ "item-category-" + suffix } name="category" placeholder="Light" value={ form.Category }/>
+			<input type="text" id={ "item-category-" + suffix } name="category" list="list-categories" placeholder="Light" value={ form.Category }/>
+		</div>
+		<div class="field">
+			<label for={ "item-scope-" + suffix }>Who is this for?</label>@ScopeSelect("scope", "item-scope-"+suffix, form.Scope, false)
 		</div>
 	</div>
 }
@@ -124,14 +135,14 @@ templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
 		<div class="actions">
 			<a
 				class="btn btn-secondary btn-sm"
-				href={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
-				hx-get={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
+				href={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
+				hx-get={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
 				hx-target="closest li"
 				hx-swap="outerHTML"
 			>Edit</a>
 			<button
 				class="btn btn-danger btn-sm"
-				hx-delete={ "/packing-list/" + listID + "/remove-item/" + item.ID }
+				hx-delete={ "/packing-lists/" + listID + "/remove-item/" + item.ID }
 				hx-headers={ templ.JSONString(map[string]string{"X-CSRF-Token": csrfToken, "X-Camplist-Revision": item.SourceRevision}) }
 				hx-confirm="Delete this item?"
 				data-confirm-action="Delete item"
@@ -159,8 +170,8 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 			<div class="form-actions">
 				<a
 					class="btn btn-secondary btn-sm"
-					href={ "/packing-list/" + listID }
-					hx-get={ "/packing-list/" + listID + "/items/" + itemID }
+					href={ "/packing-lists/" + listID }
+					hx-get={ "/packing-lists/" + listID + "/items/" + itemID }
 					hx-target="closest li"
 					hx-swap="outerHTML"
 				>Cancel</a>
@@ -173,6 +184,11 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 // EditItemPage is the fallback for editing an item without scripts.
 templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout("Edit item", csrfToken) {
+		<datalist id="list-categories">
+			for _, category := range categories(list.Items,2000) {
+				<option value={ category }></option>
+			}
+		</datalist>
 		<section class="narrow">
 			<p class="eyebrow">{ list.Name }</p>
 			<h1>Edit item</h1>
@@ -184,11 +200,21 @@ templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTo
 						@ErrorBanner(form.Error)
 					}
 					<div class="form-actions">
-						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID }>Cancel</a>
+						<a class="btn btn-secondary" href={ "/packing-lists/" + list.ID }>Cancel</a>
 						<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
 					</div>
 				</form>
 			</div>
 		</section>
 	}
+}
+
+templ ScopeSelect(name string, id string, scope string, personal bool) {
+	<select name={ name } id={ id } aria-label="Who is this for?">
+		<option value="shared" selected?={ scope=="" || scope=="shared" }>Shared</option>
+		if personal {
+			<option value="mine" selected?={ scope=="mine" }>Just for me</option>
+		}
+		<option value="person" selected?={ scope=="person" }>For each person</option>
+	</select>
 }

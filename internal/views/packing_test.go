@@ -15,7 +15,7 @@ func TestListDeleteURL(t *testing.T) {
 	if err := PackingListPage("Lists", []packing.PackingList{list}, "token").Render(context.WithValue(context.Background(), auth.USER_ID_KEY, "user"), &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), `hx-delete="/packing-list/`+list.ID+`"`) {
+	if !strings.Contains(out.String(), `hx-delete="/packing-lists/`+list.ID+`"`) {
 		t.Fatal("delete URL does not match route")
 	}
 }
@@ -26,7 +26,7 @@ func TestSessionsCanBeReopened(t *testing.T) {
 	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{session}, "token").Render(context.Background(), &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), `href="/packing-session/`+session.ID+`"`) {
+	if !strings.Contains(out.String(), `href="/trips/`+session.ID+`"`) {
 		t.Fatal("no link to reopen session")
 	}
 }

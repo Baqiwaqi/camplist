@@ -13,7 +13,7 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 					<p class="muted lede">Keep reusable lists for your camping trips. Start a fresh packing session each time you go.</p>
 				</div>
 				<div class="actions">
-					<a class="btn btn-primary" href="/packing-list/new">Create list</a>
+					<a class="btn btn-primary" href="/packing-lists/new">Create list</a>
 				</div>
 			</div>
 			if len(lists) == 0 {
@@ -28,7 +28,7 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 					}
 					<div class="card-head">
 						<div>
-							<h2><a href={ "/packing-list/" + list.ID }>{ list.Name }</a></h2>
+							<h2><a href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
 							if list.Description != "" {
 								<p class="muted">{ list.Description }</p>
 							}
@@ -40,12 +40,12 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 							</div>
 						</div>
 						<div class="actions">
-							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
-							<a class="btn btn-secondary btn-sm" href={ "/packing-list/" + list.ID }>Details</a>
+							<a class="btn btn-secondary btn-sm" href={ "/packing-lists/" + list.ID + "/edit" }>Edit</a>
+							<a class="btn btn-secondary btn-sm" href={ "/packing-lists/" + list.ID }>Details</a>
 							if list.UserID==auth.Subject(ctx) {
 								<button
 									class="btn btn-danger btn-sm"
-									hx-delete={ "/packing-list/" + list.ID }
+									hx-delete={ "/packing-lists/" + list.ID }
 									hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
 									hx-confirm="Delete this list?"
 									data-confirm-action="Delete list"

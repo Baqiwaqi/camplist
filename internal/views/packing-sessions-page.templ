@@ -8,39 +8,39 @@ import (
 
 templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession, csrfToken string) {
 	@Layout(name, csrfToken) {
-		<section>
+		<section id="trips-overview">
 			<div class="page-head">
 				<div>
-					<p class="eyebrow">Sessions</p>
+					<p class="eyebrow">Trips</p>
 					<h1>Trips in progress</h1>
-					<p class="muted lede">Each session is a snapshot of a list. Check things off without touching the list.</p>
+					<p class="muted lede">Prepare and pack together. Your reusable packing lists stay separate.</p>
 				</div>
 			</div>
 			if len(sessions) == 0 {
 				<div class="card">
-					<p class="muted">No packing sessions yet. <a href="/">Choose a list</a> to start packing.</p>
+					<p class="muted">No trips yet. <a href="/packing-lists">Choose a list</a> to start packing.</p>
 				</div>
 			}
 			for _, s := range sessions {
-				<article class="card">
+				<article class="card" data-saved-trip={ s.ID }>
 					if s.IsShared() {
 						<p class="tag">Shared</p>
 					}
 					<div class="card-head">
 						<div>
-							<h2><a href={ "/packing-session/" + s.ID }>{ s.List.Name }</a></h2>
+							<h2><a href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
 							<p class="muted">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
 						</div>
 						<div class="actions">
 							if allPacked(s.List.CountChecked(), len(s.List.Items)) {
-								<a class="btn btn-secondary btn-sm" href={ "/packing-session/" + s.ID }>Open</a>
+								<a class="btn btn-secondary btn-sm" href={ "/trips/" + s.ID }>Open</a>
 							} else {
-								<a class="btn btn-primary btn-sm" href={ "/packing-session/" + s.ID }>Keep packing</a>
+								<a class="btn btn-primary btn-sm" href={ "/trips/" + s.ID }>Keep packing</a>
 							}
 							if s.UserID==auth.Subject(ctx) {
 								<button
 									class="btn btn-danger btn-sm"
-									hx-delete={ "/packing-session/" + s.ID }
+									hx-delete={ "/trips/" + s.ID }
 									hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
 									hx-confirm="Delete this session?"
 									data-confirm-action="Delete session"

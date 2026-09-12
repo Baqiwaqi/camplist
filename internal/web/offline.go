@@ -60,11 +60,17 @@ func (h *handler) SyncSessionAPI(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	var input struct {
 		ID               string `json:"id"`
+		Action           string `json:"action,omitempty"`
+		Kind             string `json:"kind,omitempty"`
+		Name             string `json:"name,omitempty"`
+		Category         string `json:"category,omitempty"`
+		Scope            string `json:"scope,omitempty"`
+		SaveForFuture    bool   `json:"saveForFuture,omitempty"`
 		ItemID           string `json:"itemId"`
 		Checked          *bool  `json:"checked"`
 		ExpectedRevision *int64 `json:"expectedRevision"`
 	}
-	if err := decoder.Decode(&input); err != nil || input.Checked == nil || input.ExpectedRevision == nil {
+	if err := decoder.Decode(&input); err != nil || input.Action != "add" && (input.Checked == nil || input.ExpectedRevision == nil) {
 		jsonResponse(w, 400, map[string]string{"code": "invalid"})
 		return
 	}
@@ -72,9 +78,19 @@ func (h *handler) SyncSessionAPI(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, 400, map[string]string{"code": "invalid"})
 		return
 	}
-	op := packing.PackingOperation{ID: input.ID, ItemID: input.ItemID, Checked: *input.Checked, ExpectedRevision: *input.ExpectedRevision}
+	if input.Checked == nil {
+		input.Checked = new(bool)
+	}
+	if input.ExpectedRevision == nil {
+		input.ExpectedRevision = new(int64)
+	}
+	op := packing.PackingOperation{Action: input.Action, Kind: input.Kind, Name: input.Name, Category: input.Category, Scope: input.Scope, SaveForFuture: input.SaveForFuture, ID: input.ID, ItemID: input.ItemID, Checked: *input.Checked, ExpectedRevision: *input.ExpectedRevision}
 	session, err := h.packingStore.SyncSessionItem(r.Context(), chi.URLParam(r, "id"), user, op)
 	session.Operations = nil
+	if errors.Is(err, packing.ErrFutureSave) {
+		jsonResponse(w, 200, map[string]any{"operationId": op.ID, "session": session.Snapshot(user), "futureSaveError": true})
+		return
+	}
 	if errors.Is(err, packing.ErrConflict) && session.ID != "" {
 		jsonResponse(w, 409, map[string]any{"code": "conflict", "session": session.Snapshot(user)})
 		return

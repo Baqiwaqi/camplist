@@ -63,9 +63,9 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 templ.SafeURL
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-session/" + session.ID)
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 16, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 16, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -104,9 +104,9 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var6 templ.SafeURL
-				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-session/" + session.ID + "/review")
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID + "/review")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 25, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 25, Col: 87}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -326,9 +326,9 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var15 templ.SafeURL
-					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-session/" + session.ID + "/review/recover")
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID + "/review/recover")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 66, Col: 106}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 66, Col: 96}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -377,9 +377,9 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 templ.SafeURL
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-session/" + session.ID + "/review/apply")
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID + "/review/apply")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 80, Col: 102}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 80, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {

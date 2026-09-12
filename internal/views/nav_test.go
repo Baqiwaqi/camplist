@@ -16,7 +16,7 @@ func renderWithPath(t *testing.T, path string) string {
 	ctx = context.WithValue(ctx, auth.USER_NAME_KEY, "Sam Camper")
 	ctx = WithPath(ctx, path)
 	var out bytes.Buffer
-	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{}, "token").Render(ctx, &out); err != nil {
+	if err := PackingSessionsOverviewPage("Sessions", []packing.PackingSession{}, 0, "token").Render(ctx, &out); err != nil {
 		t.Fatal(err)
 	}
 	return out.String()

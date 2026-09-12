@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -73,6 +74,14 @@ func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
+	h.sessionsPage(w, r, false)
+}
+
+func (h *handler) ArchivedSessionsPage(w http.ResponseWriter, r *http.Request) {
+	h.sessionsPage(w, r, true)
+}
+
+func (h *handler) sessionsPage(w http.ResponseWriter, r *http.Request, archive bool) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
@@ -88,9 +97,13 @@ func (h *handler) SessionsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v := views.PackingSessionsOverviewPage("Sessions", sessions, csrf.Token(r))
+	active, archived := packing.PartitionSessions(sessions, time.Now().UTC())
+	if archive {
+		render(w, r, views.ArchivedPackingSessionsPage("Trip archive", archived, csrf.Token(r)))
+		return
+	}
 
-	render(w, r, v)
+	render(w, r, views.PackingSessionsOverviewPage("Sessions", active, len(archived), csrf.Token(r)))
 }
 
 func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {

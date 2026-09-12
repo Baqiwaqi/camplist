@@ -68,6 +68,7 @@ func Routes(cfg Config) *chi.Mux {
 		r.Post("/api/sessions/{id}/sync", h.SyncSessionAPI)
 		r.Get("/sessions", h.SessionsPage)
 		r.Get("/trips", h.SessionsPage)
+		r.Get("/trips/archive", h.ArchivedSessionsPage)
 		r.Get("/packing-list/new", h.NewListPage)
 		r.Get("/packing-lists/new", h.NewListPage)
 		r.Post("/packing-list/new", h.NewListHandler)

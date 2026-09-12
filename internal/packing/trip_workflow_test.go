@@ -29,6 +29,9 @@ func TestTripPersonalCopiesAndPreparationReset(t *testing.T) {
 	if len(trip.List.Items) != 2 || trip.List.Items[0].Assignee != "owner" || trip.List.Tasks[0].Done {
 		t.Fatalf("initial snapshot: %+v", trip.List)
 	}
+	if err = store.AddItem(ctx, list.ID, "owner", packing.NewItem("Added only to later template", "")); err != nil {
+		t.Fatal(err)
+	}
 	link, err := store.CreateInvitation(ctx, "packing-session", trip.ID, "owner")
 	if err != nil {
 		t.Fatal(err)

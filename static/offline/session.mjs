@@ -27,7 +27,8 @@ export async function mountSession(packing, readyForOffline) {
   let entries=checklist.querySelector('[data-trip-items]');
   if(!entries){entries=document.createElement('div');entries.dataset.tripItems='';const card=checklist.querySelector('.card:not(.progress-card)');card.replaceChildren(entries);}
   renderEntries(entries,view,'',toggle,resolve);
-  const preparation=document.querySelector('#session-preparation .item-list');
+  let preparation=document.querySelector('#session-preparation [data-trip-tasks]');
+  if(!preparation){const fallback=document.querySelector('#session-preparation .item-list');if(fallback){preparation=document.createElement('div');preparation.dataset.tripTasks='';fallback.replaceWith(preparation);}}
   if(preparation)renderEntries(preparation,view,'task',toggle,resolve);
   updateCategories(document.getElementById('trip-categories'),view.session.list.items);
   const heading=document.querySelector('h1');if(heading)heading.textContent=view.session.name||view.session.list.name;

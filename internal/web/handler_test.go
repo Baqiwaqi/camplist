@@ -17,13 +17,13 @@ import (
 
 func TestInvalidNewListPreservesForm(t *testing.T) {
 	values := url.Values{"name": {""}, "description": {"Our weekend"}, "Action": {"https://example.com"}, "SubmitButtonText": {"Wrong"}}
-	r := httptest.NewRequest("POST", "/packing-list/new", strings.NewReader(values.Encode()))
+	r := httptest.NewRequest("POST", "/packing-lists/new", strings.NewReader(values.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	h := handler{}
 	h.NewListHandler(w, r)
 	body := w.Body.String()
-	for _, want := range []string{`action="/packing-list/new"`, "Create New", "Name is required", "Our weekend"} {
+	for _, want := range []string{`action="/packing-lists/new"`, "Create New", "Name is required", "Our weekend"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q in %s", want, body)
 		}
@@ -62,8 +62,8 @@ func TestInvalidEditAndItemFormsRemainUsable(t *testing.T) {
 		name, path, want string
 		handler          http.HandlerFunc
 	}{
-		{"edit", "/packing-list/" + list.ID + "/edit", "Save", h.EditListHandler},
-		{"item", "/packing-list/" + list.ID + "/add-item", "Add Item", h.AddItemHandler},
+		{"edit", "/packing-lists/" + list.ID + "/edit", "Save", h.EditListHandler},
+		{"item", "/packing-lists/" + list.ID + "/add-item", "Add Item", h.AddItemHandler},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			r := packingRequest(test.path, url.Values{"name": {"  "}, "category": {"Shelter"}, "description": {"Weekend"}})
@@ -91,7 +91,7 @@ func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
 			session := packing.NewPackingSession(list)
 			store := &fakePackingStore{session: session}
 			h := handler{packingStore: store}
-			r := packingRequest("/packing-session/set-item", url.Values{"sessionId": {session.ID}, "itemId": {list.Items[0].ID}, "checked": {"true"}})
+			r := packingRequest("/trips/set-item", url.Values{"sessionId": {session.ID}, "itemId": {list.Items[0].ID}, "checked": {"true"}})
 			if htmx {
 				r.Header.Set("HX-Request", "true")
 			}
@@ -109,7 +109,7 @@ func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
 				if strings.Contains(w.Body.String(), "<html") || w.Header().Get("HX-Refresh") != "" {
 					t.Error("returned full navigation instead of fragment")
 				}
-			} else if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-session/"+session.ID {
+			} else if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/trips/"+session.ID {
 				t.Error("normal form missing redirect")
 			}
 		})
@@ -117,7 +117,7 @@ func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
 }
 func TestSetItemRejectsInvalidState(t *testing.T) {
 	h := handler{}
-	r := packingRequest("/packing-session/set-item", url.Values{"sessionId": {"session"}, "itemId": {"item"}, "checked": {"maybe"}})
+	r := packingRequest("/trips/set-item", url.Values{"sessionId": {"session"}, "itemId": {"item"}, "checked": {"maybe"}})
 	w := httptest.NewRecorder()
 	h.SetSessionItemHandler(w, r)
 	if w.Code != http.StatusBadRequest {
@@ -150,7 +150,7 @@ func TestEditCanClearDescriptionAndRequiresSubmittedName(t *testing.T) {
 			list := packing.NewList("user", "Camping", "Old description")
 			store := &fakePackingStore{list: list}
 			h := handler{packingStore: store}
-			r := packingRequest("/packing-list/"+list.ID+"/edit", url.Values{"name": {name}, "description": {""}})
+			r := packingRequest("/packing-lists/"+list.ID+"/edit", url.Values{"name": {name}, "description": {""}})
 			route := chi.NewRouteContext()
 			route.URLParams.Add("id", list.ID)
 			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, route))
@@ -171,7 +171,7 @@ func TestFailedCheckoffDoesNotRenderSuccess(t *testing.T) {
 	list.Items = []packing.PackingItem{packing.NewItem("Tent", "")}
 	session := packing.NewPackingSession(list)
 	h := handler{packingStore: &fakePackingStore{session: session, setErr: &azcore.ResponseError{StatusCode: 412}}}
-	r := packingRequest("/packing-session/set-item", url.Values{"sessionId": {session.ID}, "itemId": {list.Items[0].ID}, "checked": {"true"}})
+	r := packingRequest("/trips/set-item", url.Values{"sessionId": {session.ID}, "itemId": {list.Items[0].ID}, "checked": {"true"}})
 	r.Header.Set("HX-Request", "true")
 	w := httptest.NewRecorder()
 	h.SetSessionItemHandler(w, r)
@@ -190,7 +190,7 @@ func TestDeleteCSRFUsesHeader(t *testing.T) {
 	initial := httptest.NewRecorder()
 	protected.ServeHTTP(initial, httptest.NewRequest("GET", "https://example.com/", nil))
 	for _, header := range []bool{false, true} {
-		r := httptest.NewRequest("DELETE", "https://example.com/packing-list/list", strings.NewReader(url.Values{"_csrf": {initial.Body.String()}}.Encode()))
+		r := httptest.NewRequest("DELETE", "https://example.com/packing-lists/list", strings.NewReader(url.Values{"_csrf": {initial.Body.String()}}.Encode()))
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		r.Header.Set("Origin", "https://example.com")
 		for _, cookie := range initial.Result().Cookies() {

@@ -81,7 +81,7 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderReview(w, r, entry, message, status)
 		return
 	}
-	http.Redirect(w, r, "/packing-session/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
+	http.Redirect(w, r, "/trips/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
 }
 func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {
@@ -98,7 +98,7 @@ func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderReview(w, r, packing.ReviewEntry{ID: uuid.NewString(), Action: "none"}, message, status)
 		return
 	}
-	http.Redirect(w, r, "/packing-list/"+list.ID, http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 func (h *handler) RecoverReviewHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.UserID(r.Context())
@@ -111,7 +111,7 @@ func (h *handler) RecoverReviewHandler(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not recover template")
 		return
 	}
-	http.Redirect(w, r, "/packing-session/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
+	http.Redirect(w, r, "/trips/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
 }
 func (h *handler) PreparationHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {
@@ -132,5 +132,5 @@ func (h *handler) PreparationHandler(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not save preparation")
 		return
 	}
-	http.Redirect(w, r, "/packing-list/"+chi.URLParam(r, "id"), http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }

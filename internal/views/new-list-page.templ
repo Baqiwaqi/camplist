@@ -4,10 +4,10 @@ import "camplist/internal/packing"
 
 templ NewPackingListPage(name string, heading string, form packing.CreatePackingListForm, csrfToken string) {
 	@Layout(name, csrfToken) {
-		<section class="narrow">
-			<p class="eyebrow">{ name }</p>
+		<section class="max-w-[560px]">
+			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">{ name }</p>
 			<h1>{ heading }</h1>
-			<p class="muted lede">Save your regular gear here and reuse it for future trips.</p>
+			<p class="text-muted max-w-[60ch] mb-3">Save your regular gear here and reuse it for future trips.</p>
 			<div class="card">
 				@PackingListForm(form, csrfToken)
 			</div>
@@ -19,18 +19,28 @@ templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
 	<form method="post" action={ form.Action } hx-boost="true">
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="revision" value={ form.Revision }/>
-		<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
-			<label for="name">Name</label>
-			<input id="name" name="name" type="text" placeholder="Camping" value={ form.Name }/>
+		<div class="grid gap-1 mb-4">
+			<label for="name" class="text-sm font-bold">Name</label>
+			<input
+				id="name"
+				name="name"
+				type="text"
+				placeholder="Camping"
+				value={ form.Name }
+				class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				if form.NameHasError() {
+					aria-invalid="true"
+				}
+			/>
 		</div>
-		<div class="field">
-			<label for="description">Description</label>
-			<textarea id="description" name="description" placeholder="A short description of your list">{ form.Description }</textarea>
+		<div class="grid gap-1 mb-4">
+			<label for="description" class="text-sm font-bold">Description</label>
+			<textarea id="description" name="description" placeholder="A short description of your list" class="w-full min-h-22 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0">{ form.Description }</textarea>
 		</div>
 		if len(form.Error) > 0 {
 			@ErrorBanner(form.Error)
 		}
-		<div class="form-actions">
+		<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
 			<a class="btn btn-secondary" href="/">Cancel</a>
 			<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
 		</div>

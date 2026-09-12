@@ -1,10 +1,13 @@
 package views
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
 	"camplist/internal/packing"
+
+	"github.com/a-h/templ"
 )
 
 // itemSummary describes how many items a list holds, e.g. "7 items".
@@ -81,4 +84,76 @@ func progressWidth(checked, total int) string {
 		return "width: 0%"
 	}
 	return fmt.Sprintf("width: %d%%", checked*100/total)
+}
+
+<<<<<<< HEAD
+// confirmDelete builds the htmx attributes for a delete action: the CSRF
+// token travels in a header because Go ignores DELETE bodies, and the
+// layout's dialog reads the confirm data attributes.
+func confirmDelete(url, csrfToken, question, action, detail string) templ.Attributes {
+	return templ.Attributes{
+		"hx-delete":           url,
+		"hx-headers":          `{"X-CSRF-Token":"` + csrfToken + `"}`,
+		"hx-confirm":          question,
+		"data-confirm-action": action,
+		"data-confirm-detail": detail,
+	}
+}
+
+// removeTaskAttrs builds the htmx attributes that remove a preparation task
+// through the existing edit endpoint, with the confirm dialog texts.
+func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask, csrfToken string) templ.Attributes {
+	vals, _ := json.Marshal(map[string]string{"_csrf": csrfToken, "revision": list.Revision(), "taskId": task.ID, "action": "remove"})
+	return templ.Attributes{
+		"hx-post":             "/packing-list/" + list.ID + "/preparation/edit",
+		"hx-vals":             string(vals),
+		"hx-confirm":          "Remove this preparation task?",
+		"data-confirm-action": "Remove task",
+		"data-confirm-detail": "This removes the task from the reusable list.",
+	}
+=======
+func groupByParticipant(items []packing.PackingItem) []itemGroup {
+	var groups []itemGroup
+	indexes := map[string]int{}
+	for _, item := range items {
+		key := item.Assignee
+		name := item.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, itemGroup{Name: name})
+		}
+		groups[i].Items = append(groups[i].Items, item)
+	}
+	return groups
+}
+
+type preparationGroup struct {
+	Name  string
+	Tasks []packing.PreparationTask
+}
+
+func groupPreparation(tasks []packing.PreparationTask) []preparationGroup {
+	var groups []preparationGroup
+	indexes := map[string]int{}
+	for _, task := range tasks {
+		key := task.Assignee
+		name := task.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, preparationGroup{Name: name})
+		}
+		groups[i].Tasks = append(groups[i].Tasks, task)
+	}
+	return groups
+>>>>>>> origin/develop
 }

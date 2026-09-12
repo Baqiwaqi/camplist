@@ -1,7 +1,7 @@
 // A reconnect event is not evidence of a successful refresh.
 export function packingStatus(view, connected) {
  const conflicts=Object.keys(view.conflicts).length;
- const issues={signin:'Sign in again to sync. Your changes are saved on this device.',account:'Sign in to the account that saved this trip. Pending changes are preserved.',access_removed:'Your access was removed. Changes will not upload. Export or remove your local copy from On this device.',deleted:'This trip was deleted online. Export your local copy from On this device.'};
+ const issues={signin:'Sign in again to sync. Your changes are saved on this device.',account:'Sign in to the account that saved this trip. Pending changes are preserved.',access_removed:'Your access was removed. Changes will not upload. Export or remove your local copy from Trips.',deleted:'This trip was deleted online. Export your local copy from Trips.'};
  if(view.session.shared){
   const last=view.lastSyncedAt?'Last synced '+new Date(view.lastSyncedAt).toLocaleString()+'.':'Not synced yet.';
   const blocked=view.issue==='access_removed'||view.issue==='deleted';

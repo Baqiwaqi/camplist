@@ -208,6 +208,56 @@ func TestExpiredAndClaimedInvitationsCannotGrantAnotherAccountAccess(t *testing.
 	}
 }
 
+type ttlCaptureDatabase struct {
+	*testsupport.Documents
+	shareLinkID string
+	shareLink   map[string]any
+}
+
+func (d *ttlCaptureDatabase) CreateItem(ctx context.Context, pk azcosmos.PartitionKey, data []byte, options *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		return azcosmos.ItemResponse{}, err
+	}
+	if record["type"] == "share-link" {
+		d.shareLink = record
+		d.shareLinkID = record["id"].(string)
+	}
+	return d.Documents.CreateItem(ctx, pk, data, options)
+}
+
+func TestShareLinkUsesCosmosTTLAndStopsWorkingAfterAutomaticCleanup(t *testing.T) {
+	now := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	db := &ttlCaptureDatabase{Documents: testsupport.NewDocuments()}
+	store := packing.NewStore(db, packing.WithClock(func() time.Time { return now }))
+	ctx := context.Background()
+	list := packing.NewList("owner", "Kit", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	link, err := store.CreateInvitation(ctx, "packing-list", list.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if db.shareLink["ttl"] != float64(7*24*60*60) {
+		t.Fatalf("share link ttl = %v", db.shareLink["ttl"])
+	}
+	if db.shareLink["userId"] != "owner" || db.shareLink["resourceId"] != list.ID || db.shareLink["hash"] != link.Hash() {
+		t.Fatalf("invalid share-link capability: %#v", db.shareLink)
+	}
+	if _, err = store.InvitationStatus(ctx, link, "guest"); err != nil {
+		t.Fatal(err)
+	}
+	// Cosmos performs this deletion after ttl seconds. Once the capability item
+	// is gone, stale invitation metadata cannot make the token usable again.
+	if _, err = db.DeleteItem(ctx, azcosmos.NewPartitionKeyString("owner"), db.shareLinkID, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.InvitationStatus(ctx, link, "guest"); !errors.Is(err, packing.ErrNotFound) {
+		t.Fatalf("cleaned-up share link remains usable: %v", err)
+	}
+}
+
 // The external database changes between authorization and the conditional commit.
 type revocationDatabase struct {
 	*testsupport.Documents

@@ -3,6 +3,7 @@ package validation
 import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+	"camplist/internal/testsupport"
 	"camplist/internal/web"
 	"context"
 	"fmt"
@@ -23,7 +24,12 @@ func TestBrowserSimulation(t *testing.T) {
 		t.Skip("set CAMPLIST_BROWSER=1 to run the interactive local fixture")
 	}
 	owner := fmt.Sprintf("camplist-browser-%d", time.Now().UnixNano())
-	store := validationStore(t, owner)
+	var store *packing.Store
+	if os.Getenv("CAMPLIST_BROWSER_MEMORY") == "1" {
+		store = packing.NewStore(testsupport.NewDocuments())
+	} else {
+		store = validationStore(t, owner)
+	}
 	t.Chdir("../..")
 	ctx := context.Background()
 	list := packing.NewList(owner, "Validation camping trip", "")

@@ -17,6 +17,8 @@ import (
 var ErrForbidden = errors.New("only the owner can do that")
 var ErrAccessRemoved = errors.New("access to this shared resource was removed")
 
+const invitationTTLSeconds int32 = 7 * 24 * 60 * 60
+
 type Member struct {
 	Subject       string `json:"subject"`
 	Name          string `json:"name"`
@@ -35,6 +37,21 @@ type Sharing struct {
 }
 type InvitationLink struct{ Kind, ID, Owner, Token string }
 
+// shareLink is a separate Cosmos item so the invitation capability can be
+// removed by Cosmos TTL without expiring the packing list or session itself.
+// Invitation state remains embedded in the resource document so approval and
+// membership are still committed atomically.
+type shareLink struct {
+	ID         string    `json:"id"`
+	UserID     string    `json:"userId"`
+	Type       string    `json:"type"`
+	Kind       string    `json:"kind"`
+	ResourceID string    `json:"resourceId"`
+	Hash       string    `json:"hash"`
+	Expires    time.Time `json:"expires"`
+	TTL        int32     `json:"ttl"`
+}
+
 func (l InvitationLink) Hash() string {
 	sum := sha256.Sum256([]byte(l.Token))
 	return base64.RawURLEncoding.EncodeToString(sum[:])
@@ -42,7 +59,8 @@ func (l InvitationLink) Hash() string {
 func (l InvitationLink) Path() string {
 	return "/join/" + l.Owner + "/" + l.Kind + "/" + l.ID + "/" + l.Token
 }
-func resourceKind(kind string) bool { return kind == "packing-list" || kind == "packing-session" }
+func shareLinkID(hash string) string { return "share-link:" + hash }
+func resourceKind(kind string) bool  { return kind == "packing-list" || kind == "packing-session" }
 func (l InvitationLink) valid() bool {
 	b, err := base64.RawURLEncoding.DecodeString(l.Token)
 	return resourceKind(l.Kind) && l.ID != "" && len(l.ID) <= 100 && l.Owner != "" && len(l.Owner) <= 200 && err == nil && len(b) == 32
@@ -133,6 +151,24 @@ func (s *Store) updateSharing(ctx context.Context, kind, id, owner string, chang
 		if err != nil {
 			return err
 		}
+		if kind == "packing-session" {
+			var trip PackingSession
+			if err = json.Unmarshal(data, &trip); err != nil {
+				return err
+			}
+			trip.expandPersonalEntries()
+			if len(trip.List.Items)+len(trip.List.Tasks) > 2000 {
+				return ErrInvalid
+			}
+			doc["list"], err = json.Marshal(trip.List)
+			if err != nil {
+				return err
+			}
+			data, err = json.Marshal(doc)
+			if err != nil {
+				return err
+			}
+		}
 		etag := res.ETag
 		_, err = s.container.ReplaceItem(ctx, azcosmos.NewPartitionKeyString(owner), id, data, &azcosmos.ItemOptions{IfMatchEtag: &etag})
 		if preconditionFailed(err) {
@@ -159,6 +195,24 @@ func (s *Store) CreateInvitation(ctx context.Context, kind, id, actor string) (I
 		return link, err
 	}
 	link.Token = base64.RawURLEncoding.EncodeToString(secret)
+	expires := s.clock().UTC().Add(time.Duration(invitationTTLSeconds) * time.Second)
+	capability := shareLink{
+		ID:         shareLinkID(link.Hash()),
+		UserID:     actor,
+		Type:       "share-link",
+		Kind:       kind,
+		ResourceID: id,
+		Hash:       link.Hash(),
+		Expires:    expires,
+		TTL:        invitationTTLSeconds,
+	}
+	data, err := json.Marshal(capability)
+	if err != nil {
+		return link, err
+	}
+	if _, err = s.container.CreateItem(ctx, azcosmos.NewPartitionKeyString(actor), data, nil); err != nil {
+		return link, err
+	}
 	err = s.updateSharing(ctx, kind, id, actor, func(sharing *Sharing) error {
 		// Expired links cannot grant access and may be pruned to keep documents bounded.
 		active := sharing.Invitations[:0]
@@ -171,14 +225,41 @@ func (s *Store) CreateInvitation(ctx context.Context, kind, id, actor string) (I
 		if len(sharing.Invitations) >= 20 || len(sharing.Members) >= 20 {
 			return fmt.Errorf("%w: sharing limit reached", ErrInvalid)
 		}
-		sharing.Invitations = append(sharing.Invitations, Invitation{Hash: link.Hash(), Expires: s.clock().UTC().Add(7 * 24 * time.Hour), Status: "open"})
+		sharing.Invitations = append(sharing.Invitations, Invitation{Hash: link.Hash(), Expires: expires, Status: "open"})
 		return nil
 	})
+	if err != nil {
+		// The capability grants nothing on its own. Remove it eagerly when the
+		// authoritative invitation could not be added; TTL remains the fallback.
+		_, _ = s.container.DeleteItem(ctx, azcosmos.NewPartitionKeyString(actor), capability.ID, nil)
+	}
 	return link, err
 }
+
+func (s *Store) readShareLink(ctx context.Context, link InvitationLink) error {
+	response, err := s.container.ReadItem(ctx, azcosmos.NewPartitionKeyString(link.Owner), shareLinkID(link.Hash()), nil)
+	if err != nil {
+		if isMissing(err) {
+			return ErrNotFound
+		}
+		return err
+	}
+	var capability shareLink
+	if err = json.Unmarshal(response.Value, &capability); err != nil {
+		return ErrNotFound
+	}
+	if capability.ID != shareLinkID(link.Hash()) || capability.UserID != link.Owner || capability.Type != "share-link" || capability.Kind != link.Kind || capability.ResourceID != link.ID || capability.Hash != link.Hash() || capability.TTL != invitationTTLSeconds || !capability.Expires.After(s.clock()) {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *Store) InvitationStatus(ctx context.Context, link InvitationLink, actor string) (string, error) {
 	if !link.valid() {
 		return "", ErrNotFound
+	}
+	if err := s.readShareLink(ctx, link); err != nil {
+		return "", err
 	}
 	_, head, err := s.canonical(ctx, link.Kind, link.ID, link.Owner)
 	if err != nil {
@@ -306,6 +387,13 @@ func (s *Store) GetSharing(ctx context.Context, kind, id, actor string) (Sharing
 	view := SharingView{Kind: kind, ID: id, Owner: head.UserID, Actor: actor}
 	if head.UserID == actor {
 		view.Sharing = head.Sharing
+		active := view.Sharing.Invitations[:0]
+		for _, invitation := range view.Sharing.Invitations {
+			if invitation.Expires.After(s.clock()) {
+				active = append(active, invitation)
+			}
+		}
+		view.Sharing.Invitations = active
 	}
 	return view, nil
 }

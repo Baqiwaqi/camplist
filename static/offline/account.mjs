@@ -55,7 +55,7 @@ document.addEventListener('submit',async event=>{
   const identity=await transport.identity();
   const {db,packing}=await module();
   const records=await db.list(identity.userId);
-  const pending=records.some(record=>Object.keys(record.pending).length);
+  const pending=records.some(record=>(Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length));
   const finish=async exported=>{
    await packing.forget(identity.userId,exported);
    form.querySelector('[name="_csrf"]').value=identity.csrfToken;
@@ -95,8 +95,13 @@ document.addEventListener('submit',async event=>{
 async function synchronizeSaved() {
  try {
   const identity=await transport.identity();const {db,packing}=await module();await db.setOwner(identity.userId);
-  for(const record of await db.list(identity.userId))if(Object.keys(record.pending).length)await packing.sync(identity.userId,record.id);
+  for(const record of await db.list(identity.userId))if((Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length))await packing.sync(identity.userId,record.id);
  }catch {/* Offline storage is optional for the normal online app. */}
 }
 synchronizeSaved();
 window.addEventListener('online',synchronizeSaved);
+
+if(document.getElementById('trips-overview'))(async()=>{
+ const identity=await transport.identity(),{db}=await module();
+ for(const record of await db.list(identity.userId)){let card=[...document.querySelectorAll('[data-saved-trip]')].find(card=>card.dataset.savedTrip===record.id);if(!card){card=document.createElement('article');card.className='card';card.dataset.savedTrip=record.id;const link=document.createElement('a');link.href='/offline#'+encodeURIComponent(record.id);link.textContent=record.session.name||record.session.list.name;card.append(link);document.getElementById('trips-overview').append(card);}if(card){const label=document.createElement('p');label.className='tag';label.textContent='Available offline';card.append(label);}}
+})().catch(()=>{});

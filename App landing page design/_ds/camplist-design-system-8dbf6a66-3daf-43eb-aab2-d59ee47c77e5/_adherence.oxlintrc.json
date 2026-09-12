@@ -1,0 +1,289 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/core/**",
+              "ui_kits/camplist/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Bricolage Grotesque))/i]",
+        "message": "Font not provided by the design system. Available: Bricolage Grotesque."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='AppHeader'] > JSXAttribute > JSXIdentifier[name!=/^(?:userName|links|onNavigate|brand|logoSrc|style|key|ref|className|style|children)$/]",
+        "message": "<AppHeader> doesn't accept that prop. Declared props: userName, links, onNavigate, brand, logoSrc, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|disabled|children|style|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, size, disabled, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|accent|secondary|danger|link)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'accent' | 'secondary' | 'danger' | 'link'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|tone|style|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: children, tone, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:brand|soft)$/]",
+        "message": "<Card> tone must be one of 'brand' | 'soft'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ErrorBanner'] > JSXAttribute > JSXIdentifier[name!=/^(?:errors|title|children|style|key|ref|className|style|children)$/]",
+        "message": "<ErrorBanner> doesn't accept that prop. Declared props: errors, title, children, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Field'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|id|multiline|error|style|key|ref|className|style|children)$/]",
+        "message": "<Field> doesn't accept that prop. Declared props: label, id, multiline, error, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ItemRow'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|last|style|key|ref|className|style|children)$/]",
+        "message": "<ItemRow> doesn't accept that prop. Declared props: children, last, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ProgressBar'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|max|label|inverse|style|key|ref|className|style|children)$/]",
+        "message": "<ProgressBar> doesn't accept that prop. Declared props: value, max, label, inverse, style."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "AppHeader": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "ErrorBanner": {
+        "replaces": []
+      },
+      "Field": {
+        "replaces": []
+      },
+      "ItemRow": {
+        "replaces": []
+      },
+      "ProgressBar": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--accent",
+      "--accent-hover",
+      "--accent-soft",
+      "--border-card",
+      "--border-header",
+      "--border-row",
+      "--border-width",
+      "--brand",
+      "--brand-hover",
+      "--brand-soft",
+      "--button-danger-text",
+      "--button-primary-bg",
+      "--button-primary-text",
+      "--button-secondary-bg",
+      "--button-secondary-border",
+      "--card-gap",
+      "--card-padding",
+      "--content-max",
+      "--ember-100",
+      "--ember-500",
+      "--ember-700",
+      "--error-bg",
+      "--error-border",
+      "--error-text",
+      "--font-body",
+      "--font-display",
+      "--font-mono",
+      "--gray-500",
+      "--ink-900",
+      "--leading-normal",
+      "--leading-tight",
+      "--lift-hover",
+      "--main-padding",
+      "--motion-fast",
+      "--nav-padding",
+      "--pine-100",
+      "--pine-500",
+      "--pine-700",
+      "--pine-900",
+      "--progress-done",
+      "--progress-fill",
+      "--progress-track",
+      "--radius-card",
+      "--radius-pill",
+      "--radius-sm",
+      "--red-100",
+      "--red-300",
+      "--red-700",
+      "--row-gap",
+      "--row-padding",
+      "--sand-100",
+      "--sand-200",
+      "--sand-300",
+      "--sand-50",
+      "--shadow-none",
+      "--space-1",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-6",
+      "--space-8",
+      "--surface-card",
+      "--surface-header",
+      "--surface-page",
+      "--text-2xl",
+      "--text-3xl",
+      "--text-4xl",
+      "--text-base",
+      "--text-body",
+      "--text-eyebrow",
+      "--text-lg",
+      "--text-link",
+      "--text-muted",
+      "--text-sm",
+      "--text-xl",
+      "--text-xs",
+      "--tracking-display",
+      "--tracking-eyebrow",
+      "--weight-bold",
+      "--weight-display",
+      "--weight-regular",
+      "--white"
+    ],
+    "tokenKinds": {
+      "--sand-50": "color",
+      "--sand-100": "color",
+      "--sand-200": "color",
+      "--sand-300": "color",
+      "--white": "color",
+      "--ink-900": "color",
+      "--gray-500": "color",
+      "--red-100": "color",
+      "--red-300": "color",
+      "--red-700": "color",
+      "--pine-100": "color",
+      "--pine-500": "color",
+      "--pine-700": "color",
+      "--pine-900": "color",
+      "--ember-100": "color",
+      "--ember-500": "color",
+      "--ember-700": "color",
+      "--surface-page": "color",
+      "--surface-card": "color",
+      "--surface-header": "color",
+      "--text-body": "font",
+      "--text-muted": "font",
+      "--text-link": "font",
+      "--border-header": "color",
+      "--border-card": "color",
+      "--border-row": "color",
+      "--error-bg": "color",
+      "--error-border": "color",
+      "--error-text": "font",
+      "--brand": "color",
+      "--brand-hover": "color",
+      "--brand-soft": "color",
+      "--accent": "color",
+      "--accent-hover": "color",
+      "--accent-soft": "color",
+      "--text-eyebrow": "font",
+      "--progress-track": "color",
+      "--progress-fill": "color",
+      "--progress-done": "color",
+      "--button-primary-bg": "color",
+      "--button-primary-text": "font",
+      "--button-secondary-bg": "color",
+      "--button-secondary-border": "color",
+      "--button-danger-text": "font",
+      "--font-display": "font",
+      "--font-body": "font",
+      "--font-mono": "font",
+      "--text-xs": "font",
+      "--text-sm": "font",
+      "--text-base": "font",
+      "--text-lg": "font",
+      "--text-xl": "font",
+      "--text-2xl": "font",
+      "--text-3xl": "font",
+      "--text-4xl": "font",
+      "--weight-regular": "font",
+      "--weight-bold": "font",
+      "--weight-display": "font",
+      "--leading-tight": "font",
+      "--leading-normal": "font",
+      "--tracking-display": "font",
+      "--tracking-eyebrow": "font",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-6": "spacing",
+      "--space-8": "spacing",
+      "--content-max": "spacing",
+      "--nav-padding": "spacing",
+      "--main-padding": "spacing",
+      "--card-padding": "spacing",
+      "--card-gap": "spacing",
+      "--row-gap": "spacing",
+      "--row-padding": "spacing",
+      "--radius-sm": "radius",
+      "--radius-card": "radius",
+      "--border-width": "spacing",
+      "--shadow-none": "shadow",
+      "--radius-pill": "radius",
+      "--motion-fast": "other",
+      "--lift-hover": "other"
+    },
+    "fontFamilies": [
+      "Bricolage Grotesque"
+    ]
+  }
+}

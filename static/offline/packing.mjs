@@ -14,18 +14,35 @@ export class OfflinePacking {
   if (!record) return null;
   const session = structuredClone(record.session);
   for (const item of session.list.items) if (record.pending[item.id]) item.checked = record.pending[item.id].checked;
-  return { session, pending: Object.keys(record.pending).length, conflicts: structuredClone(record.conflicts), issue: record.issue, lastSyncedAt:record.lastSyncedAt||null, fresh:record.fresh===true };
+  return { session, pending: Object.keys(record.pending).length+Object.keys(record.additions||{}).length, conflicts: structuredClone(record.conflicts), issue: record.issue, futureSaves: Object.keys(record.futureSaves||{}), lastSyncedAt:record.lastSyncedAt||null, fresh:record.fresh===true };
+ }
+ async add(owner,id,entry) {
+  if(this.closing.has(owner))throw new Error('Sign-out is in progress.');
+  const name=entry.name?.trim(),itemId=entry.id||crypto.randomUUID();
+  if(!name||name.length>200||!['','shared','mine','person'].includes(entry.scope||''))throw new Error('Enter a name and choose who this is for.');
+  await this.db.update(owner,id,record=>{
+   if(!record)throw new Error('Open this trip while connected first.');
+   if(record.session.list.items.some(item=>item.id===itemId))throw new Error('Item already exists.');
+   const item={id:itemId,name,category:entry.category?.trim()||'',scope:entry.scope||'',kind:entry.kind||'',checked:false,revision:0};
+   if(['mine','person'].includes(item.scope)){item.assignee=owner;item.assigneeName='You';}
+   record.session.list.items.push(item);
+   record.additions||={};record.additions[itemId]={id:crypto.randomUUID(),itemId,action:'add',name,category:item.category,scope:item.scope,kind:item.kind,saveForFuture:Boolean(entry.saveForFuture)};
+   return record;
+  });return this.open(owner,id);
  }
  async set(owner, id, itemId, checked) {
   if (this.closing.has(owner)) throw new Error("Sign-out is in progress.");
   await this.db.update(owner, id, record => {
    if (!record || !record.session.list.items.some(item => item.id === itemId)) throw new Error('Save this session on this device first.');
+   const item=record.session.list.items.find(item=>item.id===itemId);
+   if(item.assignee&&item.assignee!==owner)throw new Error('Only this participant can check their personal entry.');
    record.pending[itemId] = { id: crypto.randomUUID(), checked: Boolean(checked) };
    return record;
   });
   return this.open(owner, id);
  }
 
+ async cancelFutureSave(owner,id,itemId) {await this.db.update(owner,id,record=>{delete record.futureSaves?.[itemId];return record;});return this.open(owner,id);}
  async resolve(owner,id,itemId,choice) {
   await this.db.update(owner,id,record => {
    const remote = record?.conflicts[itemId];
@@ -62,20 +79,31 @@ export class OfflinePacking {
   try {
    const identity = await this.transport.identity();
    if (identity.userId !== owner) throw Object.assign(new Error('Sign in to the account that saved this trip.'),{code:'account'});
+   const retriedFuture=new Set();
    for (;;) {
     let operation;
     const record = await this.db.update(owner,id, record => {
      if (!record) throw new Error('Session not saved on this device.');
      record.issue = null;
+     const addition=Object.values(record.additions||{})[0];
+     if(addition){operation=structuredClone(addition);return record;}
      const itemId = Object.keys(record.pending).find(key => !record.conflicts[key]);
      if (itemId) {
       const pending = record.pending[itemId];
       const item = record.session.list.items.find(item => item.id === itemId);
-      operation = record.flight[itemId] ||= {id:pending.id,itemId,checked:pending.checked,expectedRevision:item.revision || 0};
+      operation = record.flight[itemId] ||= {id:pending.id,itemId,checked:pending.checked,expectedRevision:item.revision || 0,...(item.kind?{kind:item.kind}:{})};
      }
      return record;
     });
     if (!operation) {
+     const future=Object.values(record.futureSaves||{}).find(op=>!retriedFuture.has(op.itemId));
+     if(future){
+      retriedFuture.add(future.itemId);
+      const result=await this.transport.send(owner,id,future,identity);
+      if(result.operationId!==future.id)throw new Error('Invalid synchronization acknowledgement.');
+      if(!result.futureSaveError)await this.db.update(owner,id,record=>{delete record.futureSaves?.[future.itemId];return record;});
+      continue;
+     }
      const remote = await this.transport.getSession(owner,id,identity);
      await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;return record;});
      return this.open(owner,id);
@@ -83,6 +111,7 @@ export class OfflinePacking {
     let result;
     try { result = await this.transport.send(owner,id,operation,identity); }
     catch (error) {
+     if(operation.action==='add')throw error;
      if (error.status !== 409 || error.code !== 'conflict' || !error.session?.list) throw error;
      await this.db.update(owner,id,record => {
       if (record.flight[operation.itemId]?.id !== operation.id) return record;
@@ -97,6 +126,11 @@ export class OfflinePacking {
     }
     if (result.operationId !== operation.id) throw new Error('Invalid synchronization acknowledgement.');
     await this.db.update(owner,id,record => {
+     if(operation.action==='add'){
+      if(result.futureSaveError){record.futureSaves||={};record.futureSaves[operation.itemId]=operation;retriedFuture.add(operation.itemId);}
+      if(record.additions?.[operation.itemId]?.id===operation.id)delete record.additions[operation.itemId];
+      return mergeRemote(record,result.session,operation.itemId);
+     }
      if (record.flight[operation.itemId]?.id !== operation.id) return record;
      delete record.flight[operation.itemId];
      if (record.pending[operation.itemId]?.id === operation.id) delete record.pending[operation.itemId];
@@ -133,5 +167,6 @@ function mergeRemote(record, remote, advanceItem) {
    if (base) record.session.list.items[i] = base;
   }
  }
+ for(const item of previous.list.items){if(record.additions?.[item.id]&&!record.session.list.items.some(remote=>remote.id===item.id))record.session.list.items.push(item);}
  return record;
 }

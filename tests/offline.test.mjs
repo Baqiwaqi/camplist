@@ -175,3 +175,29 @@ test('shared status does not claim freshness on reconnect until a server refresh
  assert.equal(packingStatus({...view,pending:0,issue:null},true).warning,true);
  assert.equal(packingStatus({...view,pending:0,issue:null,fresh:true,lastSyncedAt:'2026-09-12T12:00:00Z'},true).warning,false);
 });
+
+test('offline additions survive reopening and a check while their acknowledgement is lost', async()=>{
+ const db=await database(), state=trip(),receipts=new Set();let lose=true;
+ const remote={identity:async()=>({userId:'camper'}),getSession:async()=>structuredClone(state),send:async(_a,_b,op)=>{
+  if(!receipts.has(op.id)) {if(op.action==='add')state.list.items.push({id:op.itemId,name:op.name,kind:op.kind,checked:false,revision:0});else{const item=state.list.items.find(i=>i.id===op.itemId);item.checked=op.checked;item.revision++;}receipts.add(op.id);}
+  if(lose)throw new Error('lost response');return {operationId:op.id,session:structuredClone(state)};
+ }};
+ let packing=new OfflinePacking(db,remote);await packing.save('camper',state);
+ await packing.add('camper','trip',{id:'charge',name:'Charge car',kind:'task',scope:'shared'});
+ await packing.sync('camper','trip');await packing.set('camper','trip','charge',true);
+ packing=new OfflinePacking(db,remote);assert.equal((await packing.open('camper','trip')).session.list.items.find(i=>i.id==='charge').checked,true);
+ lose=false;const view=await packing.sync('camper','trip');assert.equal(view.pending,0);assert.equal(state.list.items.filter(i=>i.id==='charge').length,1);assert.equal(state.list.items.find(i=>i.id==='charge').checked,true);
+});
+
+test('future-list permission failure does not block trip edits and can be cancelled explicitly', async()=>{
+ const db=await database(),state=trip();let allowed=false;
+ const remote={identity:async()=>({userId:'camper'}),getSession:async()=>structuredClone(state),send:async(_a,_b,op)=>{
+  if(op.action==='add'){if(!state.list.items.some(i=>i.id===op.itemId))state.list.items.push({id:op.itemId,name:op.name,revision:0,checked:false});return{operationId:op.id,session:structuredClone(state),futureSaveError:!allowed};}
+  const item=state.list.items.find(i=>i.id===op.itemId);item.checked=op.checked;item.revision++;return{operationId:op.id,session:structuredClone(state)};
+ }};
+ const packing=new OfflinePacking(db,remote);await packing.save('camper',state);await packing.add('camper','trip',{id:'bag',name:'Bag',saveForFuture:true});
+ let view=await packing.sync('camper','trip');assert.equal(view.issue,null);assert.equal(view.pending,0);assert.deepEqual(view.futureSaves,['bag']);
+ await packing.set('camper','trip','tent',true);view=await packing.sync('camper','trip');assert.equal(view.pending,0);assert.equal(state.list.items[0].checked,true);
+ await assert.rejects(packing.forget('camper'),/pending/);
+ view=await packing.cancelFutureSave('camper','trip','bag');assert.deepEqual(view.futureSaves,[]);assert.equal(view.session.list.items.some(i=>i.id==='bag'),true);
+});

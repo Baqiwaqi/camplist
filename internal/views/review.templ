@@ -4,16 +4,24 @@ import "camplist/internal/packing"
 import "slices"
 import "camplist/internal/auth"
 
+// ReviewPage stacks its cards 2rem apart: every card after the first carries
+// mt-8, and which card is first depends on who is looking and whether the
+// reusable list is still available.
 templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, message string, csrfToken string) {
 	@Layout("Review your trip", csrfToken) {
-		<div class="page-head">
-			<div>
-				<p class="eyebrow">Trip review</p>
+		<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
+			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
+				<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trip review</p>
 				<h1>Make the next trip easier</h1>
-				<p class="muted lede">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
+				<p class="text-muted max-w-[60ch]">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
 			</div>
-			<div class="actions">
+<<<<<<< HEAD
+			<div class="flex flex-wrap items-center gap-2 sm:pt-6">
 				<a class="btn btn-secondary" href={ "/packing-session/" + session.ID }>Back to packing</a>
+=======
+			<div class="actions">
+				<a class="btn btn-secondary" href={ "/trips/" + session.ID }>Back to packing</a>
+>>>>>>> origin/develop
 			</div>
 		</div>
 		if message != "" {
@@ -22,68 +30,80 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-				<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review" }>
+<<<<<<< HEAD
+				<form method="post" action={ "/packing-session/" + session.ID + "/review" }>
+=======
+				<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review" }>
+>>>>>>> origin/develop
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
 					<input type="hidden" name="entryId" value={ entry.ID }/>
-					<label>
+					<label class="block my-3 text-sm font-bold">
 						Existing gear (optional)
-						<select name="itemId">
+						<select name="itemId" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal">
 							<option value="">New or missing gear</option>
 							for _, item := range session.List.Items {
 								<option value={ item.ID } selected?={ item.ID == entry.ItemID }>{ item.Name }</option>
 							}
 						</select>
 					</label>
-					<label>Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name }/></label>
-					<label>Category <input name="category" maxlength="100" value={ entry.Category }/></label>
-					<fieldset>
-						<legend>Observations (choose at least one)</legend>
-						<label><input type="checkbox" name="forgotten" value="true" checked?={ entry.Forgotten }/>Forgotten</label>
-						<label><input type="checkbox" name="unused" value="true" checked?={ entry.Unused }/>Unused</label>
-						<label><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention }/>Needs repair or replacement</label>
+					<label class="block my-3 text-sm font-bold">Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
+					<label class="block my-3 text-sm font-bold">Category <input name="category" maxlength="100" value={ entry.Category } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
+					<fieldset class="min-w-0 mb-4">
+						<legend class="mb-2 text-sm font-bold">Observations (choose at least one)</legend>
+						<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="forgotten" value="true" checked?={ entry.Forgotten } class="min-h-8 align-middle"/>Forgotten</label>
+						<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="unused" value="true" checked?={ entry.Unused } class="min-h-8 align-middle"/>Unused</label>
+						<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention } class="min-h-8 align-middle"/>Needs repair or replacement</label>
 					</fieldset>
-					<label>Notes <textarea name="note" maxlength="2000">{ entry.Note }</textarea></label>
-					<label>
+					<label class="block my-3 text-sm font-bold">Notes <textarea name="note" maxlength="2000" class="block w-full max-w-[34rem] mt-1 min-h-22 px-3 py-2 rounded-sm border border-sand-300 bg-white font-normal">{ entry.Note }</textarea></label>
+					<label class="block my-3 text-sm font-bold">
 						Proposed change
-						<select name="action">
+						<select name="action" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal">
 							<option value="none" selected?={ entry.Action == packing.ReviewObserve }>Keep observation only</option>
 							<option value="add" selected?={ entry.Action == packing.ReviewAdd }>Add gear to future lists</option>
 							<option value="remove" selected?={ entry.Action == packing.ReviewRemove }>Remove selected existing gear</option>
 							<option value="task" selected?={ entry.Action == packing.ReviewTask }>Create a preparation task</option>
 						</select>
 					</label>
-					<label>Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister"/></label>
-					<p class="muted">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
-					<button class="btn btn-primary" type="submit">Save observation</button>
+					<label class="block my-3 text-sm font-bold">Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
+					<p class="text-muted mb-3">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
+					<button class="btn btn-primary mt-2" type="submit">Save observation</button>
 				</form>
 			</section>
 		}
 		if !available {
-			<section class="card">
+			<section class={ "card", templ.KV("mt-8", session.UserID==auth.Subject(ctx)) }>
 				<h2>The reusable list is unavailable</h2>
-				<p>Your trip and observations are still here.</p>
+				<p class="mb-3">Your trip and observations are still here.</p>
 				if recoverable {
-					<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
+<<<<<<< HEAD
+					<form method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
+=======
+					<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/recover" }>
+>>>>>>> origin/develop
 						<input type="hidden" name="_csrf" value={ csrfToken }/>
-						<button class="btn btn-primary" type="submit">Create a new list from this trip</button>
+						<button class="btn btn-primary mt-2" type="submit">Create a new list from this trip</button>
 					</form>
 				} else {
 					<p>Your access to the template was removed. Your own trip observations remain available here.</p>
 				}
 			</section>
 		}
-		<section class="card">
+		<section class={ "card", templ.KV("mt-8", session.UserID==auth.Subject(ctx) || !available) }>
 			<h2>Trip observations</h2>
 			if len(session.Review) == 0 {
-				<p>No observations yet.</p>
+				<p class="mb-3">No observations yet.</p>
 			}
-			<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/apply" }>
+<<<<<<< HEAD
+			<form method="post" action={ "/packing-session/" + session.ID + "/review/apply" }>
+=======
+			<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/apply" }>
+>>>>>>> origin/develop
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<input type="hidden" name="revision" value={ list.Revision() }/>
 				for _, observation := range session.Review {
-					<article>
-						<h3>{ observation.Name }</h3>
-						<p>
+					<article class="py-3 border-b border-sand-100 last-of-type:border-b-0">
+						<h3 class="mt-0">{ observation.Name }</h3>
+						<p class="mb-3">
 							if observation.Forgotten {
 								<span>Forgotten. </span>
 							}
@@ -97,10 +117,10 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 						</p>
 						if observation.Action != packing.ReviewObserve {
 							if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
-								<p>Applied to future trips.</p>
+								<p class="mb-3">Applied to future trips.</p>
 							} else if available {
-								<label>
-									<input type="checkbox" name="selected" value={ observation.ID }/>
+								<label class="flex items-center gap-2 mt-3 mb-2">
+									<input type="checkbox" name="selected" value={ observation.ID } class="min-h-8 align-middle"/>
 									{ string(observation.Action) }: { observation.Name } { observation.Task }
 								</label>
 							}
@@ -108,20 +128,20 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 					</article>
 				}
 				if available && len(session.Review) > 0 {
-					<button class="btn btn-primary" type="submit">Apply selected changes</button>
+					<button class="btn btn-primary mt-2" type="submit">Apply selected changes</button>
 				}
 			</form>
 		</section>
 		if available {
-			<section class="card">
+			<section class="card mt-8">
 				<h2>Current reusable list: { list.Name }</h2>
-				<p>Compare your proposals with the current list before applying.</p>
-				<ul>
+				<p class="mb-3">Compare your proposals with the current list before applying.</p>
+				<ul class="list-disc pl-10 mb-3">
 					for _, item := range list.Items {
 						<li>{ item.Name } — { item.Category }</li>
 					}
 				</ul>
-				<ul>
+				<ul class="list-disc pl-10">
 					for _, task := range list.Tasks {
 						<li>{ task.Name }</li>
 					}

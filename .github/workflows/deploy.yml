@@ -40,6 +40,8 @@ jobs:
           npm ci
           npm run check
           npm test
+      - name: Build the Tailwind stylesheet
+        run: npm run css:build
       - name: Validate infrastructure templates
         run: |
           az bicep build --file infra/foundation.bicep --outfile "$RUNNER_TEMP/foundation.json"

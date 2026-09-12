@@ -2,6 +2,7 @@
 .env
 
 # build output
+/static/tailwind.css
 /camplist
 /web
 tmp/

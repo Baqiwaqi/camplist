@@ -14,7 +14,7 @@ type CreatePackingListForm struct {
 
 func NewCreatePackingListForm() CreatePackingListForm {
 	return CreatePackingListForm{
-		Action:           "/packing-list/new",
+		Action:           "/packing-lists/new",
 		Initial:          true,
 		SubmitButtonText: "Create New",
 	}
@@ -22,7 +22,7 @@ func NewCreatePackingListForm() CreatePackingListForm {
 
 func EditPackingListForm(list PackingList) CreatePackingListForm {
 	return CreatePackingListForm{
-		Action:           "/packing-list/" + list.ID + "/edit",
+		Action:           "/packing-lists/" + list.ID + "/edit",
 		Revision:         list.Revision(),
 		Initial:          false,
 		SubmitButtonText: "Save",
@@ -59,6 +59,8 @@ func (f CreatePackingListForm) Validate() []string {
 }
 
 type CreateItemForm struct {
+	Scope            string
+	Categories       []string `schema:"-"`
 	Revision         string
 	Action           string `schema:"-"`
 	Initial          bool   `schema:"-"`
@@ -70,7 +72,7 @@ type CreateItemForm struct {
 
 func NewCreateItemForm(listId string) CreateItemForm {
 	return CreateItemForm{
-		Action:           "/packing-list/" + listId + "/add-item",
+		Action:           "/packing-lists/" + listId + "/add-item",
 		Initial:          true,
 		SubmitButtonText: "Add Item",
 	}
@@ -78,12 +80,13 @@ func NewCreateItemForm(listId string) CreateItemForm {
 
 func EditItemForm(listId string, item PackingItem) CreateItemForm {
 	return CreateItemForm{
-		Action:           "/packing-list/" + listId + "/edit-item/" + item.ID,
+		Action:           "/packing-lists/" + listId + "/edit-item/" + item.ID,
 		Revision:         item.SourceRevision,
 		Initial:          false,
 		SubmitButtonText: "Save",
 		Name:             item.Name,
 		Category:         item.Category,
+		Scope:            item.Scope,
 	}
 }
 

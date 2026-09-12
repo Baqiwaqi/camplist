@@ -1,0 +1,79 @@
+package views
+
+// Menu is a dropdown built the way Base UI structures its Menu: a trigger,
+// a popup with role="menu", and items that are links or actions. Behaviour
+// lives in static/menu.js (Alpine.data("menu")). The popup is server
+// rendered, so without JavaScript the items show inline instead. This
+// compact size sits in card rows next to a small button.
+templ Menu(label string) {
+	@menu(label, "btn btn-secondary btn-sm menu-trigger") {
+		{ children... }
+	}
+}
+
+// PageMenu is the same dropdown at page-head size: a regular button next to
+// the page's main action, tinted a step darker on the sand page.
+templ PageMenu(label string) {
+	@menu(label, "btn btn-secondary menu-trigger menu-trigger-page") {
+		{ children... }
+	}
+}
+
+templ menu(label string, trigger string) {
+	<div
+		class="menu"
+		x-data="menu"
+		x-id="['menu']"
+		x-on:click.outside="close(false)"
+		x-on:keydown.escape.prevent="close()"
+		x-on:focusout="leave($event)"
+	>
+		<button
+			type="button"
+			class={ trigger }
+			x-ref="trigger"
+			aria-haspopup="menu"
+			x-bind:aria-expanded="open"
+			x-bind:aria-controls="$id('menu')"
+			x-on:click="toggle()"
+			x-on:keydown.arrow-down.prevent="show(0)"
+			x-on:keydown.arrow-up.prevent="show(-1)"
+		>{ label }</button>
+		<div
+			class="menu-popup"
+			role="menu"
+			x-ref="popup"
+			x-bind:id="$id('menu')"
+			x-show="open"
+			x-cloak
+			x-transition:enter="drop-enter"
+			x-transition:enter-start="drop-start"
+			x-transition:enter-end="drop-end"
+			x-transition:leave="drop-leave"
+			x-transition:leave-start="drop-end"
+			x-transition:leave-end="drop-start"
+			x-on:keydown.arrow-down.prevent="move(1)"
+			x-on:keydown.arrow-up.prevent="move(-1)"
+			x-on:keydown.home.prevent="focus(0)"
+			x-on:keydown.end.prevent="focus(-1)"
+			x-on:click="if ($event.target.closest('[role=menuitem]')) close(false)"
+		>
+			{ children... }
+		</div>
+	</div>
+}
+
+// MenuLink navigates somewhere.
+templ MenuLink(href string, label string) {
+	<a class="menu-item" role="menuitem" href={ href }>{ label }</a>
+}
+
+// MenuButton performs an action. attrs carry the htmx attributes for the
+// request and its confirmation; danger marks destructive actions in red.
+templ MenuButton(label string, danger bool, attrs templ.Attributes) {
+	<button type="button" class={ "menu-item", templ.KV("menu-item-danger", danger) } role="menuitem" { attrs... }>{ label }</button>
+}
+
+templ MenuSeparator() {
+	<div class="menu-separator" role="separator"></div>
+}

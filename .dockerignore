@@ -1,6 +1,10 @@
 **
 !go.mod
 !go.sum
+!package.json
+!package-lock.json
+!assets/
+!assets/**
 !cmd/
 !cmd/**
 !internal/

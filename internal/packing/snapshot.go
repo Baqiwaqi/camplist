@@ -5,6 +5,7 @@ import "time"
 // SessionSnapshot is the deliberately limited packing view sent to a device.
 // Memberships, applicants, invite hashes, receipts and reviews never cross this boundary.
 type SessionSnapshot struct {
+	Name      string            `json:"name"`
 	ID        string            `json:"id"`
 	UserID    string            `json:"userId"`
 	AccountID string            `json:"accountId"`
@@ -19,7 +20,11 @@ type ChecklistSnapshot struct {
 }
 
 func (s PackingSession) Snapshot(actor string) SessionSnapshot {
-	return SessionSnapshot{ID: s.ID, UserID: s.UserID, AccountID: actor, Shared: s.IsShared(), CreatedAt: s.CreatedAt, List: ChecklistSnapshot{ID: s.List.ID, Name: s.List.Name, Items: s.List.Items}}
+	items := append([]PackingItem{}, s.List.Items...)
+	for _, task := range s.List.Tasks {
+		items = append(items, PackingItem{ID: task.ID, Kind: "task", Name: task.Name, Checked: task.Done, Revision: task.Revision, Scope: task.Scope, Assignee: task.Assignee, AssigneeName: task.AssigneeName, ChangedBy: task.ChangedBy})
+	}
+	return SessionSnapshot{Name: s.DisplayName(), ID: s.ID, UserID: s.UserID, AccountID: actor, Shared: s.IsShared(), CreatedAt: s.CreatedAt, List: ChecklistSnapshot{ID: s.List.ID, Name: s.List.Name, Items: items}}
 }
 func (s PackingSession) IsShared() bool {
 	return len(s.Sharing.Members) > 0 || len(s.Sharing.Invitations) > 0

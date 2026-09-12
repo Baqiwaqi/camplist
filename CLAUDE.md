@@ -28,6 +28,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
   on the button supply the label and explanation. Packing updates return
   a checklist fragment; other mutations may redirect or refresh.
+- Reusable dropdown: `views.Menu(label)` (compact, for card rows) and
+  `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
+  `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
+  `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
+  `static/menu.js`, loaded before Alpine. Build destructive items with the
+  `confirmDelete` helper so the CSRF header and confirm dialog stay consistent.
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
@@ -44,6 +50,20 @@ The teaching-only phase is complete. Default to **implementing requested changes
 
 - `go build ./...`
 - `templ generate` after changing any `.templ`
+- `npm run css` builds `static/tailwind.css` (gitignored, the only stylesheet)
+  from `assets/css/tailwind.css`; Air and the Dockerfile run it too. Tailwind v4
+  is the styling system, with Preflight on: the `@theme` block holds the
+  Camplist tokens (`bg-pine-700`, `text-muted`, `rounded-card`, `font-display`,
+  `tracking-eyebrow`; body sizes keep 1.5 leading) and removes Tailwind's default
+  colours, shadows and breakpoints, so `max-sm:` means phones (<= 600px) and
+  `md:` the wide layouts (>= 721px). Style with utilities in the templ views;
+  `@layer base` re-adds body colour, headings, links, focus ring and checkboxes,
+  and `@layer components` keeps the classes that carry state, pseudo elements or
+  runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
+  `.tick`, `.progress-*`, `.menu-*`, `.error`, `.dialog`, `.sync-status`, the
+  `drop-*`/toast transitions) plus rules for elements the offline scripts create
+  without classes. Utilities are generated from `internal/views` and
+  `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)
 
@@ -52,13 +72,18 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - Source of truth: `.claude/skills/camplist-design/` (readme, tokens, guidelines,
   logo assets, and a React click-through kit for reference only). Invoke
   `/camplist-design` for brand context before designing new UI.
-- Runtime: tokens are inlined at the top of `static/style.css`; logomarks live in
-  `static/`. Views use the `.btn-*`, `.card`, `.item-row`, `.field`, `.error`,
-  `.progress`, `.tag`, `.eyebrow` classes; the React components are not shipped.
+- Runtime: tokens live in the `@theme` block of `assets/css/tailwind.css`;
+  logomarks live in `static/`. Views combine utilities (eyebrows, tags, fields,
+  page and card heads are utility strings) with the component classes listed
+  under Build / run; the React components are not shipped.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
-  classes such as `.error` and `.card` at runtime, so keep those ids when
-  restyling and add any new static asset to the list in `sw.js`.
+  classes such as `.error`, `.card` and `.item-row` at runtime, so keep those
+  ids and the `offline-page`, `saved-sessions`, `sync-status` and
+  `offline-items` hooks when restyling, and add any new static asset to the
+  list in `sw.js`. The worker serves those assets network-first (cache only as
+  offline fallback), so a restyle needs no cache version bump; bump `CACHE`
+  only when the asset list changes.
 - Rules: one ember (`.btn-accent`) "go" action per screen, pine for primary
   actions, red only for errors and delete; border-only elevation (no shadows);
   pills for buttons and tags; flat colour, no icons, images or gradients;

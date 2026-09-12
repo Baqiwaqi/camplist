@@ -4,53 +4,94 @@
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1">
  <meta name="theme-color" content="#2f5d3a">
- <title>On this device – Camplist</title>
+ <title>Trips – Camplist</title>
  <link rel="icon" type="image/svg+xml" href="/static/logomark.svg">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
- <link rel="stylesheet" href="/static/style.css">
+ <link rel="stylesheet" href="/static/tailwind.css">
  <script type="module" src="/static/offline/ui.mjs"></script>
 </head>
+<!-- ui.mjs finds elements by id and sets the error, card and item-row classes
+     itself; offline-page, saved-sessions, sync-status and offline-items are
+     the hooks for the rules in assets/css/tailwind.css that style what it creates. -->
 <body class="offline-page">
+<<<<<<< HEAD
+ <header class="bg-white border-b border-sand-300 max-sm:relative">
+  <nav class="max-w-[900px] mx-auto p-4 flex flex-wrap items-center gap-4" aria-label="Main">
+   <a class="inline-flex items-center gap-2 font-bold no-underline max-sm:-my-2 max-sm:py-2" href="/"><img src="/static/logomark.svg" alt="" width="22" height="22">Camplist</a>
+   <a class="font-bold no-underline max-sm:-my-2 max-sm:py-2" href="/sessions">Online sessions</a>
+   <a class="font-bold no-underline max-sm:-my-2 max-sm:py-2" href="/login">Sign in</a>
+  </nav>
+ </header>
+ <main class="max-w-[900px] mx-auto px-4 py-8">
+  <div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
+   <div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
+    <p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">On this device</p>
+=======
  <header class="site-header">
   <nav class="site-nav" aria-label="Main">
    <a class="brand" href="/"><img src="/static/logomark.svg" alt="" width="22" height="22">Camplist</a>
-   <a href="/sessions">Online sessions</a>
+   <a href="/trips">Trips</a>
+   <a href="/packing-lists">Packing lists</a>
    <a href="/login">Sign in</a>
   </nav>
  </header>
  <main>
   <div class="page-head">
    <div>
-    <p class="eyebrow">On this device</p>
+    <p class="eyebrow">Trips</p>
+>>>>>>> origin/develop
     <h1>Pack without a signal.</h1>
-    <p class="muted lede">Trips you open are saved here automatically. Keep packing offline; changes sync when you are back online.</p>
+    <p class="text-muted max-w-[60ch]">Trips you open are saved here automatically. Keep packing offline; changes sync when you are back online.</p>
    </div>
   </div>
   <p id="offline-message" role="alert" hidden></p>
-  <h2 class="section-title">Saved trips</h2>
+<<<<<<< HEAD
+  <h2 class="mb-3">Saved trips</h2>
+  <section id="saved-sessions" class="card saved-sessions" aria-label="Sessions saved on this device"></section>
+  <section id="offline-trip" class="card mt-8" hidden>
+   <p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Packing session</p>
+   <h2 id="trip-name"></h2>
+   <p id="sync-status" class="sync-status" role="status"></p>
+   <p id="packing-progress" class="progress-count mb-3" role="status"></p>
+   <ul id="offline-items" class="offline-items"></ul>
+   <div class="flex flex-wrap items-center gap-2 my-4">
+=======
+  <h2 class="section-title">Available offline</h2>
   <section id="saved-sessions" class="card saved-sessions" aria-label="Sessions saved on this device"></section>
   <section id="offline-trip" class="card offline-trip" hidden>
-   <p class="eyebrow">Packing session</p>
+   <p class="eyebrow">Trip</p>
    <h2 id="trip-name"></h2>
    <p id="sync-status" class="muted sync-status" role="status"></p>
+   <div id="future-save-status"></div>
    <p id="packing-progress" class="progress-count" role="status"></p>
-   <ul id="offline-items" class="item-list offline-items"></ul>
+   <h3>Before departure</h3><div id="offline-tasks"></div>
+   <h3>Packing</h3><div id="offline-items" class="offline-items"></div>
+   <h3>Add to this trip</h3>
+   <form id="trip-entry-form">
+    <div class="field"><label for="entry-name">Name</label><input id="entry-name" name="name" required maxlength="200"></div>
+    <div class="field"><label for="entry-category">Category</label><input id="entry-category" name="category" list="trip-categories" maxlength="100"><datalist id="trip-categories"></datalist></div>
+    <div class="field"><label for="entry-kind">Type</label><select id="entry-kind" name="kind"><option value="">Packing item</option><option value="task">Before departure task</option></select></div>
+    <div class="field"><label for="entry-scope">Who is this for?</label><select id="entry-scope" name="scope"><option value="shared">Shared</option><option value="mine">Just for me</option><option value="person">For each person</option></select></div>
+    <label><input type="checkbox" name="saveForFuture" value="true">Also save for future trips (requires packing list edit access)</label>
+    <div class="form-actions"><button class="btn btn-primary">Add</button></div>
+   </form>
    <div class="actions offline-trip-actions">
+>>>>>>> origin/develop
     <a id="review-trip" class="btn btn-secondary btn-sm">Review this trip online</a>
    </div>
-   <details class="recovery">
-    <summary>Recovery options</summary>
-    <div class="actions">
+   <details>
+    <summary class="cursor-pointer text-sm font-bold text-muted">Recovery options</summary>
+    <div class="flex flex-wrap items-center gap-2 mt-3">
      <button class="btn btn-secondary btn-sm" id="sync-now">Retry connection</button>
      <button class="btn btn-secondary btn-sm" id="export-session">Export this session</button>
     </div>
    </details>
   </section>
-  <section class="card">
+  <section class="card mt-8">
    <h2>This device</h2>
-   <p class="muted">Saved copies stay in this browser until you remove them. Export first if you want to keep a file.</p>
+   <p class="text-muted mb-3">Saved copies stay in this browser until you remove them. Export first if you want to keep a file.</p>
    <button class="btn btn-danger" id="forget-account">Export and remove saved copies</button>
   </section>
   <noscript><div class="card"><p>JavaScript is required for offline packing. Use the online app while connected.</p></div></noscript>

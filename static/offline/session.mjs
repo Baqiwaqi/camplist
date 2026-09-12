@@ -1,3 +1,4 @@
+import {renderEntries,updateCategories,entryFromForm,renderFutureSaves} from './checklist.mjs';
 import { packingStatus } from './status.mjs';
 import { AutomaticPacking } from './automatic.mjs';
 
@@ -18,28 +19,20 @@ export async function mountSession(packing, readyForOffline) {
   if(!view.session.shared&&!view.issue&&!view.pending&&!Object.keys(view.conflicts).length&&navigator.onLine){
    status.textContent+=filesReady?' · Available offline on this device':filesError?' · Offline reopening unavailable in this browser':' · Preparing offline access…';
   }
+  let future=document.getElementById('future-save-status');if(!future){future=document.createElement('div');future.id='future-save-status';status.after(future);}
+  renderFutureSaves(future,view,async id=>{await packing.cancelFutureSave(session.accountId||session.userId,session.id,id);await automatic.notify();});
   const checklist=document.getElementById('packing-checklist');
-  for(const item of view.session.list.items){
-   const button=document.getElementById('pack-'+item.id);if(!button)continue;
-   button.classList.toggle('packed',item.checked);
-   button.setAttribute('aria-pressed',String(item.checked));
-   button.querySelector('.pack-action').textContent=item.checked?'Unpack':'Pack';
-   button.form.elements.checked.value=String(!item.checked);
-   button.form.elements.expectedRevision.value=String(item.revision||0);
-   const row=button.closest('li');row.querySelector('[data-conflict]')?.remove();
-   const remote=view.conflicts[item.id];
-   if(remote){
-    const conflict=document.createElement('div');conflict.dataset.conflict='';
-    const explanation=document.createElement('p');explanation.textContent=`${remote.changedBy||'Another camper'} marked this ${remote.checked?'packed':'unpacked'}. Your waiting change would mark it ${item.checked?'packed':'unpacked'}.`;conflict.append(explanation);
-    for(const [label,choice] of [['Keep shared state','server'],[item.checked?'Mark packed instead':'Mark unpacked instead','mine']]){
-     const action=document.createElement('button');action.type='button';action.className='btn btn-secondary btn-sm';action.textContent=label;
-     action.onclick=async()=>{try{await packing.resolve(session.accountId||session.userId,session.id,item.id,choice);await automatic.notify();await automatic.sync();}catch(error){render(null,error);}};
-     conflict.append(action);
-    }
-    row.append(conflict);
-   }
-  }
-  const total=view.session.list.items.length,checked=view.session.list.items.filter(item=>item.checked).length;
+  const toggle=async(id,checked)=>{try{await automatic.set(id,checked);}catch(error){render(null,error);}};
+  const resolve=async(id,choice)=>{try{await packing.resolve(session.accountId||session.userId,session.id,id,choice);await automatic.notify();await automatic.sync();}catch(error){render(null,error);}};
+  let entries=checklist.querySelector('[data-trip-items]');
+  if(!entries){entries=document.createElement('div');entries.dataset.tripItems='';const card=checklist.querySelector('.card:not(.progress-card)');card.replaceChildren(entries);}
+  renderEntries(entries,view,'',toggle,resolve);
+  let preparation=document.querySelector('#session-preparation [data-trip-tasks]');
+  if(!preparation){const fallback=document.querySelector('#session-preparation .item-list');if(fallback){preparation=document.createElement('div');preparation.dataset.tripTasks='';fallback.replaceWith(preparation);}}
+  if(preparation)renderEntries(preparation,view,'task',toggle,resolve);
+  updateCategories(document.getElementById('trip-categories'),view.session.list.items);
+  const heading=document.querySelector('h1');if(heading)heading.textContent=view.session.name||view.session.list.name;
+  const gear=view.session.list.items.filter(item=>item.kind!=="task"),total=gear.length,checked=gear.filter(item=>item.checked).length;
   const complete=total>0&&checked===total;
   checklist.querySelector('.progress-count').textContent=`${checked} of ${total} items packed`;
   checklist.querySelector('.progress-track').setAttribute('aria-valuenow',String(checked));
@@ -56,7 +49,9 @@ export async function mountSession(packing, readyForOffline) {
  }catch(error){status.textContent='Offline saving unavailable. Packing requires a connection. '+error.message;return;}
  document.addEventListener('submit',async event=>{
   const form=event.target;
-  if(!ready||!form.matches('#packing-checklist .pack-form'))return;
+  if(!ready)return;
+  if(form.matches('#trip-entry-form')){event.preventDefault();event.stopImmediatePropagation();try{await automatic.add(entryFromForm(form));form.reset();}catch(error){render(null,error);}return;}
+  if(!form.matches('#packing-checklist .pack-form'))return;
   event.preventDefault();event.stopImmediatePropagation();
   try {await automatic.set(form.elements.itemId.value,form.elements.checked.value==='true');}
   catch(error){await automatic.notify();render(null,error);}

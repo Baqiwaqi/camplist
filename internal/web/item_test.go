@@ -38,13 +38,13 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 	h := handler{packingStore: store}
 	item := list.Items[0]
 
-	r := httptest.NewRequest("GET", "/packing-list/"+list.ID+"/items/"+item.ID+"/edit", nil)
+	r := httptest.NewRequest("GET", "/packing-lists/"+list.ID+"/items/"+item.ID+"/edit", nil)
 	r.Header.Set("HX-Request", "true")
 	r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, "user")), list.ID, item.ID)
 	w := httptest.NewRecorder()
 	h.EditItemPage(w, r)
 	body := w.Body.String()
-	for _, want := range []string{`value="Tent"`, `value="Shelter"`, `hx-post="/packing-list/` + list.ID + `/edit-item/` + item.ID + `"`} {
+	for _, want := range []string{`value="Tent"`, `value="Shelter"`, `hx-post="/packing-lists/` + list.ID + `/edit-item/` + item.ID + `"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("edit fragment missing %q", want)
 		}
@@ -53,7 +53,7 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 		t.Error("htmx edit request returned a full page")
 	}
 
-	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {" "}, "category": {"Sleep"}}), list.ID, item.ID)
+	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {" "}, "category": {"Sleep"}}), list.ID, item.ID)
 	r.Header.Set("HX-Request", "true")
 	w = httptest.NewRecorder()
 	h.EditItemHandler(w, r)
@@ -64,7 +64,7 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 		t.Error("invalid edit changed the item")
 	}
 
-	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Big tent"}, "category": {"Shelter"}}), list.ID, item.ID)
+	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Big tent"}, "category": {"Shelter"}}), list.ID, item.ID)
 	r.Header.Set("HX-Request", "true")
 	w = httptest.NewRecorder()
 	h.EditItemHandler(w, r)
@@ -75,14 +75,14 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 		t.Error("save did not return the read-only row")
 	}
 
-	r = withItemRoute(packingRequest("/packing-list/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Tent"}, "category": {""}}), list.ID, item.ID)
+	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Tent"}, "category": {""}}), list.ID, item.ID)
 	w = httptest.NewRecorder()
 	h.EditItemHandler(w, r)
-	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-list/"+list.ID {
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-lists/"+list.ID {
 		t.Errorf("plain form got %d %q", w.Code, w.Header().Get("Location"))
 	}
 
-	r = httptest.NewRequest("GET", "/packing-list/"+list.ID+"/items/"+item.ID+"/edit", nil)
+	r = httptest.NewRequest("GET", "/packing-lists/"+list.ID+"/items/"+item.ID+"/edit", nil)
 	r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, "user")), list.ID, item.ID)
 	w = httptest.NewRecorder()
 	h.EditItemPage(w, r)

@@ -1,63 +1,125 @@
 package views
 
+<<<<<<< HEAD
 import "camplist/internal/packing"
+import "camplist/internal/auth"
+import "strconv"
+=======
+import (
+	"camplist/internal/packing"
+	"time"
+)
+>>>>>>> origin/develop
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
-			<div class="card card-brand hero">
-				<div class="page-head">
-					<div>
-						<p class="eyebrow">Packing list</p>
+			<div class="card card-brand p-4 sm:p-6 mb-6">
+				<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col max-sm:items-stretch">
+					<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
+						<p class="text-xs font-bold tracking-eyebrow uppercase text-pine-100 mb-2">Packing list</p>
 						<h1>{ list.Name }</h1>
 						if list.Description != "" {
-							<p class="hero-lede">{ list.Description }</p>
+							<p class="text-xl max-w-[48ch] mb-3">{ list.Description }</p>
 						}
-						<p class="hero-meta">{ itemSummary(list.Items) }</p>
+						<p class="text-sm text-pine-100">{ itemSummary(list.Items) }</p>
 					</div>
-					<div class="actions">
-						<a class="btn btn-secondary" href={ "/sharing/packing-list/" + list.ID }>Sharing</a>
-						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
+<<<<<<< HEAD
+					<div class="flex flex-wrap items-center gap-2 sm:pt-6">
 						<button
-							class="btn btn-accent"
+							class="btn btn-accent max-sm:flex-auto"
 							hx-post="/packing-list/start-session"
 							hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
 							hx-vals={ `{"listId":"` + list.ID + `"}` }
 						>Start session</button>
+						@PageMenu("More") {
+							@MenuLink("/packing-list/"+list.ID+"/edit", "Edit list")
+							@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
+							if list.UserID == auth.Subject(ctx) {
+								@MenuSeparator()
+								@MenuButton("Delete list", true, confirmDelete("/packing-list/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Sessions you already started keep their own copy."))
+							}
+						}
+=======
+					<div class="actions">
+						<a class="btn btn-secondary" href={ "/sharing/packing-list/" + list.ID }>Sharing</a>
+						<a class="btn btn-secondary" href={ "/packing-lists/" + list.ID + "/edit" }>Edit</a>
+						<form method="post" action="/packing-lists/start-session" hx-post="/packing-lists/start-session">
+							<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ list.ID }/>
+							<div class="field"><label for="trip-name">Trip name</label><input id="trip-name" name="name" value={ list.Name + " – " + time.Now().Format("Jan 2, 2006") } required maxlength="200"/></div>
+							<button class="btn btn-accent">Start trip</button>
+						</form>
+>>>>>>> origin/develop
 					</div>
 				</div>
 			</div>
-			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
+			<p class="text-muted max-w-[60ch]">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
+<<<<<<< HEAD
+		<section class="mt-8">
+=======
 		<section>
+			<datalist id="list-categories">
+				for _, category := range categories(list.Items,2000) {
+					<option value={ category }></option>
+				}
+			</datalist>
+>>>>>>> origin/develop
 			@ListItemForm(form, csrfToken)
 		</section>
-		<section>
+		<section class="mt-8">
 			<div class="card">
 				if len(list.Items) == 0 {
-					<p class="muted">No items yet. Add your first item above.</p>
+					<p class="text-muted mb-3">No items yet. Add your first item above.</p>
 				}
-				<ul class="item-list columns">
+				<ul class="columns-[17rem] gap-x-8">
 					for _, item := range list.Items {
 						@ItemRow(list.ID, item, csrfToken)
 					}
 				</ul>
 			</div>
 		</section>
+<<<<<<< HEAD
+		<section class="mt-8">
+			<section class="card" x-data="{ editing: false }">
+				<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
+					<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
+						<h2>Prepare before your next trip</h2>
+						<p class="text-muted mb-3">Tasks from trip reviews and your own notes. Mark one done once it is handled; done tasks start every new trip as handled.</p>
+					</div>
+					if len(list.Tasks) > 0 {
+						<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
+							<button type="button" class="btn btn-secondary btn-sm" x-on:click="editing = !editing" x-bind:aria-pressed="editing" x-text="editing ? 'Done editing' : 'Edit tasks'">Edit tasks</button>
+						</div>
+					}
+				</div>
+				if len(list.Tasks) == 0 {
+					<p class="text-muted mb-3">No tasks yet.</p>
+				} else {
+					<ul>
+						for _, task := range list.Tasks {
+							@PreparationTaskRow(list, task, csrfToken)
+						}
+					</ul>
+				}
+				<form class="flex flex-wrap items-end gap-3 my-3" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
+					<div class="grid gap-1 grow basis-56"><label class="sr-only" for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Add a task, like buying fuel" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+=======
 		<section>
 			<section class="card">
 				<h2>Prepare before your next trip</h2>
 				for _, task := range list.Tasks {
-					<form class="task-row" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+					<form class="task-row" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 						<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/><input type="hidden" name="taskId" value={ task.ID }/>
 						<label class="sr-only" for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
-						<label><input type="checkbox" name="done" value="true" checked?={ task.Done }/>Prepared</label>
+						@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
 						<button class="btn btn-secondary btn-sm" name="action" value="save">Save task</button><button
 	class="btn btn-danger btn-sm"
 	name="action"
 	value="remove"
 	formnovalidate
-	hx-post={ "/packing-list/" + list.ID + "/preparation/edit" }
+	hx-post={ "/packing-lists/" + list.ID + "/preparation/edit" }
 	hx-include="closest form"
 	hx-vals={ `{"action":"remove"}` }
 	hx-confirm="Remove this preparation task?"
@@ -66,33 +128,75 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 >Remove task</button>
 					</form>
 				}
-				<form class="task-add" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+				<form class="task-add" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
 					<div class="field"><label for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Buy fuel" required maxlength="200"/></div>
+					@ScopeSelect("scope", "new-task-scope", "", false)
+>>>>>>> origin/develop
 					<button class="btn btn-secondary">Add task</button>
 				</form>
-				<p class="muted">Preparation and packing are separate: buying fuel does not mark your stove as packed.</p>
-				<h3>Improvements from trip reviews</h3>
-				<ul class="task-list">
-					for _, change := range list.Changes {
-						<li>{ change }</li>
-					}
-				</ul>
+				<p class="text-muted">Doing a task packs nothing: buying fuel does not mark your stove as packed.</p>
+				if len(list.Changes) > 0 {
+					<h3>Improvements from trip reviews</h3>
+					<ul>
+						for _, change := range list.Changes {
+							<li class="py-2 border-b border-sand-100 font-bold last:border-b-0">{ change }</li>
+						}
+					</ul>
+				}
 			</section>
 		</section>
 	}
 }
 
+// PreparationTaskRow is one task on the reusable list. Normally it is a
+// checklist row that toggles done like a packing row; while the card is in
+// edit mode it becomes a rename field with Save and Remove. Everything posts
+// to the existing preparation endpoint.
+templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string) {
+	<li class="item-row py-0">
+		<form class="pack-form w-full" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" } x-show="!editing">
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="revision" value={ list.Revision() }/>
+			<input type="hidden" name="taskId" value={ task.ID }/>
+			<input type="hidden" name="name" value={ task.Name }/>
+			<input type="hidden" name="action" value="save"/>
+			<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
+			<button type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
+				<span class="tick" aria-hidden="true"></span>
+				<span class="pack-name">{ task.Name }</span>
+				<span class="pack-action">
+					if task.Done {
+						Undo
+					} else {
+						Mark done
+					}
+				</span>
+			</button>
+		</form>
+		<form class="flex flex-wrap items-end gap-3 my-2 w-full" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" } x-show="editing" x-cloak>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="revision" value={ list.Revision() }/>
+			<input type="hidden" name="taskId" value={ task.ID }/>
+			<input type="hidden" name="action" value="save"/>
+			<input type="hidden" name="done" value={ strconv.FormatBool(task.Done) }/>
+			<div class="grid gap-1 grow basis-56"><label class="sr-only" for={ "task-" + task.ID }>Task name</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+			<button class="btn btn-primary btn-sm">Save</button>
+			<button type="button" class="btn btn-danger btn-sm" { removeTaskAttrs(list, task, csrfToken)... }>Remove</button>
+		</form>
+	</li>
+}
+
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
-	<h2 class="section-title">Add an item</h2>
+	<h2 class="mb-3">Add an item</h2>
 	<div class="card">
 		<form action={ form.Action } method="POST" hx-boost="true">
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			@ItemFields(form, "new")
+			@ItemFields(form, "new", false)
 			if len(form.Error) > 0 {
 				@ErrorBanner(form.Error)
 			}
-			<div class="form-actions">
+			<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
 				<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
 			</div>
 		</form>
@@ -100,38 +204,58 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 }
 
 // ItemFields is the name and category pair shared by the add and edit forms.
-templ ItemFields(form packing.CreateItemForm, suffix string) {
+// stacked puts the fields under each other for the inline edit row.
+templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 	<input type="hidden" name="revision" value={ form.Revision }/>
-	<div class="field-grid">
-		<div class={ "field", templ.KV("field-error", form.NameHasError()) }>
-			<label for={ "item-name-" + suffix }>Name</label>
-			<input type="text" id={ "item-name-" + suffix } name="name" placeholder="Headlamp" value={ form.Name }/>
+	<div class={ "grid", templ.KV("gap-3 mb-3", stacked), templ.KV("gap-4 mb-4 sm:grid-cols-[1fr_1fr]", !stacked) }>
+		<div class="grid gap-1">
+			<label for={ "item-name-" + suffix } class="text-sm font-bold">Name</label>
+			<input
+				type="text"
+				id={ "item-name-" + suffix }
+				name="name"
+				placeholder="Headlamp"
+				value={ form.Name }
+				class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				if form.NameHasError() {
+					aria-invalid="true"
+				}
+			/>
 		</div>
+<<<<<<< HEAD
+		<div class="grid gap-1">
+			<label for={ "item-category-" + suffix } class="text-sm font-bold">Category</label>
+			<input type="text" id={ "item-category-" + suffix } name="category" placeholder="Light" value={ form.Category } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+=======
 		<div class="field">
 			<label for={ "item-category-" + suffix }>Category</label>
-			<input type="text" id={ "item-category-" + suffix } name="category" placeholder="Light" value={ form.Category }/>
+			<input type="text" id={ "item-category-" + suffix } name="category" list="list-categories" placeholder="Light" value={ form.Category }/>
+		</div>
+		<div class="field">
+			<label for={ "item-scope-" + suffix }>Who is this for?</label>@ScopeSelect("scope", "item-scope-"+suffix, form.Scope, false)
+>>>>>>> origin/develop
 		</div>
 	</div>
 }
 
 // ItemRow is one item on the details page. Edit swaps it for ItemEditRow in place.
 templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
-	<li class="item-row" id={ "item-" + item.ID }>
-		<span class="item-name">{ item.Name }</span>
+	<li class="item-row break-inside-avoid" id={ "item-" + item.ID }>
+		<span class="font-bold min-w-0 wrap-anywhere">{ item.Name }</span>
 		if item.Category != "" {
-			<span class="tag">{ item.Category }</span>
+			<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ item.Category }</span>
 		}
-		<div class="actions">
+		<div class="flex flex-wrap items-center gap-2 ml-auto">
 			<a
 				class="btn btn-secondary btn-sm"
-				href={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
-				hx-get={ "/packing-list/" + listID + "/items/" + item.ID + "/edit" }
+				href={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
+				hx-get={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
 				hx-target="closest li"
 				hx-swap="outerHTML"
 			>Edit</a>
 			<button
 				class="btn btn-danger btn-sm"
-				hx-delete={ "/packing-list/" + listID + "/remove-item/" + item.ID }
+				hx-delete={ "/packing-lists/" + listID + "/remove-item/" + item.ID }
 				hx-headers={ templ.JSONString(map[string]string{"X-CSRF-Token": csrfToken, "X-Camplist-Revision": item.SourceRevision}) }
 				hx-confirm="Delete this item?"
 				data-confirm-action="Delete item"
@@ -140,11 +264,12 @@ templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
 	</li>
 }
 
-// ItemEditRow replaces ItemRow while an item is being edited.
+// ItemEditRow replaces ItemRow while an item is being edited: the row becomes
+// a stacked form inside its column.
 templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csrfToken string) {
-	<li class="item-row item-row-edit" id={ "item-" + itemID }>
+	<li class="item-row block break-inside-avoid" id={ "item-" + itemID }>
 		<form
-			class="item-edit-form"
+			class="w-full"
 			action={ form.Action }
 			method="POST"
 			hx-post={ form.Action }
@@ -152,15 +277,15 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 			hx-swap="outerHTML"
 		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			@ItemFields(form, itemID)
+			@ItemFields(form, itemID, true)
 			if len(form.Error) > 0 {
 				@ErrorBanner(form.Error)
 			}
-			<div class="form-actions">
+			<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
 				<a
 					class="btn btn-secondary btn-sm"
-					href={ "/packing-list/" + listID }
-					hx-get={ "/packing-list/" + listID + "/items/" + itemID }
+					href={ "/packing-lists/" + listID }
+					hx-get={ "/packing-lists/" + listID + "/items/" + itemID }
 					hx-target="closest li"
 					hx-swap="outerHTML"
 				>Cancel</a>
@@ -173,22 +298,47 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 // EditItemPage is the fallback for editing an item without scripts.
 templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout("Edit item", csrfToken) {
+<<<<<<< HEAD
+		<section class="max-w-[560px]">
+			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">{ list.Name }</p>
+=======
+		<datalist id="list-categories">
+			for _, category := range categories(list.Items,2000) {
+				<option value={ category }></option>
+			}
+		</datalist>
 		<section class="narrow">
 			<p class="eyebrow">{ list.Name }</p>
+>>>>>>> origin/develop
 			<h1>Edit item</h1>
 			<div class="card">
 				<form action={ form.Action } method="POST" hx-boost="true">
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
-					@ItemFields(form, "edit")
+					@ItemFields(form, "edit", false)
 					if len(form.Error) > 0 {
 						@ErrorBanner(form.Error)
 					}
-					<div class="form-actions">
+<<<<<<< HEAD
+					<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
 						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID }>Cancel</a>
+=======
+					<div class="form-actions">
+						<a class="btn btn-secondary" href={ "/packing-lists/" + list.ID }>Cancel</a>
+>>>>>>> origin/develop
 						<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
 					</div>
 				</form>
 			</div>
 		</section>
 	}
+}
+
+templ ScopeSelect(name string, id string, scope string, personal bool) {
+	<select name={ name } id={ id } aria-label="Who is this for?">
+		<option value="shared" selected?={ scope=="" || scope=="shared" }>Shared</option>
+		if personal {
+			<option value="mine" selected?={ scope=="mine" }>Just for me</option>
+		}
+		<option value="person" selected?={ scope=="person" }>For each person</option>
+	</select>
 }

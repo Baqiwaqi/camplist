@@ -1,0 +1,7 @@
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
+WORKDIR /app
+COPY probe /app/probe
+COPY static/ /app/static/
+USER nonroot:nonroot
+EXPOSE 3000
+ENTRYPOINT ["/app/probe"]

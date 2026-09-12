@@ -1,0 +1,570 @@
+{
+  "cost": 234,
+  "interval": "PT1M",
+  "namespace": "Microsoft.App/containerApps",
+  "resourceregion": "westeurope",
+  "timespan": "2026-09-12T16:27:04Z/2026-09-12T17:07:04Z",
+  "value": [
+    {
+      "displayDescription": "CPU consumed by the container app, in nano cores. 1,000,000,000 nano cores = 1 core",
+      "errorCode": "Success",
+      "id": "/subscriptions/986c176d-46ed-4e07-9016-cd3c56ab3f03/resourceGroups/rg-camplist-prod/providers/Microsoft.App/containerApps/camplist-stream-probe/providers/Microsoft.Insights/metrics/UsageNanoCores",
+      "name": {
+        "localizedValue": "CPU Usage",
+        "value": "UsageNanoCores"
+      },
+      "resourceGroup": "rg-camplist-prod",
+      "timeseries": [
+        {
+          "data": [
+            {
+              "timeStamp": "2026-09-12T16:27:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:28:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:29:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:30:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:31:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:32:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:33:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:34:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:35:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:36:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:37:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:38:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:39:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:40:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:41:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:42:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:43:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:44:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:45:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:46:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:47:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:48:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:49:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:50:00Z"
+            },
+            {
+              "average": 23920655.5,
+              "maximum": 61648896.0,
+              "timeStamp": "2026-09-12T16:51:00Z"
+            },
+            {
+              "average": 7064853.75,
+              "maximum": 9519204.0,
+              "timeStamp": "2026-09-12T16:52:00Z"
+            },
+            {
+              "average": 6716909.0,
+              "maximum": 8800000.0,
+              "timeStamp": "2026-09-12T16:53:00Z"
+            },
+            {
+              "average": 5366948.0,
+              "maximum": 7736434.0,
+              "timeStamp": "2026-09-12T16:54:00Z"
+            },
+            {
+              "average": 7209266.5,
+              "maximum": 12733784.0,
+              "timeStamp": "2026-09-12T16:55:00Z"
+            },
+            {
+              "average": 6254661.75,
+              "maximum": 7976653.0,
+              "timeStamp": "2026-09-12T16:56:00Z"
+            },
+            {
+              "average": 5403428.25,
+              "maximum": 5866168.0,
+              "timeStamp": "2026-09-12T16:57:00Z"
+            },
+            {
+              "average": 5386474.5,
+              "maximum": 8407107.0,
+              "timeStamp": "2026-09-12T16:58:00Z"
+            },
+            {
+              "average": 4865923.75,
+              "maximum": 5577136.0,
+              "timeStamp": "2026-09-12T16:59:00Z"
+            },
+            {
+              "average": 8864368.25,
+              "maximum": 24887711.0,
+              "timeStamp": "2026-09-12T17:00:00Z"
+            },
+            {
+              "average": 4980063.5,
+              "maximum": 9064291.0,
+              "timeStamp": "2026-09-12T17:01:00Z"
+            },
+            {
+              "average": 4742010.5,
+              "maximum": 5078196.0,
+              "timeStamp": "2026-09-12T17:02:00Z"
+            },
+            {
+              "average": 23559604.5,
+              "maximum": 125515886.0,
+              "timeStamp": "2026-09-12T17:03:00Z"
+            },
+            {
+              "average": 20966176.5,
+              "maximum": 127098901.0,
+              "timeStamp": "2026-09-12T17:04:00Z"
+            },
+            {
+              "average": 7917479.25,
+              "maximum": 9036526.0,
+              "timeStamp": "2026-09-12T17:05:00Z"
+            },
+            {
+              "average": 7901653.5,
+              "maximum": 16711417.0,
+              "timeStamp": "2026-09-12T17:06:00Z"
+            }
+          ],
+          "metadatavalues": []
+        }
+      ],
+      "type": "Microsoft.Insights/metrics",
+      "unit": "NanoCores"
+    },
+    {
+      "displayDescription": "Container App working set memory used in bytes.",
+      "errorCode": "Success",
+      "id": "/subscriptions/986c176d-46ed-4e07-9016-cd3c56ab3f03/resourceGroups/rg-camplist-prod/providers/Microsoft.App/containerApps/camplist-stream-probe/providers/Microsoft.Insights/metrics/WorkingSetBytes",
+      "name": {
+        "localizedValue": "Memory Working Set Bytes",
+        "value": "WorkingSetBytes"
+      },
+      "resourceGroup": "rg-camplist-prod",
+      "timeseries": [
+        {
+          "data": [
+            {
+              "timeStamp": "2026-09-12T16:27:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:28:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:29:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:30:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:31:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:32:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:33:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:34:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:35:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:36:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:37:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:38:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:39:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:40:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:41:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:42:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:43:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:44:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:45:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:46:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:47:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:48:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:49:00Z"
+            },
+            {
+              "timeStamp": "2026-09-12T16:50:00Z"
+            },
+            {
+              "average": 35079168.0,
+              "maximum": 45948928.0,
+              "timeStamp": "2026-09-12T16:51:00Z"
+            },
+            {
+              "average": 47474688.0,
+              "maximum": 49147904.0,
+              "timeStamp": "2026-09-12T16:52:00Z"
+            },
+            {
+              "average": 49762304.0,
+              "maximum": 50302976.0,
+              "timeStamp": "2026-09-12T16:53:00Z"
+            },
+            {
+              "average": 51103744.0,
+              "maximum": 51462144.0,
+              "timeStamp": "2026-09-12T16:54:00Z"
+            },
+            {
+              "average": 53580800.0,
+              "maximum": 54329344.0,
+              "timeStamp": "2026-09-12T16:55:00Z"
+            },
+            {
+              "average": 54629376.0,
+              "maximum": 54853632.0,
+              "timeStamp": "2026-09-12T16:56:00Z"
+            },
+            {
+              "average": 55143424.0,
+              "maximum": 55349248.0,
+              "timeStamp": "2026-09-12T16:57:00Z"
+            },
+            {
+              "average": 57300992.0,
+              "maximum": 58060800.0,
+              "timeStamp": "2026-09-12T16:58:00Z"
+            },
+            {
+              "average": 57879552.0,
+              "maximum": 58236928.0,
+              "timeStamp": "2026-09-12T16:59:00Z"
+            },
+            {
+              "average": 57487360.0,
+              "maximum": 60121088.0,
+              "timeStamp": "2026-09-12T17:00:00Z"
+            },
+            {
+              "average": 56851456.0,
+              "maximum": 56938496.0,
+              "timeStamp": "2026-09-12T17:01:00Z"
+            },
+            {
+              "average": 57076736.0,
+              "maximum": 57159680.0,
+              "timeStamp": "2026-09-12T17:02:00Z"
+            },
+            {
+              "average": 49579349.333333336,
+              "maximum": 57303040.0,
+              "timeStamp": "2026-09-12T17:03:00Z"
+            },
+            {
+              "average": 49900544.0,
+              "maximum": 57376768.0,
+              "timeStamp": "2026-09-12T17:04:00Z"
+            },
+            {
+              "average": 50792448.0,
+              "maximum": 51793920.0,
+              "timeStamp": "2026-09-12T17:05:00Z"
+            },
+            {
+              "average": 52313088.0,
+              "maximum": 53960704.0,
+              "timeStamp": "2026-09-12T17:06:00Z"
+            }
+          ],
+          "metadatavalues": []
+        }
+      ],
+      "type": "Microsoft.Insights/metrics",
+      "unit": "Bytes"
+    },
+    {
+      "displayDescription": "Number of replicas count of container app",
+      "errorCode": "Success",
+      "id": "/subscriptions/986c176d-46ed-4e07-9016-cd3c56ab3f03/resourceGroups/rg-camplist-prod/providers/Microsoft.App/containerApps/camplist-stream-probe/providers/Microsoft.Insights/metrics/Replicas",
+      "name": {
+        "localizedValue": "Replica Count",
+        "value": "Replicas"
+      },
+      "resourceGroup": "rg-camplist-prod",
+      "timeseries": [
+        {
+          "data": [
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:27:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:28:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:29:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:30:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:31:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:32:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:33:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:34:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:35:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:36:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:37:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:38:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:39:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:40:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:41:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:42:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:43:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:44:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:45:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:46:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:47:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:48:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:49:00Z"
+            },
+            {
+              "average": 0.0,
+              "maximum": 0.0,
+              "timeStamp": "2026-09-12T16:50:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:51:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:52:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:53:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:54:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:55:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:56:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:57:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:58:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T16:59:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:00:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:01:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:02:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:03:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:04:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:05:00Z"
+            },
+            {
+              "average": 1.0,
+              "maximum": 1.0,
+              "timeStamp": "2026-09-12T17:06:00Z"
+            }
+          ],
+          "metadatavalues": []
+        }
+      ],
+      "type": "Microsoft.Insights/metrics",
+      "unit": "Count"
+    }
+  ]
+}

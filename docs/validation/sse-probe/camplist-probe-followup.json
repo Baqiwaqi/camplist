@@ -1,0 +1,31 @@
+{
+  "started": "2026-09-12T17:04:39.830Z",
+  "checks": [
+    "fixture sign-in owner",
+    "fixture sign-in member",
+    "member rejoins through invitation request and owner approval",
+    "stale disagreement requires explicit conflict review",
+    "keeping shared state preserves server value",
+    "fixture sign-in stranger",
+    "account switch blocks synchronization of another account copy"
+  ],
+  "quietStart": {
+    "connections": 2,
+    "dbRequests": 93,
+    "opened": 8,
+    "published": 2,
+    "replica": "camplist-stream-probe--0000001-856944545-6bw88",
+    "requests": 117,
+    "ru": 171.01
+  },
+  "quietEnd": {
+    "connections": 2,
+    "dbRequests": 101,
+    "opened": 8,
+    "published": 2,
+    "replica": "camplist-stream-probe--0000001-856944545-6bw88",
+    "requests": 122,
+    "ru": 179.21
+  },
+  "finished": "2026-09-12T17:05:50.302Z"
+}

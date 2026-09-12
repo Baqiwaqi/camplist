@@ -1,0 +1,47 @@
+{
+  "samples": [
+    {
+      "at": "2026-09-12T17:16:15.381Z",
+      "count": 1
+    },
+    {
+      "at": "2026-09-12T17:16:47.713Z",
+      "count": 1
+    },
+    {
+      "at": "2026-09-12T17:17:19.630Z",
+      "count": 1
+    },
+    {
+      "at": "2026-09-12T17:17:52.087Z",
+      "count": 1
+    },
+    {
+      "at": "2026-09-12T17:18:24.757Z",
+      "count": 1
+    },
+    {
+      "at": "2026-09-12T17:18:57.140Z",
+      "count": 0
+    }
+  ],
+  "idleStarted": "2026-09-12T17:16:13.493Z",
+  "scaledToZero": true,
+  "coldFirstResponseMs": 21688,
+  "coldReadyMs": 22379,
+  "coldRecovered": true,
+  "coldStats": {
+    "connections": 0,
+    "dbRequests": 4,
+    "opened": 1,
+    "published": 0,
+    "replica": "camplist-stream-probe--0000001-856944545-nlw92",
+    "requests": 23,
+    "ru": 3.42
+  },
+  "harnessNote": "cleanup.ok is not a function after first cleanup HTTP request; reporting check corrected and cleanup repeated",
+  "cleanupVerification": {
+    "deleted": 0
+  },
+  "finished": "2026-09-12T17:19:53.665Z"
+}

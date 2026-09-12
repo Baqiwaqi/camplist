@@ -1,0 +1,23 @@
+{
+  "started": "2026-09-12T17:02:24.037Z",
+  "before": {
+    "connections": 2,
+    "dbRequests": 328,
+    "opened": 6,
+    "published": 9,
+    "replica": "camplist-stream-probe--ja8c2x1-9f5b5846-795hv",
+    "requests": 150,
+    "ru": 503.7
+  },
+  "after": {
+    "connections": 2,
+    "dbRequests": 13,
+    "opened": 2,
+    "published": 0,
+    "replica": "camplist-stream-probe--0000001-856944545-6bw88",
+    "requests": 18,
+    "ru": 12.3
+  },
+  "automaticReconnect": true,
+  "finished": "2026-09-12T17:03:37.023Z"
+}

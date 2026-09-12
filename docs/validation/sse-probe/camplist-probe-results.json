@@ -1,0 +1,177 @@
+{
+  "started": "2026-09-12T16:51:18.411Z",
+  "checks": [
+    "two isolated browser accounts connected through ACA",
+    "simultaneous edits on different items converge",
+    "offline change remains visible locally",
+    "offline queue synchronizes on reconnect",
+    "lost notification recovers through fallback polling",
+    "simulated background closes member SSE connection",
+    "simulated foreground refreshes current state",
+    "two browsers exercised over more than ten minutes",
+    "reconciliation survives revision replacement",
+    "expired fixture session produces sign-in state",
+    "revocation stops uploads and shows access-removed status",
+    "revoked member retains exportable pending work",
+    "different account cannot read the trip",
+    "cross-origin stream request rejected",
+    "unauthenticated stream request rejected"
+  ],
+  "latencies": [
+    304,
+    314,
+    313,
+    315,
+    52,
+    201
+  ],
+  "stats": [
+    {
+      "label": "start",
+      "at": "2026-09-12T16:51:21.367Z",
+      "connections": 2,
+      "dbRequests": 18,
+      "opened": 2,
+      "published": 0,
+      "replica": "camplist-stream-probe--ja8c2x1-9f5b5846-795hv",
+      "requests": 44,
+      "ru": 50.95
+    },
+    {
+      "label": "five-minute-quiet",
+      "at": "2026-09-12T16:56:21.489Z",
+      "connections": 2,
+      "dbRequests": 119,
+      "opened": 3,
+      "published": 0,
+      "replica": "camplist-stream-probe--ja8c2x1-9f5b5846-795hv",
+      "requests": 68,
+      "ru": 150.95
+    },
+    {
+      "label": "after-edits",
+      "at": "2026-09-12T16:57:21.487Z",
+      "connections": 2,
+      "dbRequests": 216,
+      "opened": 4,
+      "published": 8,
+      "replica": "camplist-stream-probe--ja8c2x1-9f5b5846-795hv",
+      "requests": 116,
+      "ru": 373.66
+    },
+    {
+      "label": "ten-minute",
+      "at": "2026-09-12T17:02:23.534Z",
+      "connections": 2,
+      "dbRequests": 328,
+      "opened": 6,
+      "published": 9,
+      "replica": "camplist-stream-probe--ja8c2x1-9f5b5846-795hv",
+      "requests": 149,
+      "ru": 503.7
+    },
+    {
+      "label": "before-close",
+      "at": "2026-09-12T17:03:56.752Z",
+      "connections": 1,
+      "dbRequests": 66,
+      "opened": 6,
+      "published": 2,
+      "replica": "camplist-stream-probe--0000001-856944545-6bw88",
+      "requests": 65,
+      "ru": 97.11
+    },
+    {
+      "label": "clients-closed",
+      "at": "2026-09-12T17:03:57.888Z",
+      "connections": 0,
+      "dbRequests": 66,
+      "opened": 6,
+      "published": 2,
+      "replica": "camplist-stream-probe--0000001-856944545-6bw88",
+      "requests": 66,
+      "ru": 97.11
+    }
+  ],
+  "minute1": {
+    "owner": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 0
+    },
+    "member": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 1
+    }
+  },
+  "minute2": {
+    "owner": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 0
+    },
+    "member": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 1
+    }
+  },
+  "minute3": {
+    "owner": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 0
+    },
+    "member": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 1
+    }
+  },
+  "minute4": {
+    "owner": {
+      "events": 1,
+      "opened": 1,
+      "errors": 1,
+      "blocked": null,
+      "refreshes": 0
+    },
+    "member": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 1
+    }
+  },
+  "minute5": {
+    "owner": {
+      "events": 2,
+      "opened": 2,
+      "errors": 1,
+      "blocked": null,
+      "refreshes": 1
+    },
+    "member": {
+      "events": 1,
+      "opened": 1,
+      "errors": 0,
+      "blocked": null,
+      "refreshes": 1
+    }
+  },
+  "finished": "2026-09-12T17:03:57.888Z"
+}

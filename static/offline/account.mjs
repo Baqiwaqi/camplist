@@ -1,3 +1,4 @@
+import './probe.mjs';
 import { mountSession } from './session.mjs';
 import { openDatabase } from './db.mjs';
 import { OfflinePacking } from './packing.mjs';

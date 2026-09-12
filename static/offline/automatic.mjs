@@ -3,6 +3,7 @@ export class AutomaticPacking {
  constructor(packing, changed, events = window) {
   this.packing=packing;this.changed=changed;this.events=events;
   this.reconnect=()=>{this.sync().catch(error=>this.changed(null,error));};
+  this.liveRefresh=async()=>{this.dirty=true;if(this.refreshing)return;this.refreshing=true;try{while(this.dirty){this.dirty=false;await this.sync();if(window.__probe)window.__probe.refreshes++;}}catch(error){this.changed(null,error);}finally{this.refreshing=false;}};
   this.disconnected=()=>{this.notify().catch(error=>this.changed(null,error));};
  }
  async save(session) {
@@ -10,6 +11,7 @@ export class AutomaticPacking {
   await this.packing.save(this.owner,session);
   await this.notify();
   this.events.addEventListener('online',this.reconnect);
+  this.events.addEventListener('probe:refresh',this.liveRefresh);
   this.events.addEventListener('offline',this.disconnected);
   this.events.addEventListener('focus',this.reconnect);
   this.timer=setInterval(async()=>{
@@ -18,7 +20,7 @@ export class AutomaticPacking {
     const view=await this.packing.open(this.owner,this.id);
     if(view?.issue==='network'||(!view?.issue&&(view?.pending||view?.session.shared)))await this.sync();
    }catch(error){this.changed(null,error);}
-  },15000);
+  },60000);
   this.reconnect();
  }
  async set(itemId,checked) {
@@ -37,6 +39,7 @@ export class AutomaticPacking {
  stop() {
   clearInterval(this.timer);
   this.events.removeEventListener('online',this.reconnect);
+  this.events.removeEventListener('probe:refresh',this.liveRefresh);
   this.events.removeEventListener('offline',this.disconnected);
   this.events.removeEventListener('focus',this.reconnect);
  }

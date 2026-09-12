@@ -11,3 +11,5 @@ tmp/
 
 # browser test dependencies
 node_modules/
+
+/probe

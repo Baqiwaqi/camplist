@@ -1,0 +1,188 @@
+{
+  "cost": 39,
+  "interval": "PT1M",
+  "namespace": "Microsoft.App/containerApps",
+  "resourceregion": "westeurope",
+  "timespan": "2026-09-12T16:27:05Z/2026-09-12T17:07:05Z",
+  "value": [
+    {
+      "displayDescription": "Requests processed",
+      "errorCode": "Success",
+      "id": "/subscriptions/986c176d-46ed-4e07-9016-cd3c56ab3f03/resourceGroups/rg-camplist-prod/providers/Microsoft.App/containerApps/camplist-stream-probe/providers/Microsoft.Insights/metrics/Requests",
+      "name": {
+        "localizedValue": "Requests",
+        "value": "Requests"
+      },
+      "resourceGroup": "rg-camplist-prod",
+      "timeseries": [
+        {
+          "data": [
+            {
+              "timeStamp": "2026-09-12T16:27:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:28:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:29:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:30:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:31:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:32:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:33:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:34:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:35:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:36:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:37:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:38:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:39:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:40:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:41:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:42:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:43:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:44:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:45:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:46:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:47:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:48:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:49:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:50:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:51:00Z",
+              "total": 0.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:52:00Z",
+              "total": 42.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:53:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:54:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:55:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:56:00Z",
+              "total": 7.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:57:00Z",
+              "total": 47.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:58:00Z",
+              "total": 15.0
+            },
+            {
+              "timeStamp": "2026-09-12T16:59:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:00:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:01:00Z",
+              "total": 4.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:02:00Z",
+              "total": 7.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:03:00Z",
+              "total": 6.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:04:00Z",
+              "total": 47.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:05:00Z",
+              "total": 24.0
+            },
+            {
+              "timeStamp": "2026-09-12T17:06:00Z",
+              "total": 49.0
+            }
+          ],
+          "metadatavalues": []
+        }
+      ],
+      "type": "Microsoft.Insights/metrics",
+      "unit": "Count"
+    }
+  ]
+}

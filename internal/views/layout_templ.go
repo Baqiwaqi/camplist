@@ -168,11 +168,11 @@ func NavLinks(panel bool) templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = NavLink("/trips", "Trips", isCurrentPage(ctx, "/trips", "/trips/", "/sessions", "/trips/"), panel).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NavLink("/trips", "Trips", isCurrentPage(ctx, "/trips", "/trips/", "/sessions", "/packing-session/"), panel).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NavLink("/packing-lists", "Packing lists", isCurrentPage(ctx, "/packing-lists", "/packing-lists/", "/", "/packing-lists/"), panel).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = NavLink("/packing-lists", "Packing lists", isCurrentPage(ctx, "/packing-lists", "/packing-lists/", "/", "/packing-list/"), panel).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

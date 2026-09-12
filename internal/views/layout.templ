@@ -110,8 +110,8 @@ templ Layout(title string, csrfToken string) {
 // panel each link becomes a full-width row. The current section is underlined
 // in pine, or set in pine in the panel.
 templ NavLinks(panel bool) {
-	@NavLink("/trips", "Trips", isCurrentPage(ctx, "/trips", "/trips/", "/sessions", "/trips/"), panel)
-	@NavLink("/packing-lists", "Packing lists", isCurrentPage(ctx, "/packing-lists", "/packing-lists/", "/", "/packing-lists/"), panel)
+	@NavLink("/trips", "Trips", isCurrentPage(ctx, "/trips", "/trips/", "/sessions", "/packing-session/"), panel)
+	@NavLink("/packing-lists", "Packing lists", isCurrentPage(ctx, "/packing-lists", "/packing-lists/", "/", "/packing-list/"), panel)
 }
 
 templ NavLink(href string, label string, current bool, panel bool) {

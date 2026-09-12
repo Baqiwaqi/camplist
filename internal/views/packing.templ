@@ -10,15 +10,10 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
 					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Your lists</p>
 					<h1>Where to next?</h1>
-					<p class="text-muted max-w-[60ch]">Keep reusable lists for your camping trips. Start a fresh packing session each time you go.</p>
+					<p class="text-muted max-w-[60ch]">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p>
 				</div>
-<<<<<<< HEAD
 				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
-					<a class="btn btn-primary max-sm:flex-auto" href="/packing-list/new">Create list</a>
-=======
-				<div class="actions">
-					<a class="btn btn-primary" href="/packing-lists/new">Create list</a>
->>>>>>> origin/develop
+					<a class="btn btn-primary max-sm:flex-auto" href="/packing-lists/new">Create list</a>
 				</div>
 			</div>
 			if len(lists) == 0 {
@@ -31,15 +26,9 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 					if list.IsShared() {
 						<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
 					}
-<<<<<<< HEAD
 					<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
 						<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-							<h2><a class="no-underline" href={ "/packing-list/" + list.ID }>{ list.Name }</a></h2>
-=======
-					<div class="card-head">
-						<div>
-							<h2><a href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
->>>>>>> origin/develop
+							<h2><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
 							if list.Description != "" {
 								<p class="text-muted mb-3">{ list.Description }</p>
 							}
@@ -50,30 +39,15 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 								}
 							</div>
 						</div>
-<<<<<<< HEAD
 						<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-							<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/packing-list/" + list.ID }>Open</a>
+							<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/packing-lists/" + list.ID }>Open</a>
 							@Menu("More") {
-								@MenuLink("/packing-list/"+list.ID+"/edit", "Edit list")
+								@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
 								@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
 								if list.UserID == auth.Subject(ctx) {
 									@MenuSeparator()
-									@MenuButton("Delete list", true, confirmDelete("/packing-list/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Sessions you already started keep their own copy."))
+									@MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
 								}
-=======
-						<div class="actions">
-							<a class="btn btn-secondary btn-sm" href={ "/packing-lists/" + list.ID + "/edit" }>Edit</a>
-							<a class="btn btn-secondary btn-sm" href={ "/packing-lists/" + list.ID }>Details</a>
-							if list.UserID==auth.Subject(ctx) {
-								<button
-									class="btn btn-danger btn-sm"
-									hx-delete={ "/packing-lists/" + list.ID }
-									hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
-									hx-confirm="Delete this list?"
-									data-confirm-action="Delete list"
-									data-confirm-detail="Sessions you already started keep their own copy."
-								>Delete</button>
->>>>>>> origin/develop
 							}
 						</div>
 					</div>

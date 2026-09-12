@@ -106,13 +106,12 @@ templ Layout(title string, csrfToken string) {
 	}
 }
 
-<<<<<<< HEAD
 // NavLinks renders the primary sections of the app header. In the phone
 // panel each link becomes a full-width row. The current section is underlined
 // in pine, or set in pine in the panel.
 templ NavLinks(panel bool) {
-	@NavLink("/", "Lists", isCurrentPage(ctx, "/", "/packing-list/"), panel)
-	@NavLink("/sessions", "Sessions", isCurrentPage(ctx, "/sessions", "/packing-session/"), panel)
+	@NavLink("/trips", "Trips", isCurrentPage(ctx, "/trips", "/trips/", "/sessions", "/trips/"), panel)
+	@NavLink("/packing-lists", "Packing lists", isCurrentPage(ctx, "/packing-lists", "/packing-lists/", "/", "/packing-lists/"), panel)
 }
 
 templ NavLink(href string, label string, current bool, panel bool) {
@@ -143,13 +142,6 @@ templ AccountMenu(csrfToken string) {
 // AccountLinks is the flat version of the account menu for the phone panel.
 templ AccountLinks(csrfToken string) {
 	<a class="block w-full py-3 text-left border-b border-sand-100 font-bold no-underline" href="/offline">Saved on this device</a>
-=======
-// NavLinks renders twice: inline for wide screens and inside the phone menu.
-// The stylesheet shows only one copy at a time.
-templ NavLinks(csrfToken string) {
-	<a href="/trips">Trips</a>
-	<a href="/packing-lists">Packing lists</a>
->>>>>>> origin/develop
 	<form method="post" action="/auth/signout" data-signout>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<button type="submit" class="block w-full py-3 text-left border-b border-sand-100 font-bold cursor-pointer hover:opacity-70">Sign out</button>

@@ -15,13 +15,8 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 				<h1>Make the next trip easier</h1>
 				<p class="text-muted max-w-[60ch]">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
 			</div>
-<<<<<<< HEAD
 			<div class="flex flex-wrap items-center gap-2 sm:pt-6">
-				<a class="btn btn-secondary" href={ "/packing-session/" + session.ID }>Back to packing</a>
-=======
-			<div class="actions">
 				<a class="btn btn-secondary" href={ "/trips/" + session.ID }>Back to packing</a>
->>>>>>> origin/develop
 			</div>
 		</div>
 		if message != "" {
@@ -30,11 +25,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-<<<<<<< HEAD
-				<form method="post" action={ "/packing-session/" + session.ID + "/review" }>
-=======
-				<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review" }>
->>>>>>> origin/develop
+				<form method="post" action={ "/trips/" + session.ID + "/review" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
 					<input type="hidden" name="entryId" value={ entry.ID }/>
 					<label class="block my-3 text-sm font-bold">
@@ -75,11 +66,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 				<h2>The reusable list is unavailable</h2>
 				<p class="mb-3">Your trip and observations are still here.</p>
 				if recoverable {
-<<<<<<< HEAD
-					<form method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
-=======
-					<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/recover" }>
->>>>>>> origin/develop
+					<form method="post" action={ "/trips/" + session.ID + "/review/recover" }>
 						<input type="hidden" name="_csrf" value={ csrfToken }/>
 						<button class="btn btn-primary mt-2" type="submit">Create a new list from this trip</button>
 					</form>
@@ -93,11 +80,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 			if len(session.Review) == 0 {
 				<p class="mb-3">No observations yet.</p>
 			}
-<<<<<<< HEAD
-			<form method="post" action={ "/packing-session/" + session.ID + "/review/apply" }>
-=======
-			<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/apply" }>
->>>>>>> origin/develop
+			<form method="post" action={ "/trips/" + session.ID + "/review/apply" }>
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<input type="hidden" name="revision" value={ list.Revision() }/>
 				for _, observation := range session.Review {

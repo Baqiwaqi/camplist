@@ -29,7 +29,7 @@ func TestPreparationRowsToggleRenameAndRemove(t *testing.T) {
 		`x-on:click="editing = !editing"`,
 		">Edit tasks<",
 		`class="btn btn-danger btn-sm" data-confirm-action="Remove task"`,
-		`hx-post="/packing-list/` + list.ID + `/preparation/edit"`,
+		`hx-post="/packing-lists/` + list.ID + `/preparation/edit"`,
 		`data-confirm-action="Remove task"`,
 		`id="task-fuel" name="name" value="Buy fuel"`,
 	} {

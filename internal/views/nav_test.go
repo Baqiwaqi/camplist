@@ -23,15 +23,15 @@ func renderWithPath(t *testing.T, path string) string {
 }
 
 func TestHeaderMarksTheCurrentSection(t *testing.T) {
-	body := renderWithPath(t, "/sessions")
-	if !strings.Contains(body, `href="/sessions" aria-current="page"`) {
-		t.Error("sessions link is not marked current on the sessions page")
+	body := renderWithPath(t, "/trips")
+	if !strings.Contains(body, `href="/trips" aria-current="page"`) {
+		t.Error("trips link is not marked current on the trips page")
 	}
-	if strings.Contains(body, `href="/" aria-current="page"`) {
+	if strings.Contains(body, `href="/packing-lists" aria-current="page"`) {
 		t.Error("lists link is marked current on the sessions page")
 	}
-	body = renderWithPath(t, "/packing-list/abc")
-	if !strings.Contains(body, `href="/" aria-current="page"`) {
+	body = renderWithPath(t, "/packing-lists/abc")
+	if !strings.Contains(body, `href="/packing-lists" aria-current="page"`) {
 		t.Error("lists link is not marked current on a list page")
 	}
 }

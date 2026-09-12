@@ -22,10 +22,10 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 		`aria-haspopup="menu"`,
 		`role="menu"`,
 		`role="menuitem" href="/sharing/packing-session/` + session.ID + `"`,
-		`role="menuitem" href="/packing-session/` + session.ID + `/review"`,
+		`role="menuitem" href="/trips/` + session.ID + `/review"`,
 		`role="separator"`,
-		`hx-delete="/packing-session/` + session.ID + `"`,
-		`data-confirm-action="Delete session"`,
+		`hx-delete="/trips/` + session.ID + `"`,
+		`data-confirm-action="Delete trip"`,
 		`class="menu-item menu-item-danger"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -62,16 +62,16 @@ func TestDetailsHeroMenuKeepsStartSessionVisible(t *testing.T) {
 	}
 	body := out.String()
 	for _, want := range []string{
-		`hx-post="/packing-list/start-session"`,
-		`role="menuitem" href="/packing-list/` + list.ID + `/edit"`,
+		`hx-post="/packing-lists/start-session"`,
+		`role="menuitem" href="/packing-lists/` + list.ID + `/edit"`,
 		`role="menuitem" href="/sharing/packing-list/` + list.ID + `"`,
-		`hx-delete="/packing-list/` + list.ID + `"`,
+		`hx-delete="/packing-lists/` + list.ID + `"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("details hero missing %q", want)
 		}
 	}
-	if strings.Contains(body, `class="btn btn-secondary" href="/packing-list/`+list.ID+`/edit"`) {
+	if strings.Contains(body, `class="btn btn-secondary" href="/packing-lists/`+list.ID+`/edit"`) {
 		t.Error("edit is still a loose button next to the menu")
 	}
 }

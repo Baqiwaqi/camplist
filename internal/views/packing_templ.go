@@ -44,11 +44,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-<<<<<<< HEAD
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">Your lists</p><h1>Where to next?</h1><p class=\"text-muted max-w-[60ch]\">Keep reusable lists for your camping trips. Start a fresh packing session each time you go.</p></div><div class=\"flex flex-wrap items-center gap-2 sm:pt-6\"><a class=\"btn btn-primary max-sm:flex-auto\" href=\"/packing-list/new\">Create list</a></div></div>")
-=======
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section><div class=\"page-head\"><div><p class=\"eyebrow\">Your lists</p><h1>Where to next?</h1><p class=\"muted lede\">Keep reusable lists for your camping trips. Start a fresh packing session each time you go.</p></div><div class=\"actions\"><a class=\"btn btn-primary\" href=\"/packing-lists/new\">Create list</a></div></div>")
->>>>>>> origin/develop
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">Your lists</p><h1>Where to next?</h1><p class=\"text-muted max-w-[60ch]\">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p></div><div class=\"flex flex-wrap items-center gap-2 sm:pt-6\"><a class=\"btn btn-primary max-sm:flex-auto\" href=\"/packing-lists/new\">Create list</a></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -76,11 +72,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 				var templ_7745c5c3_Var3 templ.SafeURL
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
 				if templ_7745c5c3_Err != nil {
-<<<<<<< HEAD
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 68}
-=======
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 48}
->>>>>>> origin/develop
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 69}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -93,11 +85,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(list.Name)
 				if templ_7745c5c3_Err != nil {
-<<<<<<< HEAD
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 82}
-=======
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 62}
->>>>>>> origin/develop
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 31, Col: 83}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -167,15 +155,9 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var8 templ.SafeURL
-<<<<<<< HEAD
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-list/" + list.ID)
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 43, Col: 91}
-=======
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID + "/edit")
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 43, Col: 87}
->>>>>>> origin/develop
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 43, Col: 92}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -185,7 +167,6 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-<<<<<<< HEAD
 				templ_7745c5c3_Var9 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
@@ -198,7 +179,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 						}()
 					}
 					ctx = templ.InitializeContext(ctx)
-					templ_7745c5c3_Err = MenuLink("/packing-list/"+list.ID+"/edit", "Edit list").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -223,7 +204,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDelete("/packing-list/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Sessions you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -235,54 +216,6 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 					return templ_7745c5c3_Err
 				}
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div></article>")
-=======
-				var templ_7745c5c3_Var9 templ.SafeURL
-				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 44, Col: 77}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">Details</a> ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if list.UserID == auth.Subject(ctx) {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<button class=\"btn btn-danger btn-sm\" hx-delete=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var10 string
-					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue("/packing-lists/" + list.ID)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 48, Col: 48}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-headers=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var11 string
-					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(`{"X-CSRF-Token":"` + csrfToken + `"}`)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 49, Col: 60}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-confirm=\"Delete this list?\" data-confirm-action=\"Delete list\" data-confirm-detail=\"Sessions you already started keep their own copy.\">Delete</button>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div></article>")
->>>>>>> origin/develop
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

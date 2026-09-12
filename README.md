@@ -141,3 +141,8 @@ npm test
 
 See [the implementation plan](docs/implementation-plan.md) for test seams and
 remaining environment validation.
+
+## Deployment
+
+[Azure Container Apps setup](docs/deployment.md) documents the production URL,
+GitHub Actions workflow, Azure resources, costs, secrets, and rollback commands.

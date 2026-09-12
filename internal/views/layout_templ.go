@@ -103,7 +103,7 @@ func Layout(title string, csrfToken string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"nav-menu\" x-data=\"{ open: false }\" x-on:click.outside=\"open = false\" x-on:keydown.escape.window=\"open = false\"><button type=\"button\" class=\"nav-toggle\" aria-controls=\"nav-panel\" x-bind:aria-expanded=\"open\" x-on:click=\"open = !open\" x-text=\"open ? 'Close' : 'Menu'\">Menu</button><div id=\"nav-panel\" class=\"nav-panel\" x-show=\"open\" x-cloak>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><div class=\"nav-menu\" x-data=\"{ open: false }\" x-on:click.outside=\"open = false\" x-on:keydown.escape.window=\"open = false\"><button type=\"button\" class=\"nav-toggle\" aria-controls=\"nav-panel\" x-bind:aria-expanded=\"open\" x-on:click=\"open = !open\" x-text=\"open ? 'Close' : 'Menu'\">Menu</button><div id=\"nav-panel\" class=\"nav-panel\" x-show=\"open\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" x-transition:leave=\"drop-leave\" x-transition:leave-start=\"drop-end\" x-transition:leave-end=\"drop-start\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -111,7 +111,7 @@ func Layout(title string, csrfToken string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></nav></header><main><div id=\"request-error\" class=\"error error-toast\" role=\"alert\" hidden x-data=\"{ message: '' }\" x-on:htmx:before-request.window=\"$el.hidden = true\" x-on:htmx:response-error.window=\"message = $event.detail.xhr.status === 409 ? 'This list changed while you were working. Reload it before trying again.' : $event.detail.xhr.status === 403 ? 'Your session may have expired. Reload the page and try again.' : 'That change did not save. Try again or reload to see the latest saved state.'; $el.hidden = false\" x-on:htmx:send-error.window=\"message = 'Connection lost. Reconnect and reload to check the latest saved state.'; $el.hidden = false\"><div><p class=\"error-title\">That did not save</p><p id=\"request-error-message\" x-text=\"message\"></p></div><button type=\"button\" class=\"btn btn-link error-dismiss\" x-on:click=\"$root.hidden = true\">Dismiss</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></nav></header><main><div id=\"request-error\" class=\"error error-toast\" role=\"alert\" hidden x-data=\"{ message: '', leaving: false }\" x-bind:class=\"{ 'toast-leave': leaving }\" x-on:htmx:before-request.window=\"$el.hidden = true\" x-on:htmx:response-error.window=\"message = $event.detail.xhr.status === 409 ? 'This list changed while you were working. Reload it before trying again.' : $event.detail.xhr.status === 403 ? 'Your session may have expired. Reload the page and try again.' : 'That change did not save. Try again or reload to see the latest saved state.'; $el.hidden = false\" x-on:htmx:send-error.window=\"message = 'Connection lost. Reconnect and reload to check the latest saved state.'; $el.hidden = false\"><div><p class=\"error-title\">That did not save</p><p id=\"request-error-message\" x-text=\"message\"></p></div><button type=\"button\" class=\"btn btn-link error-dismiss\" x-on:click=\"leaving = true; setTimeout(() => { $root.hidden = true; leaving = false }, 160)\">Dismiss</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -163,7 +163,7 @@ func NavLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 79, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 92, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -176,7 +176,7 @@ func NavLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(auth.UserName(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 82, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 95, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {

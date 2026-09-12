@@ -17,6 +17,12 @@ type Config struct {
 func Routes(cfg Config) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	// Process health only: probes must not consume Cosmos request units.
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Write([]byte("ok\n"))
+	})
 
 	fileServer := http.FileServer(http.Dir("static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))

@@ -221,3 +221,12 @@ func TestSyncRouteRejectsMissingCSRF(t *testing.T) {
 		t.Fatalf("sync bypassed CSRF: %d", w.Code)
 	}
 }
+
+func TestHealthRouteDoesNotRequireLoginOrDatabase(t *testing.T) {
+	r := httptest.NewRequest("GET", "/healthz", nil)
+	w := httptest.NewRecorder()
+	Routes(Config{Auth: &auth.Auth{}}).ServeHTTP(w, r)
+	if w.Code != http.StatusOK || w.Body.String() != "ok\n" {
+		t.Fatalf("health probe failed: %d %s", w.Code, w.Body.String())
+	}
+}

@@ -1035,11 +1035,54 @@ section + section {
 
 /* ---------- motion ---------- */
 
+/* Alpine transition classes for the phone menu: a short fade with a small drop. */
+.drop-enter {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.drop-leave {
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.drop-start {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.drop-end {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* The toast slides up when it appears and fades on dismiss. */
+.error-toast:not([hidden]) {
+  animation: toast-in 200ms ease;
+}
+
+.error-toast.toast-leave {
+  transition: opacity 160ms ease, transform 160ms ease;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition: none !important;
+    animation: none !important;
   }
 
   .btn:not(:disabled):hover {

@@ -1,0 +1,250 @@
+package views
+
+import "strconv"
+
+// PublicHeader frames the pages a visitor sees before signing in. The demo
+// page hides the header call to action because the visitor is already there.
+templ PublicHeader(showDemo bool) {
+	<header class="site-header">
+		<nav class="site-nav wide" aria-label="Main">
+			<a class="brand" href="/">
+				<img src="/static/logomark.svg" alt="" width="22" height="22"/>
+				Camplist
+			</a>
+			<div class="public-links">
+				<a class="public-how" href="/#how">How it works</a>
+				<a href="/auth/login">Sign in with Google</a>
+				if showDemo {
+					<a class="btn btn-accent" href="/demo">Try a demo list</a>
+				}
+			</div>
+		</nav>
+	</header>
+}
+
+templ PublicFooter() {
+	<footer class="site-footer">
+		<div class="wide">
+			<span class="brand">
+				<img src="/static/logomark.svg" alt="" width="18" height="18"/>
+				Camplist
+			</span>
+			<a href="https://github.com/Baqiwaqi/camplist">Open source on GitHub</a>
+			<a href="/auth/login">Sign in with Google</a>
+		</div>
+	</footer>
+}
+
+// Landing is the page visitors see at /. The hero is a working packing
+// session rather than a screenshot, and the only explainer is the one idea
+// people must get: the list is the template, each trip is a session.
+templ Landing() {
+	@Shell("Packing lists for campers") {
+		@PublicHeader(true)
+		<main class="landing wide">
+			<section class="landing-hero">
+				<div>
+					<p class="eyebrow">Packing lists for campers</p>
+					<h1 class="landing-title">Pack once. Go every weekend.</h1>
+					<p class="landing-lede">Build your camping list one time. Start a session for each trip and check things off as you pack. Your list stays untouched.</p>
+					<div class="actions landing-actions">
+						<a class="btn btn-accent btn-lg" href="/demo">Try a demo list</a>
+						<a class="btn btn-secondary btn-lg landing-signin" href="/auth/login">Sign in with Google</a>
+					</div>
+					<p class="muted landing-note">Free. No list caps. Works in any browser.</p>
+				</div>
+				@DemoPreview(heroItems)
+			</section>
+			<section id="how" class="landing-how">
+				<div class="landing-intro">
+					<p class="eyebrow">List vs session</p>
+					<h2 class="landing-heading">Your list is the template. Each trip is a session.</h2>
+					<p class="landing-text">Other apps make you rebuild or reset the same list every trip. In Camplist, packing items in a session never changes the list, so next weekend starts clean.</p>
+				</div>
+				<div class="landing-flow">
+					<div class="card flow-card">
+						<div class="flow-head">
+							<p class="eyebrow">Your list</p>
+							<span class="muted">Edit any time</span>
+						</div>
+						<p class="display flow-title">Car camping</p>
+						<ul class="item-list">
+							for _, item := range templateItems {
+								<li class="item-row">
+									<span class="item-name">{ item.Name }</span>
+									<span class="tag">{ item.Category }</span>
+								</li>
+							}
+						</ul>
+						<p class="muted flow-note">One list per kind of trip. Reuse it for years.</p>
+					</div>
+					<div class="flow-step" aria-hidden="true">
+						<span class="btn btn-primary">Start session</span>
+						<span>copies the list</span>
+					</div>
+					<div class="card flow-card">
+						<div class="flow-head">
+							<p class="eyebrow">Session</p>
+							<span class="muted">Started Oct 3</span>
+						</div>
+						<p class="display flow-title">Car camping</p>
+						<ul class="item-list">
+							for _, item := range templateItems {
+								<li class="item-row packed">
+									<span class="tick" aria-hidden="true"></span>
+									<span class="item-name">{ item.Name }</span>
+									<span class="pack-done">Packed</span>
+								</li>
+							}
+						</ul>
+						@ProgressBar(len(templateItems), len(templateItems), "All packed")
+					</div>
+				</div>
+			</section>
+			<section class="landing-points">
+				<div>
+					<h3>Free, no list caps</h3>
+					<p class="muted">Make as many lists and sessions as you have trips. Nothing sits behind a paywall.</p>
+				</div>
+				<div>
+					<h3>Any device</h3>
+					<p class="muted">Plan on the laptop, check off on your phone by the car. It is a web page, so there is nothing to install.</p>
+				</div>
+				<div>
+					<h3>No spreadsheets</h3>
+					<p class="muted">Name, category, packed. No gram counts, no gear catalog, no calorie math.</p>
+				</div>
+			</section>
+			<section>
+				<div class="card card-brand landing-cta">
+					<div>
+						<p class="display landing-cta-title">Where to next?</p>
+						<p class="landing-cta-text">Try the demo list. No account needed.</p>
+					</div>
+					<a class="btn btn-accent btn-lg" href="/demo">Try a demo list</a>
+				</div>
+			</section>
+		</main>
+		@PublicFooter()
+	}
+}
+
+// DemoPreview is the hero session: rows toggle in Alpine state and the
+// progress bar follows. The markup is rendered in its initial state so the
+// page does not change when Alpine starts.
+templ DemoPreview(items []demoItem) {
+	<div class="preview" x-data={ demoState(items) }>
+		<div class="card card-brand">
+			<p class="eyebrow">Packing session</p>
+			<p class="display preview-title">Weekend at the lake</p>
+			@DemoProgress(items, "All packed. Go!")
+		</div>
+		<div class="card">
+			<ul class="item-list pack-list">
+				for i, item := range items {
+					<li class="item-row">
+						@DemoRow(i, item, true)
+					</li>
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+// DemoProgress mirrors ProgressBar with Alpine bindings. doneLabel replaces
+// "Keep packing" once everything is packed; empty hides the label.
+templ DemoProgress(items []demoItem, doneLabel string) {
+	<div class={ "progress", templ.KV("progress-done", allPacked(packedCount(items), len(items))) } x-bind:class="{ 'progress-done': done }">
+		<div class="progress-head">
+			<span class="progress-label" x-text={ "done ? '" + doneLabel + "' : 'Keep packing'" }>
+				if allPacked(packedCount(items), len(items)) {
+					{ doneLabel }
+				} else {
+					Keep packing
+				}
+			</span>
+			<span class="progress-count" role="status" x-text="count + ' of ' + packed.length + ' items packed'">{ strconv.Itoa(packedCount(items)) } of { strconv.Itoa(len(items)) } items packed</span>
+		</div>
+		<div
+			class="progress-track"
+			role="progressbar"
+			aria-label="Packing progress"
+			aria-valuemin="0"
+			aria-valuemax={ strconv.Itoa(len(items)) }
+			aria-valuenow={ strconv.Itoa(packedCount(items)) }
+			x-bind:aria-valuenow="count"
+		>
+			<div class="progress-fill" style={ progressWidth(packedCount(items), len(items)) } x-bind:style="'width: ' + Math.round(count * 100 / packed.length) + '%'"></div>
+		</div>
+	</div>
+}
+
+// DemoRow is a packing row wired to the demo state instead of the server.
+templ DemoRow(index int, item demoItem, showTag bool) {
+	<button
+		type="button"
+		class={ "pack-row", templ.KV("packed", item.Packed) }
+		x-bind:class={ "{ packed: packed[" + strconv.Itoa(index) + "] }" }
+		x-on:click={ "toggle(" + strconv.Itoa(index) + ")" }
+		aria-pressed={ strconv.FormatBool(item.Packed) }
+		x-bind:aria-pressed={ "String(packed[" + strconv.Itoa(index) + "])" }
+		aria-label={ "Toggle packed status for " + item.Name }
+	>
+		<span class="tick" aria-hidden="true"></span>
+		<span class="pack-name">{ item.Name }</span>
+		if showTag {
+			<span class="tag">{ item.Category }</span>
+		}
+		<span class="pack-action" x-text={ "packed[" + strconv.Itoa(index) + "] ? 'Unpack' : 'Pack'" }>
+			if item.Packed {
+				Unpack
+			} else {
+				Pack
+			}
+		</span>
+	</button>
+}
+
+// DemoPage is a full packing session that lives only in the browser.
+templ DemoPage() {
+	@Shell("Demo session") {
+		@PublicHeader(false)
+		<main>
+			<section x-data={ demoState(demoSessionItems) }>
+				<div class="page-head">
+					<div>
+						<p class="eyebrow">Demo session</p>
+						<h1>Weekend at the lake</h1>
+						<p class="muted lede">Pack a few things to see how a session works. Nothing here is saved. Sign in with Google when you want a list of your own.</p>
+					</div>
+					<div class="actions">
+						<button type="button" class="btn btn-secondary" x-on:click="reset()">Reset demo</button>
+						<a class="btn btn-accent" href="/auth/login">Sign in with Google</a>
+					</div>
+				</div>
+				<noscript><p class="muted">The demo needs JavaScript to pack items.</p></noscript>
+				<div class="card progress-card" x-bind:class="{ 'card-brand': done }">
+					<p class="display" x-show="done" x-cloak>All packed. Go!</p>
+					@DemoProgress(demoSessionItems, "")
+				</div>
+				<div class="card">
+					<div class="columns pack-columns">
+						for _, group := range groupDemo(demoSessionItems) {
+							<div class="pack-group">
+								<p class="group-label">{ group.Name }</p>
+								<ul class="item-list pack-list">
+									for _, entry := range group.Items {
+										<li class="item-row">
+											@DemoRow(entry.Index, entry.Item, false)
+										</li>
+									}
+								</ul>
+							</div>
+						}
+					</div>
+				</div>
+			</section>
+		</main>
+		@PublicFooter()
+	}
+}

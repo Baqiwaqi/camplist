@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/tokens/colors.css">
+<link rel="stylesheet" href="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/tokens/typography.css">
+<link rel="stylesheet" href="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/tokens/shape.css">
+<link rel="stylesheet" href="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/styles.css">
+<script src="_ds/camplist-design-system-8dbf6a66-3daf-43eb-aab2-d59ee47c77e5/_ds_bundle.js"></script>
+<style>body{margin:0;background:#ece8e1;font-family:system-ui,sans-serif;color:#1f2933}a{color:#1f2933}a:hover{opacity:.7}</style>
+</helmet>
+
+<div style="padding:40px 44px 60px;display:flex;flex-direction:column;gap:32px;align-items:flex-start">
+
+<div style="max-width:1280px;background:#fff;border:1px solid #e5ded3;border-radius:12px;padding:24px 28px;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:28px;font-size:13px;line-height:1.5">
+<div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Brief</div>
+<p style="margin:6px 0 0">Landing page for Camplist. Audience: weekend campers, families, backpackers. Primary CTA: try a demo list. Lead story: pack once, reuse every trip (list vs session); free, no caps, any device. One polished page, desktop + mobile.</p>
+</div>
+<div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Market research</div>
+<p style="margin:6px 0 0">Gear apps (LighterPack, Packstack, Hikt, PackWizard) compete on gram-level weight tracking, gear catalogs and calorie planning — heavy for a weekend trip. Reusable-list apps (Packd, Repack, Checked) win on "make it once, reset with a tap", but cap free lists at 1–3 and are phone-only. Users' real fears: forgetting an item, and rebuilding the same list every trip.</p>
+</div>
+<div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Design decisions</div>
+<p style="margin:6px 0 0">Show the product, not adjectives: hero previews a live packing session. The list-vs-session split is the one idea people must get, so it gets the only explainer. One ember action per screen (Try a demo list). No icons, no imagery, no shadows — per system. Mobile keeps the session preview above the fold and the CTA thumb-reachable.</p>
+</div>
+</div>
+
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+
+<x-import component-from-global-scope="ChromeWindow" from="./browser-window.jsx" width="{{ 1280 }}" height="{{ 2120 }}" url="camplist.app" hint-size="1280px,2120px">
+<div data-screen-label="Desktop" style="background:#f6f5f2;color:#1f2933;font-family:system-ui,sans-serif;width:1280px">
+
+<header style="background:#fff;border-bottom:1px solid #ddd6cc">
+<nav style="max-width:1100px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:24px">
+<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:18px"><img src="assets/logomark.svg" alt="" style="height:22px">Camplist</a>
+<div style="margin-left:auto;display:flex;align-items:center;gap:24px;font-weight:700;font-size:15px">
+<a href="#how" style="text-decoration:none">How it works</a>
+<a href="#" style="text-decoration:none">Login with google</a>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="accent" hint-size="150px,40px">Try a demo list</x-import>
+</div>
+</nav>
+</header>
+
+<main style="max-width:1100px;margin:0 auto;padding:72px 24px 80px;display:flex;flex-direction:column;gap:96px">
+
+<section style="display:grid;grid-template-columns:1.1fr 1fr;gap:64px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:24px">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Packing lists for campers</div>
+<h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:64px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance">Pack once. Go every weekend.</h1>
+<p style="margin:0;font-size:20px;line-height:1.5;color:#1f2933;max-width:34ch;text-wrap:pretty">Build your camping list one time. Start a session for each trip and check things off as you pack — your list stays untouched.</p>
+<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="accent" size="lg" hint-size="180px,48px">Try a demo list</x-import>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="secondary" size="lg" hint-size="180px,48px">Login with google</x-import>
+</div>
+<p style="margin:0;font-size:14px;color:#6b7280">Free. No list caps. Works in any browser.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" tone="brand" dc-props="{{ heroCardProps }}" hint-size="100%,120px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+<div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Packing session · Sep 18, 2026</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:28px;line-height:1.05;letter-spacing:-.02em;margin-top:6px">Weekend at the lake</div>
+</div>
+</div>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ProgressBar" value="{{ packed }}" max="{{ 7 }}" inverse="{{ true }}" hint-size="100%,32px"></x-import>
+</div>
+</x-import>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,340px">
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="7">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ it.last }}" hint-size="100%,44px">
+<span style="font-weight:700;flex:1;min-width:0">{{ it.name }}</span>
+<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#2f5d3a;background:#e3ede4;padding:2px 10px;border-radius:999px">{{ it.cat }}</span>
+<span style="width:96px;display:flex;justify-content:flex-end">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" size="sm" variant="{{ it.variant }}" on-click="{{ it.toggle }}" hint-size="80px,32px">{{ it.label }}</x-import>
+</span>
+</x-import>
+</sc-for>
+</x-import>
+</div>
+</section>
+
+<section id="how" style="display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px;max-width:60ch">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">List vs session</div>
+<h2 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:44px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance">Your list is the template. Each trip is a session.</h2>
+<p style="margin:0;font-size:18px;line-height:1.5;text-wrap:pretty">Other apps make you rebuild or reset the same list every trip. In Camplist, checking items in a session never changes the list — so next weekend starts clean.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,360px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Your list</div>
+<span style="font-size:13px;color:#6b7280">Edit any time</span>
+</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em">Car camping</div>
+<div>
+<sc-for list="{{ listItems }}" as="li" hint-placeholder-count="5">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ li.last }}" hint-size="100%,40px">
+<span style="flex:1">{{ li.name }}</span>
+<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#2f5d3a;background:#e3ede4;padding:2px 10px;border-radius:999px">{{ li.cat }}</span>
+</x-import>
+</sc-for>
+</div>
+<p style="margin:4px 0 0;font-size:14px;color:#6b7280;line-height:1.5">One list per kind of trip. Reuse it for years.</p>
+</div>
+</x-import>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="primary" hint-size="130px,40px">Start session</x-import>
+<span style="font-size:12px;color:#6b7280">copies the list</span>
+</div>
+
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,360px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Session · Oct 3, 2026</div>
+<span style="font-size:13px;color:#6b7280">checked items: 5 / 5</span>
+</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em">Car camping</div>
+<div>
+<sc-for list="{{ listItems }}" as="li" hint-placeholder-count="5">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ li.last }}" hint-size="100%,40px">
+<span style="flex:1">{{ li.name }}</span>
+<span style="font-size:13px;font-weight:700;color:#2f5d3a">Checked</span>
+</x-import>
+</sc-for>
+</div>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ProgressBar" value="{{ 5 }}" max="{{ 5 }}" hint-size="100%,32px"></x-import>
+</div>
+</x-import>
+</div>
+</section>
+
+<section style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em">Free, no list caps</div>
+<p style="margin:0;font-size:16px;line-height:1.5;color:#6b7280">Make as many lists and sessions as you have trips. Nothing behind a paywall.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em">Any device</div>
+<p style="margin:0;font-size:16px;line-height:1.5;color:#6b7280">Plan on the laptop, check off on your phone by the car. It is a web page — nothing to install.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding-top:16px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em">No spreadsheets</div>
+<p style="margin:0;font-size:16px;line-height:1.5;color:#6b7280">Name, category, checked. No gram counts, no gear catalog, no calorie math.</p>
+</div>
+</section>
+
+<section>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" tone="brand" dc-props="{{ ctaCardProps }}" hint-size="100%,200px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:44px;line-height:1.05;letter-spacing:-.02em">Where to next?</div>
+<p style="margin:0;font-size:18px;opacity:.9">Try the demo list — no account needed.</p>
+</div>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="accent" size="lg" hint-size="180px,48px">Try a demo list</x-import>
+</div>
+</x-import>
+</section>
+</main>
+
+<footer style="border-top:1px solid #ddd6cc;background:#fff">
+<div style="max-width:1100px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:24px;font-size:14px;color:#6b7280">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700;color:#1f2933"><img src="assets/logomark.svg" alt="" style="height:18px">Camplist</span>
+<a href="#" style="margin-left:auto;text-decoration:none;font-weight:700">Open source on GitHub</a>
+<a href="#" style="text-decoration:none;font-weight:700">Login with google</a>
+</div>
+</footer>
+</div>
+</x-import>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" height="{{ 2720 }}" hint-size="402px,2720px">
+<div data-screen-label="Mobile" style="background:#f6f5f2;color:#1f2933;font-family:system-ui,sans-serif;min-height:100%;width:100%;display:flex;flex-direction:column">
+
+<header style="background:#fff;border-bottom:1px solid #ddd6cc;padding:62px 16px 12px;display:flex;align-items:center;gap:8px">
+<a href="#" style="display:flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:17px"><img src="assets/logomark.svg" alt="" style="height:22px">Camplist</a>
+<a href="#" style="margin-left:auto;text-decoration:none;font-weight:700;font-size:14px">Login with google</a>
+</header>
+
+<main style="padding:32px 16px 40px;display:flex;flex-direction:column;gap:48px">
+<section style="display:flex;flex-direction:column;gap:16px">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Packing lists for campers</div>
+<h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:40px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance">Pack once. Go every weekend.</h1>
+<p style="margin:0;font-size:17px;line-height:1.5;text-wrap:pretty">Build your camping list one time. Start a session for each trip and check things off — your list stays untouched.</p>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="accent" size="lg" dc-props="{{ fullWidthProps }}" hint-size="100%,52px">Try a demo list</x-import>
+<p style="margin:0;font-size:13px;color:#6b7280;text-align:center">Free. No list caps. Works in any browser.</p>
+
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" tone="brand" dc-props="{{ heroCardProps }}" hint-size="100%,110px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div>
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85">Packing session · Sep 18, 2026</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px;line-height:1.05;letter-spacing:-.02em;margin-top:6px">Weekend at the lake</div>
+</div>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ProgressBar" value="{{ packed }}" max="{{ 7 }}" inverse="{{ true }}" hint-size="100%,32px"></x-import>
+</div>
+</x-import>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,330px">
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="7">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ it.last }}" hint-size="100%,44px">
+<span style="font-weight:700;flex:1;min-width:0;font-size:15px">{{ it.name }}</span>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" size="sm" variant="{{ it.variant }}" on-click="{{ it.toggle }}" hint-size="80px,32px">{{ it.label }}</x-import>
+</x-import>
+</sc-for>
+</x-import>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">List vs session</div>
+<h2 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.02em;text-wrap:balance">Your list is the template. Each trip is a session.</h2>
+<p style="margin:0;font-size:16px;line-height:1.5;text-wrap:pretty">Checking items in a session never changes the list — so next weekend starts clean.</p>
+</div>
+
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,280px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Your list</div>
+<span style="font-size:13px;color:#6b7280">Edit any time</span>
+</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em">Car camping</div>
+<div>
+<sc-for list="{{ listItems }}" as="li" hint-placeholder-count="5">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ li.last }}" hint-size="100%,40px">
+<span style="flex:1;font-size:15px">{{ li.name }}</span>
+<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#2f5d3a;background:#e3ede4;padding:2px 10px;border-radius:999px">{{ li.cat }}</span>
+</x-import>
+</sc-for>
+</div>
+</div>
+</x-import>
+
+<div style="display:flex;align-items:center;justify-content:center;gap:10px">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="primary" hint-size="130px,40px">Start session</x-import>
+<span style="font-size:13px;color:#6b7280">copies the list</span>
+</div>
+
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" dc-props="{{ noMarginProps }}" hint-size="100%,300px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline">
+<div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c4581a">Session · Oct 3, 2026</div>
+<span style="font-size:13px;color:#6b7280">checked items: 5 / 5</span>
+</div>
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em">Car camping</div>
+<div>
+<sc-for list="{{ listItems }}" as="li" hint-placeholder-count="5">
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ItemRow" last="{{ li.last }}" hint-size="100%,40px">
+<span style="flex:1;font-size:15px">{{ li.name }}</span>
+<span style="font-size:13px;font-weight:700;color:#2f5d3a">Checked</span>
+</x-import>
+</sc-for>
+</div>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.ProgressBar" value="{{ 5 }}" max="{{ 5 }}" hint-size="100%,32px"></x-import>
+</div>
+</x-import>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em">Free, no list caps</div>
+<p style="margin:0;font-size:15px;line-height:1.5;color:#6b7280">As many lists and sessions as you have trips.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em">Any device</div>
+<p style="margin:0;font-size:15px;line-height:1.5;color:#6b7280">Plan on the laptop, check off on your phone. Nothing to install.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid #ddd6cc">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;line-height:1.05;letter-spacing:-.02em">No spreadsheets</div>
+<p style="margin:0;font-size:15px;line-height:1.5;color:#6b7280">Name, category, checked. No gram counts.</p>
+</div>
+</section>
+
+<section>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Card" tone="brand" dc-props="{{ ctaCardProps }}" hint-size="100%,200px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:32px;line-height:1.05;letter-spacing:-.02em">Where to next?</div>
+<p style="margin:0;font-size:16px;opacity:.9">Try the demo list — no account needed.</p>
+<x-import component-from-global-scope="CamplistDesignSystem_8dbf6a.Button" variant="accent" size="lg" dc-props="{{ fullWidthProps }}" hint-size="100%,52px">Try a demo list</x-import>
+</div>
+</x-import>
+</section>
+</main>
+
+<footer style="border-top:1px solid #ddd6cc;background:#fff;padding:16px;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#6b7280">
+<span style="display:flex;align-items:center;gap:8px;font-weight:700;color:#1f2933"><img src="assets/logomark.svg" alt="" style="height:18px">Camplist</span>
+<a href="#" style="text-decoration:none;font-weight:700">Open source on GitHub</a>
+</footer>
+</div>
+</x-import>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;interactivePreview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero preview&quot;},&quot;ctaPadding&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;roomy&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;roomy&quot;,&quot;tsType&quot;:&quot;'roomy'|'compact'&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  state = { checked: [true, true, true, true, false, false, false] };
+  renderVals() {
+    const base = [
+      ['Tent', 'Shelter'], ['Sleeping bag', 'Sleep'], ['Sleeping pad', 'Sleep'], ['Stove + fuel', 'Kitchen'],
+      ['Headlamp', 'Light'], ['Water filter', 'Water'], ['First aid kit', 'Safety']
+    ];
+    const interactive = this.props.interactivePreview ?? true;
+    const items = base.map(([name, cat], i) => {
+      const on = this.state.checked[i];
+      return {
+        name, cat, last: i === base.length - 1,
+        variant: on ? 'secondary' : 'accent',
+        label: on ? 'Uncheck' : 'Check',
+        toggle: () => { if (!interactive) return; this.setState(s => { const c = s.checked.slice(); c[i] = !c[i]; return { checked: c }; }); }
+      };
+    });
+    const list = [['Tent', 'Shelter'], ['Sleeping bag', 'Sleep'], ['Camp chairs', 'Comfort'], ['Cooler', 'Kitchen'], ['Lantern', 'Light']];
+    const listItems = list.map(([name, cat], i) => ({ name, cat, last: i === list.length - 1 }));
+    const pad = this.props.ctaPadding ?? 'roomy';
+    return {
+      items, listItems,
+      packed: this.state.checked.filter(Boolean).length,
+      noMarginProps: { style: { marginBottom: 0 } },
+      heroCardProps: { style: { marginBottom: 0, padding: '20px' } },
+      ctaCardProps: { style: { marginBottom: 0, padding: pad === 'roomy' ? '40px' : '24px' } },
+      fullWidthProps: { style: { width: '100%' } }
+    };
+  }
+}
+</script>
+</body>
+</html>

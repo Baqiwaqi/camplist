@@ -47,7 +47,7 @@ The Go server renders HTML using templ. HTMX adds form navigation and actions su
 
 You need Go 1.25 or later, access to Azure Cosmos DB, and Google OAuth client credentials for a web application.
 
-The app currently uses the database `dev` and container `packing_list`, configured in `cmd/web/main.go`. These must already exist. The container should use `/userId` as its partition key.
+The app currently uses the database `dev` and container `packing_list`, configured in `cmd/web/main.go`. These must already exist. The container should use `/userId` as its partition key. At startup, the app enables per-item Cosmos TTL (`defaultTtl: -1`) when TTL is not yet configured; share-link capability items set their own seven-day `ttl`, while lists, sessions, memberships, and shared references do not expire.
 
 Set the following environment variables, or put them in a local `.env` file, which is ignored by Git:
 
@@ -69,7 +69,7 @@ Start the server from the repository root:
 go run ./cmd/web
 ```
 
-Open <http://localhost:3000>. You will be redirected to the login page if you are not signed in.
+Open <http://localhost:3000>. Visitors see the landing page and can try a demo session at `/demo` without an account; members see their lists. Pages under the app itself redirect to the login page when you are not signed in.
 
 Cookie security and the trusted CSRF origin are derived from `REDIRECT_URL`: use an HTTPS callback URL for deployment behind HTTPS, and an HTTP localhost callback for local development. The server includes request timeouts and graceful shutdown. Authentication sessions currently last ten minutes.
 

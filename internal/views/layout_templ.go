@@ -119,7 +119,7 @@ func Layout(title string, csrfToken string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</main><dialog id=\"confirm-dialog\" class=\"dialog\" x-data=\"{ question: '', detail: '', action: 'Delete', issue: null }\" x-on:htmx:confirm.window=\"if (!$event.detail.question) return; $event.preventDefault(); question = $event.detail.question; detail = $event.detail.elt.dataset.confirmDetail || ''; action = $event.detail.elt.dataset.confirmAction || 'Delete'; issue = $event.detail.issueRequest; $el.showModal()\" x-on:close=\"issue = null\"><form method=\"dialog\"><p class=\"dialog-title\" x-text=\"question\"></p><p class=\"muted\" x-show=\"detail\" x-text=\"detail\"></p><div class=\"form-actions\"><button type=\"submit\" class=\"btn btn-secondary\">Cancel</button> <button type=\"button\" class=\"btn btn-danger-solid\" x-on:click=\"const go = issue; $el.closest('dialog').close(); if (go) go(true)\" x-text=\"action\">Delete</button></div></form></dialog>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -163,7 +163,7 @@ func NavLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 92, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 108, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -176,7 +176,7 @@ func NavLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(auth.UserName(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 95, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 111, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {

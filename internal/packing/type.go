@@ -7,6 +7,7 @@ type CreatePackingSession struct {
 }
 
 type PackingSession struct {
+	OwnerName      string                      `json:"ownerName,omitempty"`
 	Name           string                      `json:"name,omitempty"`
 	Sharing        Sharing                     `json:"sharing,omitempty"`
 	Improvements   []string                    `json:"improvements,omitempty"`

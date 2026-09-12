@@ -40,7 +40,7 @@ type packingStore interface {
 	AddItem(context.Context, string, string, packing.PackingItem) error
 	RemoveItem(context.Context, string, string, string, ...string) error
 	UpdateItem(context.Context, string, string, packing.PackingItem) error
-	CreatePackingSession(context.Context, string, string) (packing.PackingSession, error)
+	CreatePackingSession(context.Context, string, string, ...string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
@@ -364,7 +364,11 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID)
+	if len(strings.TrimSpace(r.FormValue("name"))) > 200 {
+		http.Error(w, "Trip name must be at most 200 characters", 400)
+		return
+	}
+	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID, auth.UserName(ctx))
 	if err != nil {
 		log.Printf("create packing session: %v", err)
 		storeError(w, err, "Creating packing session failed")

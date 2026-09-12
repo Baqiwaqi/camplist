@@ -145,3 +145,38 @@ func TestFutureSaveFailurePreservesTripAndCanBeRetriedAfterIndependentGrant(t *t
 		t.Fatalf("future item %+v", template.Items)
 	}
 }
+
+func TestPreparationFallbackUpdatesAttributionAfterAnotherParticipant(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("owner", "Camping", "")
+	list.Tasks = []packing.PreparationTask{{ID: "car", Name: "Charge car"}}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	trip, err := store.CreatePackingSession(ctx, list.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	link, err := store.CreateInvitation(ctx, "packing-session", trip.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.RequestAccess(ctx, link, packing.Member{Subject: "guest", Name: "Guest"}); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.DecideInvitation(ctx, link.Kind, trip.ID, "owner", link.Hash(), true); err != nil {
+		t.Fatal(err)
+	}
+	trip, err = store.SyncSessionItem(ctx, trip.ID, "guest", packing.PackingOperation{ID: "guestdone", Kind: "task", ItemID: "car", Checked: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	trip, err = store.SetSessionPreparationTask(ctx, trip.ID, "owner", "car", false, trip.List.Tasks[0].Revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if trip.List.Tasks[0].ChangedBy != "Trip owner" {
+		t.Fatalf("stale attribution %s", trip.List.Tasks[0].ChangedBy)
+	}
+}

@@ -48,7 +48,7 @@ func (s *Store) clock() time.Time {
 	return time.Now()
 }
 
-func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID string) (PackingSession, error) {
+func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID string, ownerName ...string) (PackingSession, error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
 		return PackingSession{}, fmt.Errorf("get packing list: %w", err)
@@ -66,6 +66,9 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 	}
 	session := NewPackingSession(list)
 	session.UserID = userID
+	if len(ownerName) > 0 && len(ownerName[0]) <= 200 {
+		session.OwnerName = ownerName[0]
+	}
 	session.Name = list.Name + " – " + session.CreatedAt.Format("Jan 2, 2006")
 	session.expandPersonalEntries()
 	if len(session.List.Items)+len(session.List.Tasks) > 2000 {

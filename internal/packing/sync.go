@@ -91,16 +91,8 @@ func (s *Store) SyncSessionItem(ctx context.Context, sessionID, user string, op 
 				return false, ErrNotFound
 			}
 			task := &session.List.Tasks[index]
-			if task.Assignee != "" && task.Assignee != user {
-				return false, ErrForbidden
-			}
-			if task.Revision != op.ExpectedRevision && task.Done != op.Checked {
-				return false, ErrConflict
-			}
-			if task.Revision == op.ExpectedRevision {
-				task.Done = op.Checked
-				task.Revision++
-				task.ChangedBy = session.participantName(user)
+			if _, err := task.setCompletion(user, session.participantName(user), op.Checked, op.ExpectedRevision); err != nil {
+				return false, err
 			}
 			session.recordOperation(key, op)
 			return true, nil
@@ -123,13 +115,7 @@ func (s *Store) SyncSessionItem(ctx context.Context, sessionID, user string, op 
 			item.Checked = op.Checked
 			item.Revision++
 			item.UpdatedAt = time.Now().UTC()
-			item.ChangedBy = "Trip owner"
-			if member, ok := session.Sharing.Members[user]; ok {
-				item.ChangedBy = member.Name
-				if item.ChangedBy == "" {
-					item.ChangedBy = "Another camper"
-				}
-			}
+			item.ChangedBy = session.participantName(user)
 		}
 		session.Operations[key] = op
 		return true, nil

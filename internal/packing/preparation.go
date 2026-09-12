@@ -49,17 +49,22 @@ func (s *Store) SetSessionPreparationTask(ctx context.Context, id, actor, taskID
 			return false, ErrNotFound
 		}
 		task := &session.List.Tasks[index]
-		if task.Assignee != "" && task.Assignee != actor {
-			return false, ErrForbidden
-		}
-		if task.Done == done {
-			return false, nil
-		}
-		if task.Revision != expectedRevision {
-			return false, ErrConflict
-		}
-		task.Done = done
-		task.Revision++
-		return true, nil
+		return task.setCompletion(actor, session.participantName(actor), done, expectedRevision)
 	})
+}
+
+func (task *PreparationTask) setCompletion(actor, name string, done bool, revision int64) (bool, error) {
+	if task.Assignee != "" && task.Assignee != actor {
+		return false, ErrForbidden
+	}
+	if task.Done == done {
+		return false, nil
+	}
+	if task.Revision != revision {
+		return false, ErrConflict
+	}
+	task.Done = done
+	task.Revision++
+	task.ChangedBy = name
+	return true, nil
 }

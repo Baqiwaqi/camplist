@@ -102,3 +102,28 @@ func groupByParticipant(items []packing.PackingItem) []itemGroup {
 	}
 	return groups
 }
+
+type preparationGroup struct {
+	Name  string
+	Tasks []packing.PreparationTask
+}
+
+func groupPreparation(tasks []packing.PreparationTask) []preparationGroup {
+	var groups []preparationGroup
+	indexes := map[string]int{}
+	for _, task := range tasks {
+		key := task.Assignee
+		name := task.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, preparationGroup{Name: name})
+		}
+		groups[i].Tasks = append(groups[i].Tasks, task)
+	}
+	return groups
+}

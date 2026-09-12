@@ -3,8 +3,11 @@ package web
 import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+	"camplist/internal/views"
+	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/gorilla/csrf"
 	"net/http"
 )
 
@@ -24,8 +27,18 @@ func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := chi.URLParam(r, "id")
-	op := packing.PackingOperation{ID: uuid.NewString(), ItemID: uuid.NewString(), Action: "add", Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Kind: r.PostForm.Get("kind"), Scope: r.PostForm.Get("scope"), SaveForFuture: r.PostForm.Get("saveForFuture") == "true"}
-	if _, err := h.packingStore.SyncSessionItem(r.Context(), id, auth.Subject(r.Context()), op); err != nil {
+	operationID := r.PostForm.Get("operationId")
+	if _, err := uuid.Parse(operationID); err != nil {
+		http.Error(w, "Invalid operation ID", 400)
+		return
+	}
+	op := packing.PackingOperation{ID: operationID, ItemID: operationID, Action: "add", Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Kind: r.PostForm.Get("kind"), Scope: r.PostForm.Get("scope"), SaveForFuture: r.PostForm.Get("saveForFuture") == "true"}
+	session, err := h.packingStore.SyncSessionItem(r.Context(), id, auth.Subject(r.Context()), op)
+	if errors.Is(err, packing.ErrFutureSave) {
+		render(w, r, views.FutureSaveResult(session, op, csrf.Token(r)))
+		return
+	}
+	if err != nil {
 		storeError(w, err, "Could not save entry")
 		return
 	}

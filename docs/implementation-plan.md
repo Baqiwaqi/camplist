@@ -22,3 +22,20 @@ Spec: [Product direction](product-direction.md).
 Human camper interviews and two real camping trips are validation activities, not implementation acceptance tests. Browser-specific offline behavior must be labeled experimental until verified on supported browsers. No live user data is needed for automated tests. The user approved including the current design-system UI changes in the feature commit. Review all changes since `f568a6630b6a48a46929c7fe6db5eba0965b9fbb`.
 
 Automated tests use a stateful Cosmos adapter and IndexedDB simulation. Real Cosmos concurrency, Google OAuth, and full offline close/reopen behavior across supported browsers still need environment validation. The local browser preview rendered the new online packing page; it is not evidence of complete browser offline acceptance.
+
+
+## Delivery notes
+
+All six implementation slices are complete. New sessions use the most recent
+retained session of the same template as the improvement boundary; deleting that
+prior session can cause earlier improvements to appear again. Session preparation
+is labeled as a snapshot at session start, with a link to manage current tasks.
+
+Sign-out cleanup checks the exported snapshot within the same IndexedDB
+transaction that deletes it. Concurrent edits cause cleanup to stop for a fresh
+export. If identity or local storage is unavailable, the camper can explicitly
+sign out of the server while keeping potentially inaccessible local copies.
+
+Durable sync receipts currently remain within the session document. Very long
+sessions can approach Cosmos document limits; production load validation should
+measure document growth before promoting offline support beyond experimental.

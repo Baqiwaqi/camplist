@@ -58,3 +58,12 @@ window.addEventListener('hashchange',()=>render().catch(error=>message(error.mes
 window.addEventListener('online',load);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load();});
 load();
+
+byId('forget-account').onclick=async()=>{
+ try {
+  if(!owner)return;
+  const account=owner,exported=await db.list(account);
+  downloadJSON(JSON.stringify({format:1,sessions:exported},null,2),'camplist-pending.json');
+  await packing.forget(account,exported);await render();message('Exported and removed this account’s saved copies.');
+ }catch(error){message('Copies were not removed. '+error.message);}
+};

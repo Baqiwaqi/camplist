@@ -41,7 +41,23 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 		return PackingSession{}, fmt.Errorf("get packing list: %w", err)
 	}
 
+	sessions, err := s.ListPackingSession(ctx, userID)
+	if err != nil {
+		return PackingSession{}, fmt.Errorf("read previous trips: %w", err)
+	}
+	var previous PackingSession
+	for _, candidate := range sessions {
+		if candidate.List.ID == listID && candidate.CreatedAt.After(previous.CreatedAt) {
+			previous = candidate
+		}
+	}
 	session := NewPackingSession(list)
+	// Changes are append-only; keep the full log in the snapshot for the next boundary.
+	firstNew := 0
+	for firstNew < len(previous.List.Changes) && firstNew < len(list.Changes) && previous.List.Changes[firstNew] == list.Changes[firstNew] {
+		firstNew++
+	}
+	session.Improvements = append([]string{}, list.Changes[firstNew:]...)
 
 	pk := azcosmos.NewPartitionKeyString(userID)
 

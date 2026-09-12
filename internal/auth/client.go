@@ -137,12 +137,9 @@ func (a *Auth) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	ses, err := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
-	if err != nil {
-		log.Printf("Error getting cookie store %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// CookieStore returns a fresh session even when decoding an old cookie fails.
+	// Signing out must still expire that cookie.
+	ses, _ := a.cookieStore.Get(r, SESSION_COOKIE_KEY)
 
 	ses.Options.MaxAge = -1
 

@@ -126,7 +126,8 @@ Changes persist in this browser and synchronize while the app is open, connected
 and signed into the same account. Conflicting changes offer a choice between this
 device and the online state. Expired login or a deleted session keeps the local
 copy available for export. Sign-out offers sync or export before clearing this
-account's local records. Browser storage can be evicted; local changes are not a
+account's local records. If storage cannot be inspected, an explicit server-only
+sign-out option explains that local copies may remain. Browser storage can be evicted; local changes are not a
 cloud backup. Offline support requires HTTPS (or localhost), IndexedDB, service
 workers, and JavaScript. Cross-browser acceptance remains pending.
 

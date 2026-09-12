@@ -43,13 +43,11 @@ export class OfflinePacking {
   if (!record) throw new Error('Session not saved on this device.');
   return JSON.stringify({format:1,...record},null,2);
  }
- async forget(owner,allowPending=false) {
+ async forget(owner,exported) {
   this.closing.add(owner);
   try {
    await Promise.all([...this.running.entries()].filter(([key])=>JSON.parse(key)[0]===owner).map(([,run])=>run));
-   const records = await this.db.list(owner);
-   if (!allowPending && records.some(record=>Object.keys(record.pending).length)) throw new Error('Export or synchronize pending changes before signing out.');
-   await this.db.clear(owner);
+   await this.db.clear(owner,exported);
   } catch(error) { this.closing.delete(owner); throw error; }
  }
  sync(owner, id) {

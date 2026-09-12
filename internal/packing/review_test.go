@@ -119,3 +119,33 @@ func TestDeletedTemplateCanBeRecoveredWithoutDuplicatingOrChangingHistory(t *tes
 		t.Fatal("recovery changed history or cannot apply future review")
 	}
 }
+
+func TestNextTripCarriesPreparationAndOnlyNewImprovements(t *testing.T) {
+	ctx := context.Background()
+	s, list, first := seedTrip(t)
+	entry := ReviewEntry{ID: "fuel", Name: "Fuel", NeedsAttention: true, Action: "task", Task: "Buy fuel"}
+	if _, err := s.AddReviewEntry(ctx, first.ID, "camper", entry); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ApplyReview(ctx, first.ID, "camper", list.Revision(), []string{entry.ID}); err != nil {
+		t.Fatal(err)
+	}
+	second, err := s.CreatePackingSession(ctx, list.ID, "camper")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(second.Improvements) != 1 || len(second.List.Tasks) != 1 || second.List.Tasks[0].Done {
+		t.Fatalf("next trip lost preparation: %+v", second)
+	}
+	third, err := s.CreatePackingSession(ctx, list.ID, "camper")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(third.Improvements) != 0 || len(third.List.Tasks) != 1 {
+		t.Fatal("old improvements repeated or unresolved task disappeared")
+	}
+	history, err := s.GetPackingSession(ctx, first.ID, "camper")
+	if err != nil || len(history.List.Tasks) != 0 {
+		t.Fatal("earlier trip history changed")
+	}
+}

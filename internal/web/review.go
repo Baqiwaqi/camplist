@@ -55,7 +55,7 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Sign in required", 401)
 		return
 	}
-	entry := packing.ReviewEntry{ID: r.PostForm.Get("entryId"), ItemID: r.PostForm.Get("itemId"), Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Note: r.PostForm.Get("note"), Forgotten: r.PostForm.Get("forgotten") == "true", Unused: r.PostForm.Get("unused") == "true", NeedsAttention: r.PostForm.Get("needsAttention") == "true", Action: r.PostForm.Get("action"), Task: r.PostForm.Get("task")}
+	entry := packing.ReviewEntry{ID: r.PostForm.Get("entryId"), ItemID: r.PostForm.Get("itemId"), Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Note: r.PostForm.Get("note"), Forgotten: r.PostForm.Get("forgotten") == "true", Unused: r.PostForm.Get("unused") == "true", NeedsAttention: r.PostForm.Get("needsAttention") == "true", Action: packing.ReviewAction(r.PostForm.Get("action")), Task: r.PostForm.Get("task")}
 	if entry.ItemID != "" {
 		session, e := h.packingStore.GetPackingSession(r.Context(), chi.URLParam(r, "id"), user)
 		if e != nil {

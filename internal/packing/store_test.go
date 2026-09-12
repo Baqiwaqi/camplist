@@ -5,41 +5,30 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"strings"
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 )
 
-type queryContainer struct {
-	containerClient
-	query string
-}
-
-func (c *queryContainer) NewQueryItemsPager(q string, _ azcosmos.PartitionKey, _ *azcosmos.QueryOptions) *runtime.Pager[azcosmos.QueryItemsResponse] {
-	c.query = q
-	return runtime.NewPager(runtime.PagingHandler[azcosmos.QueryItemsResponse]{
-		More: func(azcosmos.QueryItemsResponse) bool { return false },
-		Fetcher: func(context.Context, *azcosmos.QueryItemsResponse) (azcosmos.QueryItemsResponse, error) {
-			return azcosmos.QueryItemsResponse{}, nil
-		},
-	})
-}
 func TestOverviewQueriesSeparateDocumentTypes(t *testing.T) {
-	c := &queryContainer{}
-	s := &Store{container: c}
-	if _, err := s.GetPackingLists(context.Background(), "user"); err != nil {
+	ctx := context.Background()
+	s, list, session := seedTrip(t)
+	other := NewList("other", "Private", "")
+	if err := s.SavePackingList(ctx, other); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(c.query, "l.type = 'packing-list'") {
-		t.Errorf("list query includes other document types: %s", c.query)
-	}
-	if _, err := s.ListPackingSession(context.Background(), "user"); err != nil {
+	deleted := NewList("camper", "Deleted", "")
+	deleted.DeletedAt = &deleted.CreatedAt
+	if err := s.SavePackingList(ctx, deleted); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(c.query, "s.type = 'packing-session'") {
-		t.Errorf("session query includes other document types: %s", c.query)
+	lists, err := s.GetPackingLists(ctx, "camper")
+	if err != nil || len(lists) != 1 || lists[0].ID != list.ID {
+		t.Fatalf("visible lists: %+v, %v", lists, err)
+	}
+	sessions, err := s.ListPackingSession(ctx, "camper")
+	if err != nil || len(sessions) != 1 || sessions[0].ID != session.ID {
+		t.Fatalf("visible sessions: %+v, %v", sessions, err)
 	}
 }
 

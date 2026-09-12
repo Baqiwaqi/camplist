@@ -210,3 +210,14 @@ func TestDeleteCSRFUsesHeader(t *testing.T) {
 		}
 	}
 }
+
+func TestSyncRouteRejectsMissingCSRF(t *testing.T) {
+	routes := Routes(Config{Auth: &auth.Auth{}})
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("POST", "https://example.com/api/sessions/trip/sync", strings.NewReader(`{"id":"operation","itemId":"tent","checked":true,"expectedRevision":0}`))
+	r.Header.Set("Content-Type", "application/json")
+	csrf.Protect([]byte("01234567890123456789012345678901"), csrf.Secure(false))(routes).ServeHTTP(w, r)
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("sync bypassed CSRF: %d", w.Code)
+	}
+}

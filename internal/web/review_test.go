@@ -49,3 +49,28 @@ func TestReviewSubmissionAndSelectionThroughHTTP(t *testing.T) {
 		t.Fatal("selected addition not persisted")
 	}
 }
+
+func TestNewSessionPageSurfacesPreparationAndRecentImprovements(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("user", "Weekend", "")
+	list.Tasks = []packing.PreparationTask{{ID: "fuel", Name: "Buy fuel"}, {ID: "done", Name: "Already repaired", Done: true}}
+	list.Changes = []string{"Added spare matches"}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	session, err := store.CreatePackingSession(ctx, list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	route := chi.NewRouteContext()
+	route.URLParams.Add("id", session.ID)
+	r := packingRequest("/packing-session/"+session.ID, nil)
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, route))
+	w := httptest.NewRecorder()
+	h := handler{packingStore: store}
+	h.SessionDetailsPage(w, r)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), "Buy fuel") || !strings.Contains(w.Body.String(), "Added spare matches") || strings.Contains(w.Body.String(), "Already repaired") {
+		t.Fatalf("preparation absent or completed work resurfaced: %s", w.Body.String())
+	}
+}

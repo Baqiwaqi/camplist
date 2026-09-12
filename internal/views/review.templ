@@ -37,10 +37,10 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 				<label>
 					Proposed change
 					<select name="action">
-						<option value="none" selected?={ entry.Action == "none" }>Keep observation only</option>
-						<option value="add" selected?={ entry.Action == "add" }>Add gear to future lists</option>
-						<option value="remove" selected?={ entry.Action == "remove" }>Remove selected existing gear</option>
-						<option value="task" selected?={ entry.Action == "task" }>Create a preparation task</option>
+						<option value="none" selected?={ entry.Action == packing.ReviewObserve }>Keep observation only</option>
+						<option value="add" selected?={ entry.Action == packing.ReviewAdd }>Add gear to future lists</option>
+						<option value="remove" selected?={ entry.Action == packing.ReviewRemove }>Remove selected existing gear</option>
+						<option value="task" selected?={ entry.Action == packing.ReviewTask }>Create a preparation task</option>
 					</select>
 				</label>
 				<label>Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister"/></label>
@@ -81,13 +81,13 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 							}
 							{ observation.Note }
 						</p>
-						if observation.Action != "none" {
+						if observation.Action != packing.ReviewObserve {
 							if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
 								<p>Applied to future trips.</p>
 							} else if available {
 								<label>
 									<input type="checkbox" name="selected" value={ observation.ID }/>
-									{ observation.Action }: { observation.Name } { observation.Task }
+									{ string(observation.Action) }: { observation.Name } { observation.Task }
 								</label>
 							}
 						}

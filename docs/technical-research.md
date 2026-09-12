@@ -86,3 +86,16 @@ Replace the bare `ListenAndServe` call (`cmd/web/main.go:82`) with an explicit s
 ## Product boundary: camping without connectivity
 
 An offline check-off promise changes the design: cacheable pages alone cannot persist edits to Cosmos without a network. My recommendation is to validate that requirement before adding local persistence, queued desired-state changes, replay, expired-login recovery, and conflict resolution. A downloadable/printable checklist is a smaller initial option. If reliable offline editing becomes central, prototype a limited client-side packing screen while retaining Go for authentication and synchronization. HTMX itself identifies full offline operation as a poor fit for pure hypermedia. [HTMX architecture guidance](https://htmx.org/essays/when-to-use-hypermedia/)
+
+## Implementation follow-through
+
+The selected direction is now implemented with online trip reviews and a separate
+experimental offline packing screen. Go owns review application, item revisions,
+and durable sync receipts; HTMX still handles online checklist updates. The
+offline module owns IndexedDB persistence, retries, conflict choices, and account
+cleanup. Its service worker caches only a generic public shell and static assets.
+
+See [implementation review](implementation-review.md) for checks and resolved
+findings, and [implementation plan](implementation-plan.md) for live-service and
+browser validation still required before treating offline support as dependable
+across supported environments.

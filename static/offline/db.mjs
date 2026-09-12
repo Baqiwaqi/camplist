@@ -45,14 +45,23 @@ export function openDatabase(factory = indexedDB, name = 'camplist-offline') {
      tx.oncomplete = () => done(structuredClone(result));
      tx.onabort = () => fail(failure || tx.error || new Error('Offline save failed.'));
     }),
-    clear: (owner) => new Promise((done, fail) => {
+    clear: (owner, exported) => new Promise((done, fail) => {
      const tx = db.transaction(['sessions', 'meta'], 'readwrite');
      const store = tx.objectStore('sessions');
-     const req = store.openCursor();
-     req.onsuccess = () => { const cursor = req.result; if (!cursor) return; if (cursor.value.owner === owner) cursor.delete(); cursor.continue(); };
-     const meta = tx.objectStore('meta'); const active = meta.get('activeAccount');
-     active.onsuccess = () => { if (active.result === owner) meta.delete('activeAccount'); };
-     tx.oncomplete = () => done(); tx.onabort = () => fail(tx.error);
+     let failure;
+     const req = store.getAll();
+     req.onsuccess = () => {
+      const records = req.result.filter(record => record.owner === owner);
+      const serialize = records => JSON.stringify([...records].sort((a,b) => a.id.localeCompare(b.id)));
+      if (exported ? serialize(records) !== serialize(exported) : records.some(record => Object.keys(record.pending).length)) {
+       failure = new Error('Packing changed or has pending work. Export or synchronize again before signing out.');
+       tx.abort(); return;
+      }
+      for (const record of records) store.delete([owner, record.id]);
+      const meta = tx.objectStore('meta'); const active = meta.get('activeAccount');
+      active.onsuccess = () => { if (active.result === owner) meta.delete('activeAccount'); };
+     };
+     tx.oncomplete = () => done(); tx.onabort = () => fail(failure || tx.error);
     }),
     close: () => db.close()
    });

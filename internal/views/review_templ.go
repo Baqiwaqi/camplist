@@ -251,7 +251,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if entry.Action == "none" {
+			if entry.Action == packing.ReviewObserve {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " selected")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -261,7 +261,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if entry.Action == "add" {
+			if entry.Action == packing.ReviewAdd {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " selected")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -271,7 +271,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if entry.Action == "remove" {
+			if entry.Action == packing.ReviewRemove {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " selected")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -281,7 +281,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if entry.Action == "task" {
+			if entry.Action == packing.ReviewTask {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " selected")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -438,7 +438,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				if observation.Action != "none" {
+				if observation.Action != packing.ReviewObserve {
 					if slices.Contains(list.AppliedReviews, session.ID+":"+observation.ID) {
 						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<p>Applied to future trips.</p>")
 						if templ_7745c5c3_Err != nil {
@@ -463,9 +463,9 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var23 string
-						templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(observation.Action)
+						templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(string(observation.Action))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 29}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 37}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 						if templ_7745c5c3_Err != nil {
@@ -478,7 +478,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 						var templ_7745c5c3_Var24 string
 						templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(observation.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 51}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 59}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 						if templ_7745c5c3_Err != nil {
@@ -491,7 +491,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 						var templ_7745c5c3_Var25 string
 						templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(observation.Task)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 72}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/review.templ`, Line: 90, Col: 80}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 						if templ_7745c5c3_Err != nil {

@@ -42,30 +42,41 @@ document.addEventListener('submit',async event=>{
   const {db,packing}=await module();
   const records=await db.list(identity.userId);
   const pending=records.some(record=>Object.keys(record.pending).length);
-  const finish=async allowPending=>{
-   await packing.forget(identity.userId,allowPending);
+  const finish=async exported=>{
+   await packing.forget(identity.userId,exported);
    form.querySelector('[name="_csrf"]').value=identity.csrfToken;
    form.submit();
   };
-  if(!pending){await finish(false);return;}
+  if(!pending){await finish();return;}
   const dialog=document.createElement('dialog');
   const explanation=document.createElement('p');explanation.textContent='This device has packing changes waiting to sync. Keep a copy or synchronize them before signing out.';dialog.append(explanation);
   for(const [label,action] of [
    ['Cancel',async()=>dialog.remove()],
    ['Export and sign out',async()=>{
-    downloadJSON(JSON.stringify({format:1,sessions:await db.list(identity.userId)},null,2),'camplist-pending.json');
-    await finish(true);
+    const exported=await db.list(identity.userId);
+    downloadJSON(JSON.stringify({format:1,sessions:exported},null,2),'camplist-pending.json');
+    await finish(exported);
    }],
    ['Sync and sign out',async()=>{
     for(const record of records)await packing.sync(identity.userId,record.id);
-    await finish(false);
+    await finish();
    }]
   ]){
    const button=document.createElement('button');button.textContent=label;button.className='btn btn-primary';
    button.onclick=async()=>{button.disabled=true;try{await action();}catch(error){explanation.textContent=error.message;button.disabled=false;}};dialog.append(button);
   }
   document.body.append(dialog);dialog.showModal();
- }catch(error){message('Could not prepare sign-out. '+error.message+' Open Saved offline to export pending work.');}
+  }catch(error){
+  const dialog=document.createElement('dialog');
+  const explanation=document.createElement('p');
+  explanation.textContent='Could not inspect or clear offline copies: '+error.message+' You can sign out of the server now, but local copies may remain on this device. Return to Saved offline to export and remove them when storage is available.';
+  dialog.append(explanation);
+  for(const [label,action] of [['Cancel',()=>dialog.remove()],['Sign out; keep local copies',()=>form.submit()]]){
+   const button=document.createElement('button');button.className='btn btn-secondary';button.textContent=label;button.onclick=action;dialog.append(button);
+  }
+  document.body.append(dialog);dialog.showModal();
+ }
+
 });
 async function synchronizeSaved() {
  try {

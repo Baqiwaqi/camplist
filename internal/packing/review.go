@@ -22,17 +22,26 @@ type PreparationTask struct {
 	Done bool   `json:"done"`
 }
 
+type ReviewAction string
+
+const (
+	ReviewObserve ReviewAction = "none"
+	ReviewAdd     ReviewAction = "add"
+	ReviewRemove  ReviewAction = "remove"
+	ReviewTask    ReviewAction = "task"
+)
+
 type ReviewEntry struct {
-	ID             string `json:"id"`
-	ItemID         string `json:"itemId,omitempty"`
-	Name           string `json:"name"`
-	Category       string `json:"category,omitempty"`
-	Forgotten      bool   `json:"forgotten"`
-	Unused         bool   `json:"unused"`
-	NeedsAttention bool   `json:"needsAttention"`
-	Note           string `json:"note,omitempty"`
-	Action         string `json:"action"`
-	Task           string `json:"task,omitempty"`
+	ID             string       `json:"id"`
+	ItemID         string       `json:"itemId,omitempty"`
+	Name           string       `json:"name"`
+	Category       string       `json:"category,omitempty"`
+	Forgotten      bool         `json:"forgotten"`
+	Unused         bool         `json:"unused"`
+	NeedsAttention bool         `json:"needsAttention"`
+	Note           string       `json:"note,omitempty"`
+	Action         ReviewAction `json:"action"`
+	Task           string       `json:"task,omitempty"`
 }
 
 func (s *Store) updateSession(ctx context.Context, id, user string, change func(*PackingSession) (bool, error)) (PackingSession, error) {
@@ -72,7 +81,7 @@ func (s *Store) AddReviewEntry(ctx context.Context, id, user string, entry Revie
 	if entry.ID == "" || len(entry.ID) > 100 || entry.Name == "" || len(entry.Name) > 200 || len(entry.Note) > 2000 || len(entry.Task) > 200 || len(entry.Category) > 100 || (!entry.Forgotten && !entry.Unused && !entry.NeedsAttention) {
 		return PackingSession{}, ErrInvalid
 	}
-	if !slices.Contains([]string{"none", "add", "remove", "task"}, entry.Action) || (entry.Action == "task" && entry.Task == "") {
+	if !slices.Contains([]ReviewAction{ReviewObserve, ReviewAdd, ReviewRemove, ReviewTask}, entry.Action) || (entry.Action == ReviewTask && entry.Task == "") {
 		return PackingSession{}, ErrInvalid
 	}
 	return s.updateSession(ctx, id, user, func(session *PackingSession) (bool, error) {
@@ -92,7 +101,7 @@ func (s *Store) AddReviewEntry(ctx context.Context, id, user string, entry Revie
 				return false, ErrInvalid
 			}
 		}
-		if entry.Action == "remove" && entry.ItemID == "" {
+		if entry.Action == ReviewRemove && entry.ItemID == "" {
 			return false, ErrInvalid
 		}
 		session.Review = append(session.Review, entry)
@@ -116,7 +125,7 @@ func (s *Store) ApplyReview(ctx context.Context, sessionID, user, revision strin
 			return list, ErrInvalid
 		}
 		entry := session.Review[index]
-		if entry.Action == "none" {
+		if entry.Action == ReviewObserve {
 			return list, ErrInvalid
 		}
 		key := sessionID + ":" + entry.ID
@@ -133,19 +142,19 @@ func (s *Store) ApplyReview(ctx context.Context, sessionID, user, revision strin
 	for _, entry := range pending {
 		key := sessionID + ":" + entry.ID
 		switch entry.Action {
-		case "add":
+		case ReviewAdd:
 			item := NewItem(entry.Name, entry.Category)
 			item.ID = uuid.NewSHA1(uuid.NameSpaceURL, []byte(key)).String()
 			list.Items = append(list.Items, item)
 			list.Changes = append(list.Changes, "Added "+entry.Name)
-		case "remove":
+		case ReviewRemove:
 			index := slices.IndexFunc(list.Items, func(i PackingItem) bool { return i.ID == entry.ItemID })
 			if index < 0 {
 				return list, ErrConflict
 			}
 			list.Items = append(list.Items[:index], list.Items[index+1:]...)
 			list.Changes = append(list.Changes, "Removed "+entry.Name)
-		case "task":
+		case ReviewTask:
 			list.Tasks = append(list.Tasks, PreparationTask{ID: uuid.NewSHA1(uuid.NameSpaceURL, []byte(key)).String(), Name: entry.Task})
 			list.Changes = append(list.Changes, "Prepare: "+entry.Task)
 		}

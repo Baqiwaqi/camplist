@@ -95,7 +95,7 @@ test('expired login, account changes and deleted sessions preserve pending work'
  const exported=JSON.parse(await packing.export('camper','trip'));
  assert.equal(exported.pending.tent.checked,true);
  await assert.rejects(packing.forget('camper'),/pending/i);
- await packing.forget('camper',true);
+ await packing.forget('camper',await db.list('camper'));
  assert.equal(await packing.open('camper','trip'),null);
 });
 
@@ -137,4 +137,15 @@ test('different-item changes merge and choosing the server resolves a conflict w
  await packing.resolve('camper','trip','tent','server');view=await packing.sync('camper','trip');
  assert.equal(view.pending,0);assert.equal(view.session.list.items[0].checked,true);
  assert.equal(remote.receipts.size,count);
+});
+
+test('sign-out cannot discard a change made in another tab after export', async () => {
+ const db=await database(),packing=new OfflinePacking(db,{}),second=new OfflinePacking(db,{});
+ await packing.save('camper',trip());await packing.set('camper','trip','tent',true);
+ const exported=await db.list('camper');
+ await second.set('camper','trip','tent',false);
+ await assert.rejects(packing.forget('camper',exported),/changed|export/i);
+ assert.equal((await second.open('camper','trip')).session.list.items[0].checked,false);
+ await packing.forget('camper',await db.list('camper'));
+ assert.equal(await packing.open('camper','trip'),null);
 });

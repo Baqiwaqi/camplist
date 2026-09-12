@@ -60,7 +60,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						<input type="hidden" name="revision" value={ list.Revision() }/>
 						<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
 						<span>{ task.Name }</span>
-						<button type="submit">
+						<button class="btn btn-primary btn-sm" type="submit">
 							if task.Done {
 								Reopen task
 							} else {

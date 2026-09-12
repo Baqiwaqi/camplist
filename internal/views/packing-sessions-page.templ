@@ -31,7 +31,7 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 							if allPacked(s.List.CountChecked(), len(s.List.Items)) {
 								<a class="btn btn-secondary btn-sm" href={ "/packing-session/" + s.ID }>Open</a>
 							} else {
-								<a class="btn btn-accent btn-sm" href={ "/packing-session/" + s.ID }>Keep packing</a>
+								<a class="btn btn-primary btn-sm" href={ "/packing-session/" + s.ID }>Keep packing</a>
 							}
 							<button
 								class="btn btn-danger btn-sm"

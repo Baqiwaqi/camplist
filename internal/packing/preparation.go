@@ -34,3 +34,29 @@ func (s *Store) EditPreparationTask(ctx context.Context, id, actor string, task 
 	}
 	return s.SavePackingList(ctx, list)
 }
+
+// SetSessionPreparationTask records preparation for this trip only.
+func (s *Store) SetSessionPreparationTask(ctx context.Context, id, actor, taskID string, done bool, expectedRevision int64) (PackingSession, error) {
+	if expectedRevision < 0 {
+		return PackingSession{}, ErrInvalid
+	}
+	return s.updateSession(ctx, id, actor, func(session *PackingSession) (bool, error) {
+		if session.UserID != actor {
+			return false, ErrForbidden
+		}
+		index := slices.IndexFunc(session.List.Tasks, func(task PreparationTask) bool { return task.ID == taskID })
+		if index < 0 {
+			return false, ErrNotFound
+		}
+		task := &session.List.Tasks[index]
+		if task.Done == done {
+			return false, nil
+		}
+		if task.Revision != expectedRevision {
+			return false, ErrConflict
+		}
+		task.Done = done
+		task.Revision++
+		return true, nil
+	})
+}

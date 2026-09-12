@@ -34,25 +34,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			<p class="muted" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
 			<noscript><p>Packing requires a connection when JavaScript is disabled.</p></noscript>
 			if session.UserID==auth.Subject(ctx) {
-				<section class="card">
-					<h2>Before this trip</h2>
-					<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
-					<ul class="task-list">
-						for _, task := range session.List.Tasks {
-							if !task.Done {
-								<li>{ task.Name }</li>
-							}
-						}
-					</ul>
-					if len(session.Improvements) > 0 {
-						<h3>Changes since your previous outing</h3>
-						<ul class="task-list">
-							for _, change := range session.Improvements {
-								<li>{ change }</li>
-							}
-						</ul>
-					}
-				</section>
+				@SessionPreparation(session, csrfToken)
 			}
 			@PackingChecklist(session, csrfToken)
 		</section>
@@ -129,4 +111,49 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 			</button>
 		</form>
 	</li>
+}
+
+templ SessionPreparation(session packing.PackingSession, csrfToken string) {
+	<section class="card" id="session-preparation">
+		<h2>Before this trip</h2>
+		<p class="muted">Mark preparation done for this trip. These tasks need a connection to save. <a href={ "/packing-list/" + session.TemplateID() }>Manage reusable preparation tasks</a>.</p>
+		<ul class="item-list">
+			for _, task := range session.List.Tasks {
+				<li class="item-row">
+					<form
+						method="post"
+						action={ "/packing-session/" + session.ID + "/preparation" }
+						hx-post={ "/packing-session/" + session.ID + "/preparation" }
+						hx-target="#session-preparation"
+						hx-swap="outerHTML"
+						hx-disabled-elt="#session-preparation button"
+						class="pack-form"
+					>
+						<input type="hidden" name="_csrf" value={ csrfToken }/>
+						<input type="hidden" name="taskId" value={ task.ID }/>
+						<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
+						<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(task.Revision, 10) }/>
+						<button type="submit" class={ "pack-row", templ.KV("packed",task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle completion for " + task.Name }>
+							<span class="tick" aria-hidden="true"></span><span class="pack-name">{ task.Name }</span>
+							<span class="pack-action">
+								if task.Done {
+									Undo
+								} else {
+									Mark done
+								}
+							</span>
+						</button>
+					</form>
+				</li>
+			}
+		</ul>
+		if len(session.Improvements)>0 {
+			<h3>Changes since your previous outing</h3>
+			<ul class="task-list">
+				for _, change := range session.Improvements {
+					<li>{ change }</li>
+				}
+			</ul>
+		}
+	</section>
 }

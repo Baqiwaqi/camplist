@@ -18,6 +18,7 @@ import (
 
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
+	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
 	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) error
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
 	CreateInvitation(context.Context, string, string, string) (packing.InvitationLink, error)

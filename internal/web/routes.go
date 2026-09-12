@@ -80,6 +80,7 @@ func Routes(cfg Config) *chi.Mux {
 		r.Post("/packing-session/{id}/review/recover", h.RecoverReviewHandler)
 		r.Post("/packing-list/{id}/preparation", h.PreparationHandler)
 		r.Post("/packing-list/{id}/preparation/edit", h.EditPreparationTask)
+		r.Post("/packing-session/{id}/preparation", h.SetSessionPreparationTask)
 		r.Delete("/packing-session/{id}", h.DeletePackingSession)
 		r.Post("/packing-session/set-item", h.SetSessionItemHandler)
 	})

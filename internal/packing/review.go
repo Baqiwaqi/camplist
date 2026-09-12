@@ -17,9 +17,10 @@ var ErrConflict = errors.New("the record changed; review the current version")
 var ErrInvalid = errors.New("invalid packing input")
 
 type PreparationTask struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Done bool   `json:"done"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Done     bool   `json:"done"`
+	Revision int64  `json:"revision,omitempty"`
 }
 
 type ReviewAction string

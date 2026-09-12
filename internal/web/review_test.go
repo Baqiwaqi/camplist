@@ -74,3 +74,63 @@ func TestNewSessionPageSurfacesPreparationAndRecentImprovements(t *testing.T) {
 		t.Fatalf("preparation absent or completed work resurfaced: %s", w.Body.String())
 	}
 }
+
+func TestBeforeTripTasksHaveCompletionControls(t *testing.T) {
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("user", "Weekend", "")
+	list.Tasks = []packing.PreparationTask{{ID: "car", Name: "Auto opladen"}, {ID: "sleep", Name: "Slaapspullen ophalen nederhorst"}}
+	if err := store.SavePackingList(context.Background(), list); err != nil {
+		t.Fatal(err)
+	}
+	session, err := store.CreatePackingSession(context.Background(), list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := withItemRoute(packingRequest("/packing-session/"+session.ID, nil), session.ID, "")
+	w := httptest.NewRecorder()
+	h := handler{packingStore: store}
+	h.SessionDetailsPage(w, r)
+	if !strings.Contains(w.Body.String(), `/packing-session/`+session.ID+`/preparation`) || !strings.Contains(w.Body.String(), `Mark done`) {
+		t.Fatal("before-trip tasks are read-only: no completion controls")
+	}
+	submit := func(taskID, done, revision string) *httptest.ResponseRecorder {
+		r := withItemRoute(packingRequest("/packing-session/"+session.ID+"/preparation", url.Values{"taskId": {taskID}, "done": {done}, "expectedRevision": {revision}}), session.ID, "")
+		r.Header.Set("HX-Request", "true")
+		w := httptest.NewRecorder()
+		h.SetSessionPreparationTask(w, r)
+		return w
+	}
+	for _, id := range []string{"car", "sleep"} {
+		response := submit(id, "true", "0")
+		if response.Code != 200 || !strings.Contains(response.Body.String(), "Undo") {
+			t.Fatalf("complete %s: %d %s", id, response.Code, response.Body.String())
+		}
+	}
+	reopened, err := store.GetPackingSession(context.Background(), session.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reopened.List.Tasks[0].Done || !reopened.List.Tasks[1].Done {
+		t.Fatal("completion was not persisted")
+	}
+	original, err := store.GetPackingList(context.Background(), list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if original.Tasks[0].Done || original.Tasks[1].Done {
+		t.Fatal("trip completion changed reusable tasks")
+	}
+	if response := submit("car", "false", "0"); response.Code != 409 {
+		t.Fatalf("stale undo: %d", response.Code)
+	}
+	if response := submit("car", "false", "1"); response.Code != 200 {
+		t.Fatalf("undo: %d", response.Code)
+	}
+	if response := submit("missing", "true", "0"); response.Code != 404 {
+		t.Fatalf("unknown task: %d", response.Code)
+	}
+	if response := submit("car", "true", ""); response.Code != 400 {
+		t.Fatalf("missing revision: %d", response.Code)
+	}
+
+}

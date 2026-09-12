@@ -1,6 +1,7 @@
 param location string = resourceGroup().location
 param appName string = 'camplist'
-param githubRepository string = 'Baqiwaqi/camplist'
+// Match the repository identity in the GitHub OIDC subject, including immutable IDs.
+param githubRepository string = 'Baqiwaqi@48436110/camplist@1336119282'
 param githubEnvironment string = 'production'
 param registryName string = 'camplist${uniqueString(resourceGroup().id)}'
 

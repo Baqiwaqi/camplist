@@ -4,14 +4,14 @@ The production app is hosted at:
 
 https://camplist.yellowcliff-1d686ee3.westeurope.azurecontainerapps.io
 
-Google's OAuth client must allow this exact redirect URI:
+The existing Google OAuth client is configured with this production redirect URI:
 
 ```text
 https://camplist.yellowcliff-1d686ee3.westeurope.azurecontainerapps.io/auth/callback
 ```
 
-Add it alongside the existing localhost callback in Google Cloud Console → Google
-Auth Platform → Clients. The existing OAuth client credentials are reused.
+It was added alongside the existing localhost callback in Google Cloud Console →
+Google Auth Platform → Clients. The existing OAuth client credentials are reused.
 The app's `REDIRECT_URL` is configured automatically by `infra/app.bicep`.
 
 ## Resources
@@ -59,7 +59,7 @@ GitHub environment variables:
 The deployment identity has AcrPush on the dedicated registry, Container Apps
 Contributor on the dedicated resource group, and Managed Identity Operator on the
 runtime identity. Federation trusts only
-`repo:Baqiwaqi/camplist:environment:production`; the GitHub environment permits
+`repo:Baqiwaqi@48436110/camplist@1336119282:environment:production`; the GitHub environment permits
 only `main`. No Azure client secret is stored in GitHub.
 
 ## Secrets and packaging

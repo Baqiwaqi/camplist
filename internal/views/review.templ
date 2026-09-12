@@ -6,9 +6,16 @@ import "camplist/internal/auth"
 
 templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, message string, csrfToken string) {
 	@Layout("Review your trip", csrfToken) {
-		<a href={ "/packing-session/" + session.ID }>Back to packing session</a>
-		<h1>Make the next trip easier</h1>
-		<p>Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
+		<div class="page-head">
+			<div>
+				<p class="eyebrow">Trip review</p>
+				<h1>Make the next trip easier</h1>
+				<p class="muted lede">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
+			</div>
+			<div class="actions">
+				<a class="btn btn-secondary" href={ "/packing-session/" + session.ID }>Back to packing</a>
+			</div>
+		</div>
 		if message != "" {
 			<p class="error" role="alert">{ message }</p>
 		}

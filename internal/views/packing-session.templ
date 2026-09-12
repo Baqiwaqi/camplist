@@ -20,13 +20,13 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 					</p>
 				</div>
 				<div class="actions">
+					if canReview {
+						<a class="btn btn-secondary" href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a>
+					}
+					<a class="btn btn-secondary" href={ "/sharing/packing-session/" + session.ID }>Sharing</a>
 					<a class="btn btn-secondary" href="/sessions">All sessions</a>
 				</div>
 			</div>
-			<p><a href={ "/sharing/packing-session/" + session.ID }>Sharing and access</a></p>
-			if canReview {
-				<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
-			}
 			if session.IsShared() {
 				<p class="muted">Shared trip. Changes saved on this device are visible to others only after syncing. Offline views may miss other people’s changes.</p>
 			}
@@ -37,7 +37,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 				<section class="card">
 					<h2>Before this trip</h2>
 					<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
-					<ul>
+					<ul class="task-list">
 						for _, task := range session.List.Tasks {
 							if !task.Done {
 								<li>{ task.Name }</li>
@@ -46,7 +46,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 					</ul>
 					if len(session.Improvements) > 0 {
 						<h3>Changes since your previous outing</h3>
-						<ul>
+						<ul class="task-list">
 							for _, change := range session.Improvements {
 								<li>{ change }</li>
 							}

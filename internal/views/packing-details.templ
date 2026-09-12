@@ -16,6 +16,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						<p class="hero-meta">{ itemSummary(list.Items) }</p>
 					</div>
 					<div class="actions">
+						<a class="btn btn-secondary" href={ "/sharing/packing-list/" + list.ID }>Sharing</a>
 						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
 						<button
 							class="btn btn-accent"
@@ -26,7 +27,6 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 					</div>
 				</div>
 			</div>
-			<p><a href={ "/sharing/packing-list/" + list.ID }>Sharing and access</a></p>
 			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
 		<section>
@@ -48,12 +48,12 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 			<section class="card">
 				<h2>Prepare before your next trip</h2>
 				for _, task := range list.Tasks {
-					<form class="card" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+					<form class="task-row" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
 						<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/><input type="hidden" name="taskId" value={ task.ID }/>
-						<label for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
+						<label class="sr-only" for={ "task-" + task.ID }>Preparation task</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200"/>
 						<label><input type="checkbox" name="done" value="true" checked?={ task.Done }/>Prepared</label>
-						<button class="btn btn-secondary" name="action" value="save">Save task</button><button
-	class="btn btn-danger"
+						<button class="btn btn-secondary btn-sm" name="action" value="save">Save task</button><button
+	class="btn btn-danger btn-sm"
 	name="action"
 	value="remove"
 	formnovalidate
@@ -66,14 +66,14 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 >Remove task</button>
 					</form>
 				}
-				<form method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
+				<form class="task-add" method="post" action={ "/packing-list/" + list.ID + "/preparation/edit" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
 					<div class="field"><label for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Buy fuel" required maxlength="200"/></div>
 					<button class="btn btn-secondary">Add task</button>
 				</form>
 				<p class="muted">Preparation and packing are separate: buying fuel does not mark your stove as packed.</p>
 				<h3>Improvements from trip reviews</h3>
-				<ul>
+				<ul class="task-list">
 					for _, change := range list.Changes {
 						<li>{ change }</li>
 					}

@@ -1,27 +1,59 @@
 <!doctype html>
 <html lang="en">
 <head>
- <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
- <title>Packing on this device · Camplist</title>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#2f5d3a">
+ <title>On this device – Camplist</title>
+ <link rel="icon" type="image/svg+xml" href="/static/logomark.svg">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
  <link rel="stylesheet" href="/static/style.css">
  <script type="module" src="/static/offline/ui.mjs"></script>
 </head>
 <body class="offline-page">
- <header class="site-header"><nav class="site-nav"><a href="/">Camplist online</a><a href="/offline">On this device</a><a href="/login">Sign in</a></nav></header>
- <main class="container">
-  <h1>Packing on this device</h1>
-  <p class="muted">Trips you open are saved here automatically. Keep packing without a connection; changes sync automatically when you’re back online.</p>
+ <header class="site-header">
+  <nav class="site-nav" aria-label="Main">
+   <a class="brand" href="/"><img src="/static/logomark.svg" alt="" width="22" height="22">Camplist</a>
+   <a href="/sessions">Online sessions</a>
+   <a href="/login">Sign in</a>
+  </nav>
+ </header>
+ <main>
+  <div class="page-head">
+   <div>
+    <p class="eyebrow">On this device</p>
+    <h1>Pack without a signal.</h1>
+    <p class="muted lede">Trips you open are saved here automatically. Keep packing offline; changes sync when you are back online.</p>
+   </div>
+  </div>
   <p id="offline-message" role="alert" hidden></p>
-  <section id="saved-sessions" aria-label="Sessions saved on this device"></section>
-  <section id="offline-trip" class="card" hidden>
-   <h2 id="trip-name"></h2><p id="sync-status" role="status"></p>
-   <details><summary>Recovery options</summary><button class="btn btn-secondary" id="sync-now">Retry connection</button> <button class="btn btn-secondary" id="export-session">Export this session</button></details>
-   <p id="packing-progress" role="status"></p>
-   <ul id="offline-items" class="item-list"></ul>
-   <a id="review-trip">Review this trip online</a>
+  <h2 class="section-title">Saved trips</h2>
+  <section id="saved-sessions" class="card saved-sessions" aria-label="Sessions saved on this device"></section>
+  <section id="offline-trip" class="card offline-trip" hidden>
+   <p class="eyebrow">Packing session</p>
+   <h2 id="trip-name"></h2>
+   <p id="sync-status" class="muted sync-status" role="status"></p>
+   <p id="packing-progress" class="progress-count" role="status"></p>
+   <ul id="offline-items" class="item-list offline-items"></ul>
+   <div class="actions offline-trip-actions">
+    <a id="review-trip" class="btn btn-secondary btn-sm">Review this trip online</a>
+   </div>
+   <details class="recovery">
+    <summary>Recovery options</summary>
+    <div class="actions">
+     <button class="btn btn-secondary btn-sm" id="sync-now">Retry connection</button>
+     <button class="btn btn-secondary btn-sm" id="export-session">Export this session</button>
+    </div>
+   </details>
   </section>
-  <p><button class="btn btn-secondary" id="forget-account">Export and remove this account’s saved copies</button></p>
-  <noscript>JavaScript is required for offline packing. Use the online app while connected.</noscript>
+  <section class="card">
+   <h2>This device</h2>
+   <p class="muted">Saved copies stay in this browser until you remove them. Export first if you want to keep a file.</p>
+   <button class="btn btn-danger" id="forget-account">Export and remove saved copies</button>
+  </section>
+  <noscript><div class="card"><p>JavaScript is required for offline packing. Use the online app while connected.</p></div></noscript>
  </main>
 </body>
 </html>

@@ -11,7 +11,7 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 		<section class="narrow">
 			<p class="eyebrow">Sharing</p>
 			<h1>Pack together.</h1>
-			<p><a href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
+			<p><a class="btn btn-secondary btn-sm" href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
 			if view.Kind=="packing-session" {
 				<p>Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>
 				<p class="muted">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>

@@ -51,6 +51,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - Runtime: tokens are inlined at the top of `static/style.css`; logomarks live in
   `static/`. Views use the `.btn-*`, `.card`, `.item-row`, `.field`, `.error`,
   `.progress`, `.tag`, `.eyebrow` classes; the React components are not shipped.
+- The offline shell `static/offline/offline.html` is static HTML on the same
+  stylesheet. Its scripts in `static/offline/` look up elements by id and set
+  classes such as `.error` and `.card` at runtime, so keep those ids when
+  restyling and add any new static asset to the list in `sw.js`.
 - Rules: one ember (`.btn-accent`) "go" action per screen, pine for primary
   actions, red only for errors and delete; border-only elevation (no shadows);
   pills for buttons and tags; flat colour, no icons, images or gradients;

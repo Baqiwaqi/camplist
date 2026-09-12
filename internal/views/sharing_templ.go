@@ -81,7 +81,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					return templ_7745c5c3_Err
 				}
 				if link != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"grid gap-1 mb-4\" x-data=\"{ copied: false }\" data-invitation-share><label for=\"invitation-link\" class=\"text-sm font-bold\">Invitation link</label> <input id=\"invitation-link\" type=\"text\" readonly value=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"grid gap-1 mb-4\" x-data=\"invitationShare\"><label for=\"invitation-link\" class=\"text-sm font-bold\">Invitation link</label> <input id=\"invitation-link\" type=\"text\" readonly value=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -94,7 +94,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0\" data-invitation-link><div class=\"flex flex-wrap gap-2 justify-self-start\"><button type=\"button\" class=\"btn btn-primary\" hidden data-share-invitation>Share invitation</button> <button type=\"button\" class=\"btn btn-secondary\" data-copy-invitation x-on:click=\"navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())\" x-text=\"copied ? 'Copied' : 'Copy link'\">Copy link</button></div><p class=\"text-muted text-sm\" role=\"alert\" hidden data-share-error>Couldn’t open sharing options. Copy the link instead.</p></div><script type=\"module\" src=\"/static/sharing.mjs\"></script> <p class=\"text-muted mb-3\">Copy this link now. For security, it will not be shown again.</p>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0\" x-ref=\"invitationLink\"><div class=\"flex flex-wrap gap-2 justify-self-start\"><button type=\"button\" class=\"btn btn-primary\" x-show=\"supported\" x-cloak x-on:click=\"shareInvitation\">Share invitation</button> <button type=\"button\" class=\"btn btn-secondary\" x-on:click=\"navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())\" x-text=\"copied ? 'Copied' : 'Copy link'\">Copy link</button></div><p class=\"text-muted text-sm\" role=\"alert\" x-show=\"shareError\" x-cloak>Couldn’t open sharing options. Copy the link instead.</p></div><p class=\"text-muted mb-3\">Share or copy this link now. For security, it will not be shown again.</p>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -106,7 +106,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs("/sharing/" + view.Kind + "/" + view.ID + "/invitations")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 38, Col: 90}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 37, Col: 90}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -119,7 +119,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(token)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 39, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 38, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 				if templ_7745c5c3_Err != nil {
@@ -137,7 +137,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(invitation.Status)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 48, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 47, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -150,7 +150,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(invitation.Expires.Format("Jan 2, 2006"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 48, Col: 99}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 47, Col: 99}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -168,7 +168,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 						var templ_7745c5c3_Var9 string
 						templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(invitation.Applicant.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 50, Col: 52}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 49, Col: 52}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 						if templ_7745c5c3_Err != nil {
@@ -181,7 +181,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 						var templ_7745c5c3_Var10 string
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(invitation.Applicant.Email)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 50, Col: 86}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 49, Col: 86}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -194,7 +194,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 						var templ_7745c5c3_Var11 string
 						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(invitation.Applicant.Subject)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 51, Col: 82}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 50, Col: 82}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {
@@ -217,7 +217,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 						var templ_7745c5c3_Var12 templ.SafeURL
 						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs("/sharing/" + view.Kind + "/" + view.ID + "/invitations/" + invitation.Hash)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 55, Col: 112}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 54, Col: 112}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 						if templ_7745c5c3_Err != nil {
@@ -230,7 +230,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 						var templ_7745c5c3_Var13 string
 						templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(token)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 56, Col: 56}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 55, Col: 56}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 						if templ_7745c5c3_Err != nil {
@@ -268,7 +268,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(member.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 70, Col: 36}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 69, Col: 36}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
@@ -281,7 +281,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var15 string
 					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(member.Email)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 70, Col: 56}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 69, Col: 56}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -294,7 +294,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var16 templ.SafeURL
 					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs("/sharing/" + view.Kind + "/" + view.ID + "/members/" + subject + "/remove")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 71, Col: 111}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 70, Col: 111}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 					if templ_7745c5c3_Err != nil {
@@ -307,7 +307,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(token)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 72, Col: 55}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 71, Col: 55}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 					if templ_7745c5c3_Err != nil {
@@ -330,7 +330,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 				var templ_7745c5c3_Var18 templ.SafeURL
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs("/sharing/" + view.Kind + "/" + view.ID + "/members/" + view.Actor + "/remove")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 79, Col: 111}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 78, Col: 111}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -343,7 +343,7 @@ func SharingPage(view packing.SharingView, link string, token string) templ.Comp
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(token)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 80, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 79, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 				if templ_7745c5c3_Err != nil {
@@ -397,7 +397,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(profile.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 97, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 96, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -410,7 +410,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(profile.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 97, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 96, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -423,7 +423,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(profile.Subject)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 98, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 97, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -436,7 +436,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 		var templ_7745c5c3_Var24 templ.SafeURL
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs("/auth/login?switch=1&returnTo=" + url.QueryEscape(link.Path()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 99, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 98, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -454,7 +454,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 			var templ_7745c5c3_Var25 templ.SafeURL
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinURLErrs(link.Path())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 102, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 101, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -467,7 +467,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.ResolveAttributeValue(token)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 102, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 101, Col: 96}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 			if templ_7745c5c3_Err != nil {
@@ -485,7 +485,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 			var templ_7745c5c3_Var27 templ.SafeURL
 			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinURLErrs(link.Path())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 105, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 104, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
@@ -503,7 +503,7 @@ func JoinPage(link packing.InvitationLink, status string, profile auth.Profile, 
 			var templ_7745c5c3_Var28 templ.SafeURL
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinURLErrs("/" + link.Kind + "/" + link.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 107, Col: 195}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/sharing.templ`, Line: 106, Col: 195}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {

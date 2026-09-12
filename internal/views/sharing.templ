@@ -23,17 +23,16 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 					<h2>Invite someone</h2>
 					<p class="mb-3">Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
 					if link!="" {
-						<div class="grid gap-1 mb-4" x-data="{ copied: false }" data-invitation-share>
+						<div class="grid gap-1 mb-4" x-data="invitationShare">
 							<label for="invitation-link" class="text-sm font-bold">Invitation link</label>
-							<input id="invitation-link" type="text" readonly value={ link } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" data-invitation-link/>
+							<input id="invitation-link" type="text" readonly value={ link } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" x-ref="invitationLink"/>
 							<div class="flex flex-wrap gap-2 justify-self-start">
-								<button type="button" class="btn btn-primary" hidden data-share-invitation>Share invitation</button>
-								<button type="button" class="btn btn-secondary" data-copy-invitation x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
+								<button type="button" class="btn btn-primary" x-show="supported" x-cloak x-on:click="shareInvitation">Share invitation</button>
+								<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
 							</div>
-							<p class="text-muted text-sm" role="alert" hidden data-share-error>Couldn’t open sharing options. Copy the link instead.</p>
+							<p class="text-muted text-sm" role="alert" x-show="shareError" x-cloak>Couldn’t open sharing options. Copy the link instead.</p>
 						</div>
-						<script type="module" src="/static/sharing.mjs"></script>
-						<p class="text-muted mb-3">Copy this link now. For security, it will not be shown again.</p>
+						<p class="text-muted mb-3">Share or copy this link now. For security, it will not be shown again.</p>
 					}
 					<form method="post" action={ "/sharing/" + view.Kind + "/" + view.ID + "/invitations" }>
 						<input type="hidden" name="_csrf" value={ token }/>

@@ -1,8 +1,8 @@
 # Quick sharing invitation links
 
 Research date: 2026-09-12. Scope: the current repository and primary platform,
-standards, and app documentation. This is an implementation recommendation;
-product code was not changed.
+standards, and app documentation. This document records the recommendation that
+the subsequent implementation follows.
 
 ## Recommendation
 

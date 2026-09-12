@@ -1,14 +1,33 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-
-import {
-  canShareInvitation,
-  enhanceInvitationSharing,
-  invitationShareData,
-  shareInvitation,
-} from '../static/sharing.mjs'
+import { readFile } from 'node:fs/promises'
+import vm from 'node:vm'
 
 const invitationURL = 'https://camplist.example/join/packing-list/list/owner/secret'
+const source = await readFile(new URL('../static/sharing.js', import.meta.url), 'utf8')
+
+function invitationShare(browser) {
+  let alpineInit
+  let factory
+  const context = {
+    document: {
+      addEventListener(event, handler) {
+        if (event === 'alpine:init') alpineInit = handler
+      },
+    },
+    navigator: browser,
+    Alpine: {
+      data(name, componentFactory) {
+        if (name === 'invitationShare') factory = componentFactory
+      },
+    },
+  }
+  vm.runInNewContext(source, context)
+  alpineInit()
+  const component = factory()
+  component.$refs = { invitationLink: { value: invitationURL } }
+  return component
+}
 
 test('shares the existing invitation through the browser share picker', async () => {
   const calls = []
@@ -16,12 +35,13 @@ test('shares the existing invitation through the browser share picker', async ()
     canShare: data => data.url === invitationURL,
     share: async data => calls.push(data),
   }
+  const sharing = invitationShare(browser)
 
-  const data = invitationShareData(invitationURL)
+  sharing.init()
+  await sharing.shareInvitation()
 
-  assert.equal(canShareInvitation(browser, data), true)
-  assert.equal(await shareInvitation(browser, data), 'shared')
-  assert.deepEqual(calls, [
+  assert.equal(sharing.supported, true)
+  assert.deepEqual(structuredClone(calls), [
     {
       title: 'Camplist invitation',
       text: 'Join my Camplist. Sign in and request access; I will approve your account.',
@@ -30,43 +50,33 @@ test('shares the existing invitation through the browser share picker', async ()
   ])
 })
 
-test('does not offer browser sharing when the payload is unsupported', () => {
-  const data = invitationShareData(invitationURL)
+test('does not offer browser sharing when the API or payload is unsupported', () => {
+  const missing = invitationShare({})
+  missing.init()
+  assert.equal(missing.supported, false)
 
-  assert.equal(canShareInvitation({}, data), false)
-  assert.equal(canShareInvitation({ share() {}, canShare: () => false }, data), false)
+  const rejected = invitationShare({ share() {}, canShare: () => false })
+  rejected.init()
+  assert.equal(rejected.supported, false)
 })
 
 test('treats dismissing the share picker as a normal cancellation', async () => {
   const abort = new Error('user dismissed picker')
   abort.name = 'AbortError'
-  const browser = { share: async () => Promise.reject(abort) }
+  const sharing = invitationShare({ share: async () => Promise.reject(abort) })
 
-  assert.equal(await shareInvitation(browser, invitationShareData(invitationURL)), 'cancelled')
+  sharing.init()
+  await sharing.shareInvitation()
+
+  assert.equal(sharing.shareError, false)
 })
 
-test('progressively reveals sharing and reports launch failures without removing copy fallback', async () => {
-  let click
-  const input = { value: invitationURL }
-  const button = {
-    hidden: true,
-    addEventListener: (_event, handler) => { click = handler },
-  }
-  const errorMessage = { hidden: true }
-  const copyButton = { hidden: false }
-  const elements = new Map([
-    ['[data-invitation-link]', input],
-    ['[data-share-invitation]', button],
-    ['[data-share-error]', errorMessage],
-    ['[data-copy-invitation]', copyButton],
-  ])
-  const root = { querySelector: selector => elements.get(selector) }
-  const browser = { share: async () => { throw new Error('share unavailable') } }
+test('reports a share launch failure while leaving the component usable', async () => {
+  const sharing = invitationShare({ share: async () => { throw new Error('share unavailable') } })
 
-  enhanceInvitationSharing(root, browser)
-  assert.equal(button.hidden, false)
-  assert.equal(copyButton.hidden, false)
+  sharing.init()
+  await sharing.shareInvitation()
 
-  await click()
-  assert.equal(errorMessage.hidden, false)
+  assert.equal(sharing.supported, true)
+  assert.equal(sharing.shareError, true)
 })

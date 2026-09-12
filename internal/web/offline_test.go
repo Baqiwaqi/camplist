@@ -91,3 +91,38 @@ func TestSharedAPIUsesMemberAccountAndHidesInvitationMetadata(t *testing.T) {
 		t.Fatal("removed access indistinguishable from login", w.Code, w.Body.String())
 	}
 }
+
+func TestTripAdditionHTTPUsesAuthenticatedIdentityAndTaskSync(t *testing.T) {
+	store := packing.NewStore(testsupport.NewDocuments())
+	ctx := context.Background()
+	list := packing.NewList("user", "Camping", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	trip, err := store.CreatePackingSession(ctx, list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+	send := func(body string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest("POST", "/api/sessions/"+trip.ID+"/sync", strings.NewReader(body))
+		route := chi.NewRouteContext()
+		route.URLParams.Add("id", trip.ID)
+		r = r.WithContext(context.WithValue(context.WithValue(r.Context(), chi.RouteCtxKey, route), auth.USER_ID_KEY, "user"))
+		w := httptest.NewRecorder()
+		h.SyncSessionAPI(w, r)
+		return w
+	}
+	w := send(`{"id":"add","itemId":"charge","action":"add","kind":"task","scope":"mine","name":"Charge phone"}`)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"assignee":"user"`) {
+		t.Fatalf("add task %d %s", w.Code, w.Body.String())
+	}
+	w = send(`{"id":"done","itemId":"charge","kind":"task","checked":true,"expectedRevision":0}`)
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"checked":true`) {
+		t.Fatalf("complete task %d %s", w.Code, w.Body.String())
+	}
+	w = send(`{"id":"spoof","itemId":"fake","action":"add","name":"Fake","assignee":"other"}`)
+	if w.Code != 400 {
+		t.Fatalf("accepted assignee injection %d", w.Code)
+	}
+}

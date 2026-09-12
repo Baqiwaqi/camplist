@@ -59,7 +59,7 @@ func (h *handler) ItemRowHandler(w http.ResponseWriter, r *http.Request) {
 		render(w, r, views.ItemRow(list.ID, item, csrf.Token(r)))
 		return
 	}
-	http.Redirect(w, r, "/packing-list/"+list.ID, http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 
 // EditItemHandler saves a renamed or recategorised item.
@@ -97,6 +97,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 	item.SourceRevision = form.Revision
 	item.Name = form.Name
 	item.Category = form.Category
+	item.Scope = form.Scope
 	if err := h.packingStore.UpdateItem(r.Context(), list.ID, userID, item); err != nil {
 		log.Printf("update item: %v", err)
 		_, message := storeErrorDetails(err, "Saving the item failed")
@@ -109,7 +110,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.ItemRowHandler(w, r)
 		return
 	}
-	http.Redirect(w, r, "/packing-list/"+list.ID, http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 
 func (h *handler) renderItemForm(w http.ResponseWriter, r *http.Request, list packing.PackingList, item packing.PackingItem, form packing.CreateItemForm) {

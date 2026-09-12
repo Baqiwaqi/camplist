@@ -7,6 +7,8 @@ type CreatePackingSession struct {
 }
 
 type PackingSession struct {
+	OwnerName      string                      `json:"ownerName,omitempty"`
+	Name           string                      `json:"name,omitempty"`
 	Sharing        Sharing                     `json:"sharing,omitempty"`
 	Improvements   []string                    `json:"improvements,omitempty"`
 	Operations     map[string]PackingOperation `json:"operations,omitempty"`
@@ -49,6 +51,11 @@ func (l PackingList) CountChecked() int {
 }
 
 type PackingItem struct {
+	Kind           string     `json:"kind,omitempty"`
+	Scope          string     `json:"scope,omitempty"`
+	SourceID       string     `json:"sourceId,omitempty"`
+	Assignee       string     `json:"assignee,omitempty"`
+	AssigneeName   string     `json:"assigneeName,omitempty"`
 	SourceRevision string     `json:"-"`
 	ChangedBy      string     `json:"changedBy,omitempty"`
 	Revision       int64      `json:"revision"`

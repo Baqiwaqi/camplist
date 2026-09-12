@@ -16,11 +16,12 @@ export class AutomaticPacking {
    if(typeof document!=="undefined"&&document.visibilityState!=="visible")return;
    try {
     const view=await this.packing.open(this.owner,this.id);
-    if(view?.issue==='network'||(!view?.issue&&(view?.pending||view?.session.shared)))await this.sync();
+    if(view?.issue==='network'||(!view?.issue&&(view?.pending||view?.futureSaves?.length||view?.session.shared)))await this.sync();
    }catch(error){this.changed(null,error);}
   },15000);
   this.reconnect();
  }
+ async add(entry) {await this.packing.add(this.owner,this.id,entry);await this.notify();this.reconnect();}
  async set(itemId,checked) {
   await this.packing.set(this.owner,this.id,itemId,checked);
   await this.notify();

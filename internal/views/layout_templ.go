@@ -168,7 +168,11 @@ func NavLinks(panel bool) templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+<<<<<<< HEAD
 		templ_7745c5c3_Err = NavLink("/", "Lists", isCurrentPage(ctx, "/", "/packing-list/"), panel).Render(ctx, templ_7745c5c3_Buffer)
+=======
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"/trips\">Trips</a> <a href=\"/packing-lists\">Packing lists</a><form method=\"post\" action=\"/auth/signout\" data-signout><input type=\"hidden\" name=\"_csrf\" value=\"")
+>>>>>>> origin/develop
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

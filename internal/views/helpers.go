@@ -86,6 +86,7 @@ func progressWidth(checked, total int) string {
 	return fmt.Sprintf("width: %d%%", checked*100/total)
 }
 
+<<<<<<< HEAD
 // confirmDelete builds the htmx attributes for a delete action: the CSRF
 // token travels in a header because Go ignores DELETE bodies, and the
 // layout's dialog reads the confirm data attributes.
@@ -110,4 +111,49 @@ func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask, csr
 		"data-confirm-action": "Remove task",
 		"data-confirm-detail": "This removes the task from the reusable list.",
 	}
+=======
+func groupByParticipant(items []packing.PackingItem) []itemGroup {
+	var groups []itemGroup
+	indexes := map[string]int{}
+	for _, item := range items {
+		key := item.Assignee
+		name := item.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, itemGroup{Name: name})
+		}
+		groups[i].Items = append(groups[i].Items, item)
+	}
+	return groups
+}
+
+type preparationGroup struct {
+	Name  string
+	Tasks []packing.PreparationTask
+}
+
+func groupPreparation(tasks []packing.PreparationTask) []preparationGroup {
+	var groups []preparationGroup
+	indexes := map[string]int{}
+	for _, task := range tasks {
+		key := task.Assignee
+		name := task.AssigneeName
+		if key == "" {
+			name = "Shared"
+		}
+		i, ok := indexes[key]
+		if !ok {
+			i = len(groups)
+			indexes[key] = i
+			groups = append(groups, preparationGroup{Name: name})
+		}
+		groups[i].Tasks = append(groups[i].Tasks, task)
+	}
+	return groups
+>>>>>>> origin/develop
 }

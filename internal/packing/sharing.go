@@ -151,6 +151,24 @@ func (s *Store) updateSharing(ctx context.Context, kind, id, owner string, chang
 		if err != nil {
 			return err
 		}
+		if kind == "packing-session" {
+			var trip PackingSession
+			if err = json.Unmarshal(data, &trip); err != nil {
+				return err
+			}
+			trip.expandPersonalEntries()
+			if len(trip.List.Items)+len(trip.List.Tasks) > 2000 {
+				return ErrInvalid
+			}
+			doc["list"], err = json.Marshal(trip.List)
+			if err != nil {
+				return err
+			}
+			data, err = json.Marshal(doc)
+			if err != nil {
+				return err
+			}
+		}
 		etag := res.ETag
 		_, err = s.container.ReplaceItem(ctx, azcosmos.NewPartitionKeyString(owner), id, data, &azcosmos.ItemOptions{IfMatchEtag: &etag})
 		if preconditionFailed(err) {

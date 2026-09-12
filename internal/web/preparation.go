@@ -15,7 +15,7 @@ func (h *handler) EditPreparationTask(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {
 		return
 	}
-	task := packing.PreparationTask{ID: r.PostForm.Get("taskId"), Name: r.PostForm.Get("name"), Done: r.PostForm.Get("done") == "true"}
+	task := packing.PreparationTask{Scope: r.PostForm.Get("scope"), ID: r.PostForm.Get("taskId"), Name: r.PostForm.Get("name"), Done: r.PostForm.Get("done") == "true"}
 	if task.ID == "" {
 		task.ID = uuid.NewString()
 	}
@@ -25,10 +25,10 @@ func (h *handler) EditPreparationTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isHTMX(r) {
-		w.Header().Set("HX-Redirect", "/packing-list/"+chi.URLParam(r, "id"))
+		w.Header().Set("HX-Redirect", "/packing-lists/"+chi.URLParam(r, "id"))
 		return
 	}
-	http.Redirect(w, r, "/packing-list/"+chi.URLParam(r, "id"), http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }
 
 func (h *handler) SetSessionPreparationTask(w http.ResponseWriter, r *http.Request) {
@@ -54,5 +54,5 @@ func (h *handler) SetSessionPreparationTask(w http.ResponseWriter, r *http.Reque
 		render(w, r, views.SessionPreparation(session, csrf.Token(r)))
 		return
 	}
-	http.Redirect(w, r, "/packing-session/"+session.ID, http.StatusSeeOther)
+	http.Redirect(w, r, "/trips/"+session.ID, http.StatusSeeOther)
 }

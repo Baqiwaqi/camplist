@@ -18,6 +18,7 @@ import (
 
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
+	RenameTrip(context.Context, string, string, string) (packing.PackingSession, error)
 	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
 	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) error
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
@@ -39,7 +40,7 @@ type packingStore interface {
 	AddItem(context.Context, string, string, packing.PackingItem) error
 	RemoveItem(context.Context, string, string, string, ...string) error
 	UpdateItem(context.Context, string, string, packing.PackingItem) error
-	CreatePackingSession(context.Context, string, string) (packing.PackingSession, error)
+	CreatePackingSession(context.Context, string, string, ...string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
@@ -310,6 +311,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	item := packing.NewItem(form.Name, form.Category)
+	item.Scope = form.Scope
 
 	err = h.packingStore.AddItem(ctx, listID, userID, item)
 	if err != nil {
@@ -318,7 +320,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/packing-list/"+listID, http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
 }
 
 func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
@@ -362,14 +364,24 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID)
+	if len(strings.TrimSpace(r.FormValue("name"))) > 200 {
+		http.Error(w, "Trip name must be at most 200 characters", 400)
+		return
+	}
+	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID, auth.UserName(ctx))
 	if err != nil {
 		log.Printf("create packing session: %v", err)
 		storeError(w, err, "Creating packing session failed")
 		return
 	}
 
-	w.Header().Set("HX-Redirect", "/packing-session/"+ses.ID)
+	if name := strings.TrimSpace(r.FormValue("name")); name != "" {
+		if _, err = h.packingStore.RenameTrip(ctx, ses.ID, userID, name); err != nil {
+			storeError(w, err, "Could not name trip")
+			return
+		}
+	}
+	w.Header().Set("HX-Redirect", "/trips/"+ses.ID)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -394,7 +406,7 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 		_, templateErr := h.packingStore.GetPackingList(ctx, ses.TemplateID(), userID)
 		canReview = templateErr == nil
 	}
-	render(w, r, views.PackingSessionPage(ses.List.Name, ses, canReview, csrf.Token(r)))
+	render(w, r, views.PackingSessionPage(ses.DisplayName(), ses, canReview, csrf.Token(r)))
 }
 
 func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) {
@@ -441,7 +453,7 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 		render(w, r, views.PackingChecklist(session, csrf.Token(r)))
 		return
 	}
-	http.Redirect(w, r, "/packing-session/"+sessionID, http.StatusSeeOther)
+	http.Redirect(w, r, "/trips/"+sessionID, http.StatusSeeOther)
 }
 
 func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {

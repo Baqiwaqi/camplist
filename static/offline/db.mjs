@@ -53,7 +53,7 @@ export function openDatabase(factory = indexedDB, name = 'camplist-offline') {
      req.onsuccess = () => {
       const records = req.result.filter(record => record.owner === owner);
       const serialize = records => JSON.stringify([...records].sort((a,b) => a.id.localeCompare(b.id)));
-      if (exported ? serialize(records) !== serialize(exported) : records.some(record => Object.keys(record.pending).length)) {
+      if (exported ? serialize(records) !== serialize(exported) : records.some(record => (Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length))) {
        failure = new Error('Packing changed or has pending work. Export or synchronize again before signing out.');
        tx.abort(); return;
       }

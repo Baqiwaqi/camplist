@@ -10,6 +10,11 @@ func NewPackingSession(list PackingList) PackingSession {
 	list.Sharing = Sharing{}
 	list.actor = ""
 	list.Tasks = append([]PreparationTask{}, list.Tasks...)
+	for i := range list.Tasks {
+		list.Tasks[i].Done = false
+		list.Tasks[i].Revision = 0
+		list.Tasks[i].ChangedBy = ""
+	}
 	list.AppliedReviews = append([]string{}, list.AppliedReviews...)
 	list.Changes = append([]string{}, list.Changes...)
 	list.Items = append([]PackingItem{}, list.Items...)

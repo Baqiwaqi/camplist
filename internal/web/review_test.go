@@ -23,7 +23,7 @@ func TestReviewSubmissionAndSelectionThroughHTTP(t *testing.T) {
 		t.Fatal(err)
 	}
 	h := handler{packingStore: store}
-	r := packingRequest("/packing-session/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}})
+	r := packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}})
 	route := chi.NewRouteContext()
 	route.URLParams.Add("id", session.ID)
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, route))
@@ -38,7 +38,7 @@ func TestReviewSubmissionAndSelectionThroughHTTP(t *testing.T) {
 		t.Fatal("review cannot be selected")
 	}
 	current, _ := store.GetPackingList(ctx, list.ID, "user")
-	r = packingRequest("/packing-session/"+session.ID+"/review/apply", url.Values{"selected": {"matches"}, "revision": {current.Revision()}}).WithContext(r.Context())
+	r = packingRequest("/trips/"+session.ID+"/review/apply", url.Values{"selected": {"matches"}, "revision": {current.Revision()}}).WithContext(r.Context())
 	w = httptest.NewRecorder()
 	h.ApplyReviewHandler(w, r)
 	if w.Code != 303 {
@@ -65,7 +65,7 @@ func TestNewSessionPageSurfacesPreparationAndRecentImprovements(t *testing.T) {
 	}
 	route := chi.NewRouteContext()
 	route.URLParams.Add("id", session.ID)
-	r := packingRequest("/packing-session/"+session.ID, nil)
+	r := packingRequest("/trips/"+session.ID, nil)
 	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, route))
 	w := httptest.NewRecorder()
 	h := handler{packingStore: store}
@@ -86,15 +86,15 @@ func TestBeforeTripTasksHaveCompletionControls(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r := withItemRoute(packingRequest("/packing-session/"+session.ID, nil), session.ID, "")
+	r := withItemRoute(packingRequest("/trips/"+session.ID, nil), session.ID, "")
 	w := httptest.NewRecorder()
 	h := handler{packingStore: store}
 	h.SessionDetailsPage(w, r)
-	if !strings.Contains(w.Body.String(), `/packing-session/`+session.ID+`/preparation`) || !strings.Contains(w.Body.String(), `Mark done`) {
+	if !strings.Contains(w.Body.String(), `/trips/`+session.ID+`/preparation`) || !strings.Contains(w.Body.String(), `Mark done`) {
 		t.Fatal("before-trip tasks are read-only: no completion controls")
 	}
 	submit := func(taskID, done, revision string) *httptest.ResponseRecorder {
-		r := withItemRoute(packingRequest("/packing-session/"+session.ID+"/preparation", url.Values{"taskId": {taskID}, "done": {done}, "expectedRevision": {revision}}), session.ID, "")
+		r := withItemRoute(packingRequest("/trips/"+session.ID+"/preparation", url.Values{"taskId": {taskID}, "done": {done}, "expectedRevision": {revision}}), session.ID, "")
 		r.Header.Set("HX-Request", "true")
 		w := httptest.NewRecorder()
 		h.SetSessionPreparationTask(w, r)

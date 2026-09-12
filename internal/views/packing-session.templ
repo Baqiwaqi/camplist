@@ -3,6 +3,7 @@ package views
 import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+	"github.com/google/uuid"
 	"strconv"
 	"time"
 )
@@ -12,8 +13,8 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 		<section>
 			<div class="page-head">
 				<div>
-					<p class="eyebrow">Packing session</p>
-					<h1>{ session.List.Name }</h1>
+					<p class="eyebrow">Trip</p>
+					<h1>{ session.DisplayName() }</h1>
 					<p class="muted lede">
 						Started <time datetime={ session.CreatedAt.Format(time.RFC3339) }>{ session.CreatedAt.Format("Jan 2, 2006") }</time>.
 						Your reusable list stays unchanged.
@@ -21,10 +22,10 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 				</div>
 				<div class="actions">
 					if canReview {
-						<a class="btn btn-secondary" href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a>
+						<a class="btn btn-secondary" href={ "/trips/" + session.ID + "/review" }>Review this trip</a>
 					}
 					<a class="btn btn-secondary" href={ "/sharing/packing-session/" + session.ID }>Sharing</a>
-					<a class="btn btn-secondary" href="/sessions">All sessions</a>
+					<a class="btn btn-secondary" href="/trips">All trips</a>
 				</div>
 			</div>
 			if session.IsShared() {
@@ -33,10 +34,12 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			@templ.JSONScript("packing-snapshot", session.Snapshot(auth.Subject(ctx)))
 			<p class="muted" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
 			<noscript><p>Packing requires a connection when JavaScript is disabled.</p></noscript>
-			if session.UserID==auth.Subject(ctx) {
-				@SessionPreparation(session, csrfToken)
-			}
+			@SessionPreparation(session, csrfToken)
 			@PackingChecklist(session, csrfToken)
+			@TripEntryForm(session, csrfToken)
+			if session.UserID==auth.Subject(ctx) {
+				<form method="post" action={ "/trips/" + session.ID + "/name" } class="card"><input type="hidden" name="_csrf" value={ csrfToken }/><div class="field"><label for="rename-trip">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200"/></div><button class="btn btn-secondary">Rename trip</button></form>
+			}
 		</section>
 	}
 }
@@ -58,7 +61,7 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 				<p class="muted">This session has no items. Add gear to your reusable list and start a new session.</p>
 			} else {
 				<div class="columns pack-columns">
-					for _, group := range groupByCategory(session.List.Items) {
+					for _, group := range groupByParticipant(session.List.Items) {
 						<div class="pack-group">
 							if group.Name != "" {
 								<p class="group-label">{ group.Name }</p>
@@ -80,9 +83,9 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 	<li class="item-row">
 		<form
 			method="post"
-			action="/packing-session/set-item"
+			action="/trips/set-item"
 			class="pack-form"
-			hx-post="/packing-session/set-item"
+			hx-post="/trips/set-item"
 			hx-target="#packing-checklist"
 			hx-swap="outerHTML"
 			hx-disabled-elt="#packing-checklist button"
@@ -98,9 +101,13 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 				class={ "pack-row", templ.KV("packed", item.Checked) }
 				aria-pressed={ strconv.FormatBool(item.Checked) }
 				aria-label={ "Toggle packed status for " + item.Name }
+				disabled?={ item.Assignee!="" && item.Assignee!=auth.Subject(ctx) }
 			>
 				<span class="tick" aria-hidden="true"></span>
 				<span class="pack-name">{ item.Name }</span>
+				if item.ChangedBy!="" {
+					<span class="muted">{ item.ChangedBy }</span>
+				}
 				<span class="pack-action">
 					if item.Checked {
 						Unpack
@@ -116,34 +123,42 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 	<section class="card" id="session-preparation">
 		<h2>Before this trip</h2>
-		<p class="muted">Mark preparation done for this trip. These tasks need a connection to save. <a href={ "/packing-list/" + session.TemplateID() }>Manage reusable preparation tasks</a>.</p>
+		<p class="muted">Mark preparation done for this trip. Changes save automatically on this device. <a href={ "/packing-lists/" + session.TemplateID() }>Manage reusable preparation tasks</a>.</p>
 		<ul class="item-list">
-			for _, task := range session.List.Tasks {
-				<li class="item-row">
-					<form
-						method="post"
-						action={ "/packing-session/" + session.ID + "/preparation" }
-						hx-post={ "/packing-session/" + session.ID + "/preparation" }
-						hx-target="#session-preparation"
-						hx-swap="outerHTML"
-						hx-disabled-elt="#session-preparation button"
-						class="pack-form"
-					>
-						<input type="hidden" name="_csrf" value={ csrfToken }/>
-						<input type="hidden" name="taskId" value={ task.ID }/>
-						<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
-						<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(task.Revision, 10) }/>
-						<button type="submit" class={ "pack-row", templ.KV("packed",task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle completion for " + task.Name }>
-							<span class="tick" aria-hidden="true"></span><span class="pack-name">{ task.Name }</span>
-							<span class="pack-action">
-								if task.Done {
-									Undo
-								} else {
-									Mark done
-								}
-							</span>
-						</button>
-					</form>
+			for _, group := range groupPreparation(session.List.Tasks) {
+				<li>
+					<h3>{ group.Name }</h3>
+					<ul class="item-list">
+						for _, task := range group.Tasks {
+							<li class="item-row">
+								<form
+									method="post"
+									action={ "/trips/" + session.ID + "/preparation" }
+									hx-post={ "/trips/" + session.ID + "/preparation" }
+									hx-target="#session-preparation"
+									hx-swap="outerHTML"
+									hx-disabled-elt="#session-preparation button"
+									class="pack-form"
+									data-task-form
+								>
+									<input type="hidden" name="_csrf" value={ csrfToken }/>
+									<input type="hidden" name="taskId" value={ task.ID }/>
+									<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
+									<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(task.Revision, 10) }/>
+									<button id={ "pack-" + task.ID } disabled?={ task.Assignee!="" && task.Assignee!=auth.Subject(ctx) } type="submit" class={ "pack-row", templ.KV("packed",task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle completion for " + task.Name }>
+										<span class="tick" aria-hidden="true"></span><span class="pack-name">{ task.Name }</span>
+										<span class="pack-action">
+											if task.Done {
+												Undo
+											} else {
+												Mark done
+											}
+										</span>
+									</button>
+								</form>
+							</li>
+						}
+					</ul>
 				</li>
 			}
 		</ul>
@@ -156,4 +171,44 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 			</ul>
 		}
 	</section>
+}
+
+templ TripEntryForm(session packing.PackingSession, csrfToken string) {
+	<section class="card">
+		<h2>Add to this trip</h2>
+		<form id="trip-entry-form" method="post" action={ "/trips/" + session.ID + "/entries" }>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="operationId" value={ uuid.NewString() }/>
+			<div class="field-grid">
+				<div class="field"><label for="entry-name">Name</label><input id="entry-name" name="name" required maxlength="200"/></div>
+				<div class="field"><label for="entry-category">Category</label><input id="entry-category" name="category" list="trip-categories" maxlength="100"/></div>
+			</div>
+			<datalist id="trip-categories">
+				for _, category := range categories(session.List.Items,2000) {
+					<option value={ category }></option>
+				}
+			</datalist>
+			<div class="field-grid">
+				<div class="field"><label for="entry-kind">Type</label><select id="entry-kind" name="kind"><option value="">Packing item</option><option value="task">Before departure task</option></select></div>
+				<div class="field">
+					<label for="entry-scope">Who is this for?</label>@ScopeSelect("scope", "entry-scope", "", true)
+				</div>
+			</div>
+			<label><input type="checkbox" name="saveForFuture" value="true"/>Also save for future trips (requires packing list edit access)</label>
+			<div class="form-actions"><button class="btn btn-primary">Add</button></div>
+		</form>
+	</section>
+}
+
+templ FutureSaveResult(session packing.PackingSession, op packing.PackingOperation, csrfToken string) {
+	@Layout("Trip entry saved", csrfToken) {
+		<section class="card">
+			<h1>Saved to this trip</h1>
+			<p>{ op.Name } was added. Saving it to the reusable packing list failed. You may need its owner's permission.</p>
+			<form method="post" action={ "/trips/" + session.ID + "/entries" }>
+				<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="operationId" value={ op.ID }/><input type="hidden" name="name" value={ op.Name }/><input type="hidden" name="category" value={ op.Category }/><input type="hidden" name="scope" value={ op.Scope }/><input type="hidden" name="kind" value={ op.Kind }/><input type="hidden" name="saveForFuture" value="true"/>
+				<div class="actions"><a class="btn btn-secondary" href={ "/trips/" + session.ID }>Keep only in this trip</a><button class="btn btn-primary">Retry saving for future trips</button></div>
+			</form>
+		</section>
+	}
 }

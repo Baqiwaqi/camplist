@@ -4,7 +4,7 @@
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1">
  <meta name="theme-color" content="#2f5d3a">
- <title>On this device – Camplist</title>
+ <title>Trips – Camplist</title>
  <link rel="icon" type="image/svg+xml" href="/static/logomark.svg">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,27 +16,39 @@
  <header class="site-header">
   <nav class="site-nav" aria-label="Main">
    <a class="brand" href="/"><img src="/static/logomark.svg" alt="" width="22" height="22">Camplist</a>
-   <a href="/sessions">Online sessions</a>
+   <a href="/trips">Trips</a>
+   <a href="/packing-lists">Packing lists</a>
    <a href="/login">Sign in</a>
   </nav>
  </header>
  <main>
   <div class="page-head">
    <div>
-    <p class="eyebrow">On this device</p>
+    <p class="eyebrow">Trips</p>
     <h1>Pack without a signal.</h1>
     <p class="muted lede">Trips you open are saved here automatically. Keep packing offline; changes sync when you are back online.</p>
    </div>
   </div>
   <p id="offline-message" role="alert" hidden></p>
-  <h2 class="section-title">Saved trips</h2>
+  <h2 class="section-title">Available offline</h2>
   <section id="saved-sessions" class="card saved-sessions" aria-label="Sessions saved on this device"></section>
   <section id="offline-trip" class="card offline-trip" hidden>
-   <p class="eyebrow">Packing session</p>
+   <p class="eyebrow">Trip</p>
    <h2 id="trip-name"></h2>
    <p id="sync-status" class="muted sync-status" role="status"></p>
+   <div id="future-save-status"></div>
    <p id="packing-progress" class="progress-count" role="status"></p>
-   <ul id="offline-items" class="item-list offline-items"></ul>
+   <h3>Before departure</h3><div id="offline-tasks"></div>
+   <h3>Packing</h3><div id="offline-items" class="offline-items"></div>
+   <h3>Add to this trip</h3>
+   <form id="trip-entry-form">
+    <div class="field"><label for="entry-name">Name</label><input id="entry-name" name="name" required maxlength="200"></div>
+    <div class="field"><label for="entry-category">Category</label><input id="entry-category" name="category" list="trip-categories" maxlength="100"><datalist id="trip-categories"></datalist></div>
+    <div class="field"><label for="entry-kind">Type</label><select id="entry-kind" name="kind"><option value="">Packing item</option><option value="task">Before departure task</option></select></div>
+    <div class="field"><label for="entry-scope">Who is this for?</label><select id="entry-scope" name="scope"><option value="shared">Shared</option><option value="mine">Just for me</option><option value="person">For each person</option></select></div>
+    <label><input type="checkbox" name="saveForFuture" value="true">Also save for future trips (requires packing list edit access)</label>
+    <div class="form-actions"><button class="btn btn-primary">Add</button></div>
+   </form>
    <div class="actions offline-trip-actions">
     <a id="review-trip" class="btn btn-secondary btn-sm">Review this trip online</a>
    </div>

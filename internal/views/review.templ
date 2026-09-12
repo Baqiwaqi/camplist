@@ -13,7 +13,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 				<p class="muted lede">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
 			</div>
 			<div class="actions">
-				<a class="btn btn-secondary" href={ "/packing-session/" + session.ID }>Back to packing</a>
+				<a class="btn btn-secondary" href={ "/trips/" + session.ID }>Back to packing</a>
 			</div>
 		</div>
 		if message != "" {
@@ -22,7 +22,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-				<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review" }>
+				<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
 					<input type="hidden" name="entryId" value={ entry.ID }/>
 					<label>
@@ -63,7 +63,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 				<h2>The reusable list is unavailable</h2>
 				<p>Your trip and observations are still here.</p>
 				if recoverable {
-					<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/recover" }>
+					<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/recover" }>
 						<input type="hidden" name="_csrf" value={ csrfToken }/>
 						<button class="btn btn-primary" type="submit">Create a new list from this trip</button>
 					</form>
@@ -77,7 +77,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 			if len(session.Review) == 0 {
 				<p>No observations yet.</p>
 			}
-			<form class="review-form" method="post" action={ "/packing-session/" + session.ID + "/review/apply" }>
+			<form class="review-form" method="post" action={ "/trips/" + session.ID + "/review/apply" }>
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
 				<input type="hidden" name="revision" value={ list.Revision() }/>
 				for _, observation := range session.Review {

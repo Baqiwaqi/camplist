@@ -28,6 +28,10 @@ func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, it
 	if err != nil {
 		return err
 	}
+	if !validScope(item.Scope, false) {
+		return ErrInvalid
+	}
+	list.Items[index].Scope = item.Scope
 	list.Items[index].Name = item.Name
 	list.Items[index].Category = item.Category
 	list.Items[index].UpdatedAt = time.Now().UTC()

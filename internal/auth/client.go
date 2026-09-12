@@ -33,16 +33,10 @@ type Config struct {
 const SESSION_COOKIE_KEY = "auth-session"
 const USER_ID_KEY = "userID"
 const USER_NAME_KEY = "userName"
+const sessionMaxAge = 365 * 24 * 60 * 60
 
 func New(cfg Config) (*Auth, error) {
-	store := sessions.NewCookieStore([]byte(cfg.SessionKey))
-	store.Options = &sessions.Options{
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   cfg.CookieSecure,
-		SameSite: http.SameSiteLaxMode,
-		MaxAge:   600,
-	}
+	store := newCookieStore(cfg.SessionKey, cfg.CookieSecure)
 
 	provider, err := oidc.NewProvider(context.TODO(), "https://accounts.google.com")
 	if err != nil {
@@ -71,6 +65,20 @@ func New(cfg Config) (*Auth, error) {
 	}
 
 	return auth, nil
+}
+
+func newCookieStore(sessionKey string, secure bool) *sessions.CookieStore {
+	store := sessions.NewCookieStore([]byte(sessionKey))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   sessionMaxAge,
+	}
+	// CookieStore also enforces MaxAge while decoding signed cookies.
+	store.MaxAge(sessionMaxAge)
+	return store
 }
 
 // sessionContext carries the signed-in user from the cookie session into the

@@ -48,7 +48,7 @@ func (s *Store) clock() time.Time {
 	return time.Now()
 }
 
-func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID string) (PackingSession, error) {
+func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID string, ownerName ...string) (PackingSession, error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
 		return PackingSession{}, fmt.Errorf("get packing list: %w", err)
@@ -66,6 +66,14 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 	}
 	session := NewPackingSession(list)
 	session.UserID = userID
+	if len(ownerName) > 0 && len(ownerName[0]) <= 200 {
+		session.OwnerName = ownerName[0]
+	}
+	session.Name = list.Name + " – " + session.CreatedAt.Format("Jan 2, 2006")
+	session.expandPersonalEntries()
+	if len(session.List.Items)+len(session.List.Tasks) > 2000 {
+		return PackingSession{}, ErrInvalid
+	}
 	// Changes are append-only; keep the full log in the snapshot for the next boundary.
 	firstNew := 0
 	for firstNew < len(previous.List.Changes) && firstNew < len(list.Changes) && previous.List.Changes[firstNew] == list.Changes[firstNew] {
@@ -275,6 +283,9 @@ func (s *Store) DeletePackingList(ctx context.Context, id, user string) error {
 	return s.SavePackingList(ctx, list)
 }
 func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) error {
+	if !validScope(item.Scope, false) {
+		return ErrInvalid
+	}
 	for attempt := 0; attempt < 5; attempt++ {
 		list, err := s.GetPackingList(ctx, id, user)
 		if err != nil {

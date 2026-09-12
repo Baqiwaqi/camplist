@@ -14,6 +14,9 @@ func (s *Store) EditPreparationTask(ctx context.Context, id, actor string, task 
 	if revision == "" || revision != list.Revision() {
 		return ErrConflict
 	}
+	if !validScope(task.Scope, false) {
+		return ErrInvalid
+	}
 	task.Name = strings.TrimSpace(task.Name)
 	if task.ID == "" || len(task.ID) > 100 || !remove && (task.Name == "" || len(task.Name) > 200) {
 		return ErrInvalid
@@ -41,22 +44,27 @@ func (s *Store) SetSessionPreparationTask(ctx context.Context, id, actor, taskID
 		return PackingSession{}, ErrInvalid
 	}
 	return s.updateSession(ctx, id, actor, func(session *PackingSession) (bool, error) {
-		if session.UserID != actor {
-			return false, ErrForbidden
-		}
 		index := slices.IndexFunc(session.List.Tasks, func(task PreparationTask) bool { return task.ID == taskID })
 		if index < 0 {
 			return false, ErrNotFound
 		}
 		task := &session.List.Tasks[index]
-		if task.Done == done {
-			return false, nil
-		}
-		if task.Revision != expectedRevision {
-			return false, ErrConflict
-		}
-		task.Done = done
-		task.Revision++
-		return true, nil
+		return task.setCompletion(actor, session.participantName(actor), done, expectedRevision)
 	})
+}
+
+func (task *PreparationTask) setCompletion(actor, name string, done bool, revision int64) (bool, error) {
+	if task.Assignee != "" && task.Assignee != actor {
+		return false, ErrForbidden
+	}
+	if task.Done == done {
+		return false, nil
+	}
+	if task.Revision != revision {
+		return false, ErrConflict
+	}
+	task.Done = done
+	task.Revision++
+	task.ChangedBy = name
+	return true, nil
 }

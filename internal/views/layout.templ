@@ -102,8 +102,8 @@ templ Layout(title string, csrfToken string) {
 // NavLinks renders twice: inline for wide screens and inside the phone menu.
 // The stylesheet shows only one copy at a time.
 templ NavLinks(csrfToken string) {
-	<a href="/sessions">Sessions</a>
-	<a href="/offline">On this device</a>
+	<a href="/trips">Trips</a>
+	<a href="/packing-lists">Packing lists</a>
 	<form method="post" action="/auth/signout" data-signout>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<button type="submit" class="nav-button">Sign out</button>

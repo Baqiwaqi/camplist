@@ -71,7 +71,7 @@ go run ./cmd/web
 
 Open <http://localhost:3000>. Visitors see the landing page and can try a demo session at `/demo` without an account; members see their lists. Pages under the app itself redirect to the login page when you are not signed in.
 
-Cookie security and the trusted CSRF origin are derived from `REDIRECT_URL`: use an HTTPS callback URL for deployment behind HTTPS, and an HTTP localhost callback for local development. The server includes request timeouts and graceful shutdown. Authentication sessions currently last ten minutes.
+Cookie security and the trusted CSRF origin are derived from `REDIRECT_URL`: use an HTTPS callback URL for deployment behind HTTPS, and an HTTP localhost callback for local development. The server includes request timeouts and graceful shutdown. Authentication sessions persist for one year unless the user signs out, clears browser data, or the deployment's `SESSION_KEY` changes.
 
 ## Development
 

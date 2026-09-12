@@ -83,6 +83,30 @@ func TestInvitationLoginPreservesOnlyAnInternalReturnAndOffersAccountChoice(t *t
 	}
 }
 
+func TestLoginCreatesALongLivedSessionCookie(t *testing.T) {
+	a := &Auth{
+		cookieStore: newCookieStore("01234567890123456789012345678901", true),
+		oauthCfg: &oauth2.Config{
+			ClientID: "client",
+			Endpoint: oauth2.Endpoint{AuthURL: "https://accounts.google.com/auth"},
+		},
+	}
+	w := httptest.NewRecorder()
+	a.LoginHandler(w, httptest.NewRequest("GET", "/auth/login", nil))
+
+	const oneYear = 365 * 24 * 60 * 60
+	cookies := w.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("login set %d cookies, want 1", len(cookies))
+	}
+	if cookies[0].MaxAge != oneYear {
+		t.Fatalf("session cookie lasts %d seconds, want %d", cookies[0].MaxAge, oneYear)
+	}
+	if !cookies[0].Secure || !cookies[0].HttpOnly || cookies[0].SameSite != http.SameSiteLaxMode {
+		t.Fatal("persistent session cookie lost its security attributes")
+	}
+}
+
 func TestOptionalAuthLetsVisitorsThroughAndLoadsMembers(t *testing.T) {
 	a := &Auth{cookieStore: sessions.NewCookieStore([]byte("01234567890123456789012345678901"))}
 	got := "unset"

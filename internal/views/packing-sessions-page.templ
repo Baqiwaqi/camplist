@@ -24,7 +24,7 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 				<article class="card">
 					<div class="card-head">
 						<div>
-							<h2>{ s.List.Name }</h2>
+							<h2><a href={ "/packing-session/" + s.ID }>{ s.List.Name }</a></h2>
 							<p class="muted">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
 						</div>
 						<div class="actions">

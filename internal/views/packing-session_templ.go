@@ -86,7 +86,7 @@ func PackingSessionPage(name string, session packing.PackingSession, csrfToken s
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</time>. Your reusable list stays unchanged.</p></div><div class=\"actions\"><a class=\"btn btn-secondary btn-sm\" href=\"/sessions\">All sessions</a></div></div><p><a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</time>. Your reusable list stays unchanged.</p></div><div class=\"actions\"><a class=\"btn btn-secondary\" href=\"/sessions\">All sessions</a></div></div><p><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -119,7 +119,7 @@ func PackingSessionPage(name string, session packing.PackingSession, csrfToken s
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-list/" + session.TemplateID())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 30, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 30, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -138,7 +138,7 @@ func PackingSessionPage(name string, session packing.PackingSession, csrfToken s
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(task.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 34, Col: 15}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 34, Col: 22}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -167,7 +167,7 @@ func PackingSessionPage(name string, session packing.PackingSession, csrfToken s
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(change)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 42, Col: 12}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 42, Col: 19}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -231,7 +231,7 @@ func PackingChecklist(session packing.PackingSession, csrfToken string) templ.Co
 			return templ_7745c5c3_Err
 		}
 		if allPacked(session.List.CountChecked(), len(session.List.Items)) {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"card card-brand\"><p class=\"display\">All packed. Go!</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"card card-brand progress-card\"><p class=\"display\">All packed. Go!</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -244,7 +244,7 @@ func PackingChecklist(session packing.PackingSession, csrfToken string) templ.Co
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"card\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"card progress-card\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

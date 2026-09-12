@@ -196,7 +196,7 @@ func PackingListForm(form packing.CreatePackingListForm, csrfToken string) templ
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"form-actions\"><a class=\"btn btn-link\" href=\"/\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"form-actions\"><a class=\"btn btn-secondary\" href=\"/\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

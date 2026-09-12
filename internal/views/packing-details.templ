@@ -19,7 +19,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 					<div class="actions">
 						<a class="btn btn-secondary" href={ "/packing-list/" + list.ID + "/edit" }>Edit</a>
 						<button
-							class="btn btn-accent btn-lg"
+							class="btn btn-accent"
 							hx-post="/packing-list/start-session"
 							hx-headers={ `{"X-CSRF-Token":"` + csrfToken + `"}` }
 							hx-vals={ `{"listId":"` + list.ID + `"}` }
@@ -28,9 +28,14 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				</div>
 			</div>
 			<p class="muted lede">Starting a session copies this list. Your reusable list stays unchanged as you pack.</p>
+		</section>
+		<section>
+			@ListItemForm(form, csrfToken)
+		</section>
+		<section>
 			<div class="card">
 				if len(list.Items) == 0 {
-					<p class="muted">No items yet. Add your first one below.</p>
+					<p class="muted">No items yet. Add your first item above.</p>
 				}
 				<ul class="item-list columns">
 					for _, item := range list.Items {
@@ -80,7 +85,6 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 					}
 				</ul>
 			</section>
-			@ListItemForm(form, csrfToken)
 		</section>
 	}
 }
@@ -88,7 +92,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<h2 class="section-title">Add an item</h2>
 	<div class="card">
-		<form action={ form.Action } method="POST">
+		<form action={ form.Action } method="POST" hx-boost="true">
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<div class="field-grid">
 				<div class={ "field", templ.KV("field-error", form.NameHasError()) }>

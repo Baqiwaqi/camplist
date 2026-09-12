@@ -19,32 +19,32 @@ templ PackingSessionPage(name string, session packing.PackingSession, csrfToken 
 					</p>
 				</div>
 				<div class="actions">
-					<a class="btn btn-secondary btn-sm" href="/sessions">All sessions</a>
+					<a class="btn btn-secondary" href="/sessions">All sessions</a>
 				</div>
 			</div>
 			<p><a href={ "/packing-session/" + session.ID + "/review" }>Review this trip</a></p>
 			<button class="btn btn-primary" type="button" data-save-offline={ session.ID }>Save for offline packing</button>
 			<p class="muted">Save while connected, then use Saved offline to pack without a connection. Offline support is experimental.</p>
-            <section class="card">
-                <h2>Before this trip</h2>
-                <p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
-                <ul>
-                    for _, task := range session.List.Tasks {
-                        if !task.Done {
-<li>{ task.Name }</li>
-}
-                    }
-                </ul>
-                if len(session.Improvements) > 0 {
-                    <h3>Changes since your previous outing</h3>
-                    <ul>
-                        for _, change := range session.Improvements {
-<li>{ change }</li>
-}
-                    </ul>
-                }
-            </section>
-            @PackingChecklist(session, csrfToken)
+			<section class="card">
+				<h2>Before this trip</h2>
+				<p class="muted">Preparation recorded when this session started. <a href={ "/packing-list/" + session.TemplateID() }>Manage current preparation tasks</a>.</p>
+				<ul>
+					for _, task := range session.List.Tasks {
+						if !task.Done {
+							<li>{ task.Name }</li>
+						}
+					}
+				</ul>
+				if len(session.Improvements) > 0 {
+					<h3>Changes since your previous outing</h3>
+					<ul>
+						for _, change := range session.Improvements {
+							<li>{ change }</li>
+						}
+					</ul>
+				}
+			</section>
+			@PackingChecklist(session, csrfToken)
 		</section>
 	}
 }
@@ -52,12 +52,12 @@ templ PackingSessionPage(name string, session packing.PackingSession, csrfToken 
 templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 	<section id="packing-checklist" aria-label="Packing checklist">
 		if allPacked(session.List.CountChecked(), len(session.List.Items)) {
-			<div class="card card-brand">
+			<div class="card card-brand progress-card">
 				<p class="display">All packed. Go!</p>
 				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "")
 			</div>
 		} else {
-			<div class="card">
+			<div class="card progress-card">
 				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "Keep packing")
 			</div>
 		}

@@ -15,7 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/joho/godotenv"
 )
 
@@ -84,14 +83,8 @@ func main() {
 		log.Fatal("CSRF_KEY is required")
 	}
 
-	csrfMiddleware := csrf.Protect(
-		[]byte(csrfKey),
-		csrf.Secure(secureCookies),
-		csrf.TrustedOrigins([]string{
-			callbackURL.Host,
-		}),
-		csrf.FieldName("_csrf"),
-	)
+	csrfMiddleware := web.CSRFProtection([]byte(csrfKey), secureCookies, callbackURL.Host)
+
 	server := &http.Server{
 		Addr:              ":3000",
 		Handler:           csrfMiddleware(r),

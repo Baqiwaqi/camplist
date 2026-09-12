@@ -24,7 +24,7 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 				<article class="card">
 					<div class="card-head">
 						<div>
-							<h2>{ list.Name }</h2>
+							<h2><a href={ "/packing-list/" + list.ID }>{ list.Name }</a></h2>
 							if list.Description != "" {
 								<p class="muted">{ list.Description }</p>
 							}

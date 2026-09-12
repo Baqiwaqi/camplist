@@ -21,7 +21,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - Routing: `go-chi/chi/v5`. Routes and handlers live in `internal/web/`; `cmd/web/main.go` wires dependencies.
 - Views: `templ` — edit `*.templ`, then run `templ generate` before building.
   Never hand-edit the generated `*_templ.go` files.
-- Frontend: `htmx` (loaded in `internal/views/layout.templ`). Packing updates return
+- Frontend: `htmx` plus `Alpine.js` (both vendored in `static/`, loaded in
+  `internal/views/layout.templ`). Client-side state lives in `x-data` on the
+  element that needs it (menu, error toast); there is no separate app script. Packing updates return
   a checklist fragment; other mutations may redirect or refresh.
 - CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`.
   Note: Go's `ParseForm` ignores request bodies for `DELETE`, so send the CSRF

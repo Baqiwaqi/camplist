@@ -17,7 +17,9 @@ templ Shell(title string) {
 			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap"/>
 			<link rel="stylesheet" href="/static/style.css"/>
 			<script src="/static/htmx.min.js"></script>
-			<script src="/static/app.js" defer></script>
+			<script src="/static/alpine.min.js" defer></script>
+			<noscript><style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; }</style>
+</noscript>
 			<script type="module" src="/static/offline/account.mjs"></script>
 		</head>
 		<body>
@@ -35,23 +37,47 @@ templ Layout(title string, csrfToken string) {
 					<img src="/static/logomark.svg" alt="" width="22" height="22"/>
 					Camplist
 				</a>
-				<a href="/sessions">Sessions</a>
-				<a href="/offline">Saved offline</a>
-				<form method="post" action="/auth/signout" data-signout>
-					<input type="hidden" name="_csrf" value={ csrfToken }/>
-					<button type="submit" class="nav-button">Sign out</button>
-				</form>
-				<span class="site-user">{ auth.UserName(ctx) }</span>
+				<div class="nav-inline">
+					@NavLinks(csrfToken)
+				</div>
+				<div class="nav-menu" x-data="{ open: false }" x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
+					<button type="button" class="nav-toggle" aria-controls="nav-panel" x-bind:aria-expanded="open" x-on:click="open = !open" x-text="open ? 'Close' : 'Menu'">Menu</button>
+					<div id="nav-panel" class="nav-panel" x-show="open" x-cloak>
+						@NavLinks(csrfToken)
+					</div>
+				</div>
 			</nav>
 		</header>
 		<main>
-			<div id="request-error" class="error" role="alert" hidden>
+			<div
+				id="request-error"
+				class="error error-toast"
+				role="alert"
+				hidden
+				x-data="{ message: '' }"
+				x-on:htmx:before-request.window="$el.hidden = true"
+				x-on:htmx:response-error.window="message = $event.detail.xhr.status === 409 ? 'This list changed while you were working. Reload it before trying again.' : $event.detail.xhr.status === 403 ? 'Your session may have expired. Reload the page and try again.' : 'That change did not save. Try again or reload to see the latest saved state.'; $el.hidden = false"
+				x-on:htmx:send-error.window="message = 'Connection lost. Reconnect and reload to check the latest saved state.'; $el.hidden = false"
+			>
 				<div>
-					<p class="error-title">Couldn't save that change</p>
-					<p id="request-error-message"></p>
+					<p class="error-title">That did not save</p>
+					<p id="request-error-message" x-text="message"></p>
 				</div>
+				<button type="button" class="btn btn-link error-dismiss" x-on:click="$root.hidden = true">Dismiss</button>
 			</div>
 			{ children... }
 		</main>
 	}
+}
+
+// NavLinks renders twice: inline for wide screens and inside the phone menu.
+// The stylesheet shows only one copy at a time.
+templ NavLinks(csrfToken string) {
+	<a href="/sessions">Sessions</a>
+	<a href="/offline">Saved offline</a>
+	<form method="post" action="/auth/signout" data-signout>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<button type="submit" class="nav-button">Sign out</button>
+	</form>
+	<span class="site-user">{ auth.UserName(ctx) }</span>
 }

@@ -40,7 +40,7 @@ The Go server renders HTML using templ. HTMX adds form navigation and actions su
 | `internal/auth/` | Google OAuth/OpenID Connect login and cookie-based sessions |
 | `internal/views/` | templ page templates and generated Go code |
 | `internal/db.go` | Cosmos DB client setup |
-| `static/` | Stylesheet, logo marks, the request-error script, and the bundled HTMX script |
+| `static/` | Stylesheet, logo marks, and the bundled htmx and Alpine.js scripts |
 | `.claude/skills/camplist-design/` | Design system: tokens, guidelines, logo assets, and a click-through UI kit |
 
 ## Run locally

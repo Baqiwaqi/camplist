@@ -165,7 +165,8 @@ img {
   outline-color: var(--white);
 }
 
-[hidden] {
+[hidden],
+[x-cloak] {
   display: none !important;
 }
 
@@ -244,6 +245,15 @@ img {
   font-size: var(--text-lg);
 }
 
+/* The nav links render twice: inline for wide screens, inside a disclosure menu on phones. */
+.nav-inline {
+  display: contents;
+}
+
+.nav-menu {
+  display: none;
+}
+
 /* ---------- layout ---------- */
 
 main {
@@ -263,7 +273,7 @@ section + section {
 .page-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-4);
   flex-wrap: wrap;
   margin-bottom: var(--space-6);
@@ -276,6 +286,11 @@ section + section {
 
 .page-head > :first-child > :last-child {
   margin-bottom: 0;
+}
+
+/* Page actions sit top-right, centred on the title line below the eyebrow. */
+.page-head > .actions {
+  padding-top: var(--space-6);
 }
 
 .section-title {
@@ -293,7 +308,7 @@ section + section {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-2);
 }
 
@@ -309,6 +324,10 @@ section + section {
 
 .card > :last-child {
   margin-bottom: 0;
+}
+
+.card h2 a {
+  text-decoration: none;
 }
 
 .card-brand {
@@ -656,6 +675,26 @@ section + section {
   color: inherit;
 }
 
+/* Failed background requests surface as a toast near the thumb, on every screen size. */
+.error-toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-4);
+  transform: translateX(-50%);
+  width: min(calc(100% - 2rem), calc(var(--content-max) - 2rem));
+  margin: 0;
+  z-index: 10;
+}
+
+.error-toast > div {
+  flex: 1 1 auto;
+}
+
+.error-dismiss {
+  flex: none;
+  color: inherit;
+}
+
 /* ---------- progress ---------- */
 
 .progress {
@@ -713,6 +752,13 @@ section + section {
 
 .card-brand .display {
   margin-bottom: var(--space-3);
+}
+
+/* Progress stays in view while a long checklist scrolls. */
+.progress-card {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 1;
 }
 
 /* ---------- packing rows ---------- */
@@ -888,9 +934,22 @@ section + section {
     flex: 0 0 auto;
   }
 
-  .page-head .actions .btn,
-  .card-head .actions .btn {
+  .page-head > .actions {
+    padding-top: 0;
+  }
+
+  .page-head .actions .btn-primary,
+  .page-head .actions .btn-accent,
+  .card-head .actions .btn-primary,
+  .card-head .actions .btn-accent,
+  .form-actions .btn {
     flex: 1 1 auto;
+  }
+
+    .site-nav a,
+  .nav-button {
+    padding: var(--space-2) 0;
+    margin: calc(-1 * var(--space-2)) 0;
   }
 
   .card-head {
@@ -907,6 +966,70 @@ section + section {
 
   .field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .site-header {
+    position: relative;
+  }
+
+  .nav-inline {
+    display: none;
+  }
+
+  .nav-menu {
+    display: block;
+    margin-left: auto;
+  }
+
+  .nav-toggle {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    font-weight: var(--weight-bold);
+    padding: var(--space-2) var(--space-4);
+    margin: calc(-1 * var(--space-2)) 0;
+    border: var(--border-width) solid var(--button-secondary-border);
+    border-radius: var(--radius-pill);
+    background: var(--button-secondary-bg);
+  }
+
+  .nav-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 5;
+    background: var(--surface-header);
+    border-bottom: var(--border-width) solid var(--border-header);
+    padding: 0 var(--space-4) var(--space-2);
+  }
+
+  .nav-panel a,
+  .nav-panel .nav-button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: var(--space-3) 0;
+    text-align: left;
+    border-bottom: var(--border-width) solid var(--border-row);
+  }
+
+  .nav-panel .site-user {
+    display: block;
+    margin: 0;
+    padding: var(--space-3) 0 var(--space-2);
+  }
+}
+
+/* ---------- touch ---------- */
+
+@media (pointer: coarse) {
+  .btn-sm {
+    min-height: 2.5rem;
+  }
+
+  .item-row {
+    padding: var(--space-1) 0;
   }
 }
 
@@ -930,3 +1053,6 @@ section + section {
 .offline-page input[type="checkbox"], .review-form input[type="checkbox"] { min-height: 2rem; vertical-align: middle; }
 dialog { max-width: 32rem; border: 1px solid #ddd6cc; border-radius: 12px; }
 dialog button { margin: 0.25rem; }
+
+/* Offline actions must remain usable on narrow phone screens. */
+.offline-page .btn { max-width: 100%; white-space: normal; }

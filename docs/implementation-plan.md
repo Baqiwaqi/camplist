@@ -39,3 +39,10 @@ sign out of the server while keeping potentially inaccessible local copies.
 Durable sync receipts currently remain within the session document. Very long
 sessions can approach Cosmos document limits; production load validation should
 measure document growth before promoting offline support beyond experimental.
+
+## Follow-up validation
+
+The [deployment validation report](deployment-validation.md) records completed
+Chromium simulations and live Cosmos checks, two fixes discovered during those
+checks, and the remaining deployment/browser limits. It supersedes the earlier
+statement that all browser and live-service validation was pending.

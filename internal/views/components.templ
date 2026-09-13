@@ -18,14 +18,15 @@ templ ErrorBanner(messages []string) {
 }
 
 // ProgressBar shows packing progress: pine while packing, ember once everything
-// is packed. An empty label leaves only the count above the bar.
+// is packed. An empty label leaves only the count above the bar. The count is
+// not a live region: the trip page announces it with PackingProgressStatus.
 templ ProgressBar(checked int, total int, label string) {
 	<div class={ "progress", templ.KV("progress-done", allPacked(checked, total)) }>
 		<div class="progress-head">
 			if label != "" {
 				<span class="progress-label">{ label }</span>
 			}
-			<span class="progress-count" role="status">{ strconv.Itoa(checked) } of { strconv.Itoa(total) } items packed</span>
+			<span class="progress-count">{ progressCount(checked, total) }</span>
 		</div>
 		<div
 			class="progress-track"

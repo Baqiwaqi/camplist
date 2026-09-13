@@ -101,7 +101,7 @@ func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
 				t.Fatal("item not packed")
 			}
 			if htmx {
-				for _, want := range []string{`id="packing-checklist"`, "1 of 1 items packed", "Unpack", `value="false"`} {
+				for _, want := range []string{`id="packing-checklist"`, "1 of 1 items packed", "Unpack", `value="false"`, `<p id="packing-progress-status" hx-swap-oob="innerHTML">1 of 1 items packed</p>`} {
 					if !strings.Contains(w.Body.String(), want) {
 						t.Errorf("missing %q", want)
 					}

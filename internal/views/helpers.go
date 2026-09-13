@@ -78,6 +78,11 @@ func allPacked(checked, total int) bool {
 	return total > 0 && checked >= total
 }
 
+// progressCount is the "3 of 5 items packed" text of the progress count and status.
+func progressCount(checked, total int) string {
+	return fmt.Sprintf("%d of %d items packed", checked, total)
+}
+
 // progressWidth is the inline width of the progress fill.
 func progressWidth(checked, total int) string {
 	if total == 0 {

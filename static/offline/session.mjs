@@ -34,7 +34,11 @@ export async function mountSession(packing, readyForOffline) {
   const heading=document.querySelector('h1');if(heading)heading.textContent=view.session.name||view.session.list.name;
   const gear=view.session.list.items.filter(item=>item.kind!=="task"),total=gear.length,checked=gear.filter(item=>item.checked).length;
   const complete=total>0&&checked===total;
-  checklist.querySelector('.progress-count').textContent=`${checked} of ${total} items packed`;
+  const count=`${checked} of ${total} items packed`;
+  checklist.querySelector('.progress-count').textContent=count;
+  // The live region sits outside the checklist; only a changed count is announced.
+  const announcement=document.getElementById('packing-progress-status');
+  if(announcement&&announcement.textContent!==count)announcement.textContent=count;
   checklist.querySelector('.progress-track').setAttribute('aria-valuenow',String(checked));
   checklist.querySelector('.progress-fill').style.width=`${total?checked/total*100:0}%`;
   checklist.querySelector('.progress').classList.toggle('progress-done',complete);

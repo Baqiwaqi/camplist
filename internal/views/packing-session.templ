@@ -36,6 +36,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			@templ.JSONScript("packing-snapshot", session.Snapshot(auth.Subject(ctx)))
 			<p class="sync-status text-sm" id="packing-save-status" role="status">Packing saves as you go. Preparing offline access…</p>
 			<noscript><p class="mb-3">Packing requires a connection when JavaScript is disabled.</p></noscript>
+			@PackingProgressStatus(session, false)
 			@SessionPreparation(session, csrfToken)
 			@PackingChecklist(session, csrfToken)
 			@TripEntryForm(session, csrfToken)
@@ -47,6 +48,24 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 				</form>
 			}
 		</section>
+	}
+}
+
+// PackingChecklistUpdate is the htmx answer to a packing toggle: the checklist
+// plus the new count for the progress status, which lives outside the swap.
+templ PackingChecklistUpdate(session packing.PackingSession, csrfToken string) {
+	@PackingChecklist(session, csrfToken)
+	@PackingProgressStatus(session, true)
+}
+
+// PackingProgressStatus announces the packed count to screen readers. It stays
+// outside #packing-checklist so the live region survives the checklist swap;
+// updates replace only its text (out of band here, directly in session.mjs).
+templ PackingProgressStatus(session packing.PackingSession, oob bool) {
+	if oob {
+		<p id="packing-progress-status" hx-swap-oob="innerHTML">{ progressCount(session.List.CountChecked(), len(session.List.Items)) }</p>
+	} else {
+		<p id="packing-progress-status" class="sr-only" role="status">{ progressCount(session.List.CountChecked(), len(session.List.Items)) }</p>
 	}
 }
 
@@ -85,6 +104,11 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 	</section>
 }
 
+// PackingSessionItem is one server-rendered toggle, used until the offline
+// module takes over. Its hx-sync and hx-indicator (shared with the task toggles
+// in SessionPreparation) drop repeat presses and dim the section while one
+// saves. Unlike hx-disabled-elt they keep the pressed button enabled, so htmx
+// puts focus back on it by id after the swap.
 templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
 	<li class="item-row py-0">
 		<form
@@ -94,7 +118,8 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 			hx-post="/trips/set-item"
 			hx-target="#packing-checklist"
 			hx-swap="outerHTML"
-			hx-disabled-elt="#packing-checklist button"
+			hx-sync="closest section:drop"
+			hx-indicator="closest section"
 		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="sessionId" value={ sessionID }/>
@@ -145,7 +170,8 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 									hx-post={ "/trips/" + session.ID + "/preparation" }
 									hx-target="#session-preparation"
 									hx-swap="outerHTML"
-									hx-disabled-elt="#session-preparation button"
+									hx-sync="closest section:drop"
+									hx-indicator="closest section"
 									class="pack-form w-full"
 									data-task-form
 								>

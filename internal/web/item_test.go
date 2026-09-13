@@ -74,6 +74,9 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 	if !strings.Contains(w.Body.String(), "Big tent") || strings.Contains(w.Body.String(), "<form") {
 		t.Error("save did not return the read-only row")
 	}
+	if !strings.Contains(w.Body.String(), `id="edit-`+item.ID+`"`) || !strings.Contains(w.Body.String(), "autofocus") {
+		t.Error("saved row does not hand focus back to its Edit link")
+	}
 
 	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Tent"}, "category": {""}}), list.ID, item.ID)
 	w = httptest.NewRecorder()

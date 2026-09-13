@@ -141,18 +141,48 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 	</li>
 }
 
+// ListItemForm is the compact add form on the details page: the name with the
+// add button beside it, and category and scope folded behind a toggle that
+// opens by itself when the form comes back with either one filled in.
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<h2 class="mb-3">Add an item</h2>
 	<div class="card">
 		<form action={ form.Action } method="POST" hx-boost="true">
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			@ItemFields(form, "new", false)
-			if len(form.Error) > 0 {
-				@ErrorBanner(form.Error)
-			}
-			<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
-				<button type="submit" class="btn btn-primary">{ form.SubmitButtonText }</button>
+			<input type="hidden" name="revision" value={ form.Revision }/>
+			<div class="flex items-center gap-2">
+				<label for="item-name-new" class="sr-only">Item name</label>
+				<input
+					type="text"
+					id="item-name-new"
+					name="name"
+					placeholder="Like a headlamp"
+					value={ form.Name }
+					class="min-w-0 flex-1 min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+					if form.NameHasError() {
+						aria-invalid="true"
+					}
+				/>
+				<button type="submit" class="btn btn-primary min-h-11 shrink-0">{ form.SubmitButtonText }</button>
 			</div>
+			if len(form.Error) > 0 {
+				<div class="mt-3">
+					@ErrorBanner(form.Error)
+				</div>
+			}
+			<details class="mt-1" open?={ form.Category != "" || (form.Scope != "" && form.Scope != "shared") }>
+				<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Category and who it's for</summary>
+				<div class="grid gap-3 pb-1 sm:grid-cols-2">
+					<div class="grid gap-1">
+						<label for="item-category-new" class="text-sm font-bold">Category</label>
+						<input type="text" id="item-category-new" name="category" list="list-categories" placeholder="Light" value={ form.Category } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+					</div>
+					<div class="grid gap-1">
+						<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
+						@ScopeSelect("scope", "item-scope-new", form.Scope, false)
+					</div>
+				</div>
+			</details>
 		</form>
 	</div>
 }

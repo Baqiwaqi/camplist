@@ -25,7 +25,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-				@ReviewForm(session, list, available, entry, "", csrfToken)
+				@ReviewForm(session, list, available, entry, "", false, csrfToken)
 				@reviewSaveStatus("")
 			</section>
 		}
@@ -54,8 +54,9 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 // comes back as a fresh form (new entry ID) or the submitted values with an
 // error; without JavaScript it posts normally and the handler redirects.
 // "Save and apply now" also applies the proposed change, so it is offered only
-// while the reusable list is available and a change is proposed.
-templ ReviewForm(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
+// while the reusable list is available and a change is proposed. focusSave
+// moves focus to Save observation after that button disappears in a swap.
+templ ReviewForm(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, focusSave bool, csrfToken string) {
 	<form
 		id="review-form"
 		method="post"
@@ -91,7 +92,7 @@ templ ReviewForm(session packing.PackingSession, list packing.PackingList, avail
 			<p class="error" role="alert">{ message }</p>
 		}
 		<div class="flex flex-wrap items-center gap-2 mt-2">
-			<button id="review-submit" class="btn btn-primary in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress" type="submit">Save observation</button>
+			<button id="review-submit" class="btn btn-primary in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress" type="submit" autofocus?={ focusSave }>Save observation</button>
 			if available {
 				<button
 					id="review-save-apply"
@@ -221,7 +222,7 @@ templ CurrentReviewList(list packing.PackingList, attrs templ.Attributes) {
 // saved but could not be applied; listChanged also refreshes the list card
 // after an apply attempt.
 templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, saved string, message string, listChanged bool, csrfToken string) {
-	@ReviewForm(session, list, available, entry, message, csrfToken)
+	@ReviewForm(session, list, available, entry, message, listChanged, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML">{ saved }</div>
 	@TripObservations(session, list, available, true, csrfToken, templ.Attributes{"hx-swap-oob": "outerHTML"})
 	if listChanged && available {
@@ -232,6 +233,6 @@ templ ReviewSaved(session packing.PackingSession, list packing.PackingList, avai
 // ReviewFormError answers a failed htmx save with the form, the submitted
 // values and the message, and clears an earlier confirmation.
 templ ReviewFormError(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
-	@ReviewForm(session, list, available, entry, message, csrfToken)
+	@ReviewForm(session, list, available, entry, message, false, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML"></div>
 }

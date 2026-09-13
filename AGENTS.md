@@ -48,6 +48,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `static/menu.js`, loaded before Alpine. Build destructive items with the
   `confirmDelete` helper so the confirm dialog stays consistent;
   `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
+- Form dropdown: `views.Select` (Pines UI style listbox, `static/select.js`)
+  keeps a hidden native `<select>` as the submitted field and no-JS fallback.
+  Inside htmx-swapped content toggle Alpine state with `hidden`, not `x-show`:
+  htmx settles `style`/`class` on same-id elements and undoes inline display.
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and

@@ -12,7 +12,9 @@ type SelectOption struct {
 // listbox, driven by Alpine.data("select") in static/select.js. The native
 // <select> stays in the form and carries the value, so a plain post, an htmx
 // swap and a re-rendered error all keep the choice; without JavaScript the
-// layout's noscript style shows the native control instead.
+// layout's noscript style shows the native control instead. The popup toggles
+// the hidden attribute rather than x-show: htmx settles style and class on
+// same-id elements after a swap, which would undo an inline display.
 templ Select(id string, name string, label string, options []SelectOption, selected string) {
 	<div class="my-3 max-w-[34rem]" x-data="select" x-on:click.outside="close(false)" x-on:focusout="leave($event)">
 		<label id={ id + "-label" } for={ id } class="block text-sm font-bold" x-on:click.prevent="$refs.trigger.focus()">{ label }</label>
@@ -45,8 +47,8 @@ templ Select(id string, name string, label string, options []SelectOption, selec
 				aria-labelledby={ id + "-label" }
 				class="select-popup"
 				x-bind:class="up && 'select-popup-up'"
-				x-show="open"
-				x-cloak
+				hidden
+				x-bind:hidden="!open"
 				x-on:mousedown.prevent
 			>
 				for i, option := range options {

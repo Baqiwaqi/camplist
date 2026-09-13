@@ -21,11 +21,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						<p class="text-sm text-pine-100">{ itemSummary(list.Items) }</p>
 					</div>
 					<div class="flex flex-wrap items-end gap-2 sm:pt-6">
-						<form method="post" action="/packing-lists/start-session" hx-post="/packing-lists/start-session" class="flex flex-wrap items-end gap-2 max-sm:w-full">
-							<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ list.ID }/>
-							<div class="grid gap-1 max-sm:w-full"><label for="trip-name" class="text-sm font-bold text-pine-100">Trip name</label><input id="trip-name" name="name" value={ list.Name + " – " + time.Now().Format("Jan 2, 2006") } required maxlength="200" class="min-h-11 w-64 max-w-full max-sm:w-full rounded-sm border border-pine-500 bg-white px-3 py-2 text-ink-900 focus-visible:outline-offset-0"/></div>
-							<button class="btn btn-accent max-sm:flex-auto">Start trip</button>
-						</form>
+						@StartTripForm(list.ID, list.Name+" – "+time.Now().Format("Jan 2, 2006"), nil, csrfToken)
 						@PageMenu("More") {
 							@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
 							@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
@@ -80,7 +76,9 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				<form class="flex flex-wrap items-end gap-3 my-3" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
 					<div class="grid gap-1 grow basis-56"><label class="sr-only" for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Add a task, like buying fuel" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-					<div class="grid gap-1"><label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)</div>
+					<div class="grid gap-1">
+						<label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)
+					</div>
 					<button class="btn btn-secondary">Add task</button>
 				</form>
 				<p class="text-muted">Doing a task packs nothing: buying fuel does not mark your stove as packed.</p>
@@ -106,6 +104,62 @@ templ PreparationTasks(list packing.PackingList, csrfToken string) {
 			@PreparationTaskRow(list, task, csrfToken)
 		}
 	</ul>
+}
+
+// StartTripForm sits in the pine hero. A started trip is a new page, so the
+// server redirects; a rejected name swaps the form back in place with the
+// error. hx-sync drops repeat presses while a start is in flight; once the
+// redirect arrives the button is disabled, so neither a click nor Enter can
+// start a second trip while the trip page loads (static/revision.js reloads
+// the page when it returns from the back/forward cache).
+templ StartTripForm(listID string, name string, errs []string, csrfToken string) {
+	<form
+		id="start-trip"
+		method="post"
+		action="/packing-lists/start-session"
+		hx-post="/packing-lists/start-session"
+		hx-target="this"
+		hx-swap="outerHTML"
+		hx-sync="this:drop"
+		hx-on::after-request="if (event.detail.xhr.getResponseHeader('HX-Redirect')) this.querySelector('button').disabled = true"
+		class="flex flex-wrap items-end gap-2 max-sm:w-full"
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ listID }/>
+		<div class="grid gap-1 max-sm:w-full">
+			<label for="trip-name" class="text-sm font-bold text-pine-100">Trip name</label>
+			<input
+				id="trip-name"
+				name="name"
+				value={ name }
+				required
+				maxlength="200"
+				class="min-h-11 w-64 max-w-full max-sm:w-full rounded-sm border border-pine-500 bg-white px-3 py-2 text-ink-900 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				if len(errs) > 0 {
+					aria-invalid="true"
+					aria-describedby="trip-name-error"
+					autofocus
+				}
+			/>
+		</div>
+		<button class="btn btn-accent max-sm:flex-auto">Start trip</button>
+		if len(errs) > 0 {
+			<div id="trip-name-error" class="basis-full *:mb-0">
+				@ErrorBanner(errs)
+			</div>
+		}
+	</form>
+}
+
+// StartTripPage shows a rejected trip name when the form posted without scripts.
+templ StartTripPage(list packing.PackingList, name string, errs []string, csrfToken string) {
+	@Layout("Start trip", csrfToken) {
+		<section class="card card-brand p-4 sm:p-6">
+			<p class="text-xs font-bold tracking-eyebrow uppercase text-pine-100 mb-2">{ list.Name }</p>
+			<h1>Start trip</h1>
+			@StartTripForm(list.ID, name, errs, csrfToken)
+			<p class="mt-4"><a class="text-white" href={ "/packing-lists/" + list.ID }>Back to the list</a></p>
+		</section>
+	}
 }
 
 // PreparationTaskRow is one task on the reusable list. Normally it is a
@@ -150,7 +204,9 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(task.Done) }/>
 			<div class="grid gap-1 grow basis-56"><label class="sr-only" for={ "task-" + task.ID }>Task name</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-			<div class="grid gap-1"><label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)</div>
+			<div class="grid gap-1">
+				<label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
+			</div>
 			<button class="btn btn-primary btn-sm">Save</button>
 			<button type="button" class="btn btn-danger btn-sm" { removeTaskAttrs(list, task)... }>Remove</button>
 		</form>
@@ -203,7 +259,8 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	</div>
 }
 
-// ItemFields is the name and category pair shared by the add and edit forms.
+// ItemFields is the name, category and scope set of the edit forms. The name
+// takes focus, so an inline Edit or a rejected save lands the keyboard there.
 // stacked puts the fields under each other for the inline edit row.
 templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 	<input type="hidden" name="revision" value={ form.Revision }/>
@@ -216,6 +273,7 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 				name="name"
 				placeholder="Headlamp"
 				value={ form.Name }
+				autofocus
 				class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
 				if form.NameHasError() {
 					aria-invalid="true"
@@ -235,6 +293,16 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 
 // ItemRow is one item on the details page. Edit swaps it for ItemEditRow in place.
 templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
+	@itemRow(listID, item, csrfToken, false)
+}
+
+// FocusedItemRow is the row htmx swaps back after Save or Cancel. Its Edit
+// link takes focus, so the keyboard stays on the item instead of the page.
+templ FocusedItemRow(listID string, item packing.PackingItem, csrfToken string) {
+	@itemRow(listID, item, csrfToken, true)
+}
+
+templ itemRow(listID string, item packing.PackingItem, csrfToken string, focusEdit bool) {
 	<li class="item-row break-inside-avoid" id={ "item-" + item.ID }>
 		<span class="font-bold min-w-0 wrap-anywhere">{ item.Name }</span>
 		if item.Category != "" {
@@ -242,8 +310,12 @@ templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
 		}
 		<div class="flex flex-wrap items-center gap-2 ml-auto">
 			<a
+				id={ "edit-" + item.ID }
 				class="btn btn-secondary btn-sm"
 				href={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
+				if focusEdit {
+					autofocus
+				}
 				hx-get={ "/packing-lists/" + listID + "/items/" + item.ID + "/edit" }
 				hx-target="closest li"
 				hx-swap="outerHTML"
@@ -270,6 +342,7 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 			hx-post={ form.Action }
 			hx-target="closest li"
 			hx-swap="outerHTML"
+			hx-sync="this:drop"
 		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			@ItemFields(form, itemID, true)

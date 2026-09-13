@@ -35,6 +35,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   requests answer with a user-facing plain-text reason (`http.Error`); the
   layout's error toast (`static/request-error.js`) shows it for statuses under
   500 and offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`).
+- htmx mutations: branch on `isHTMX(r)` (`internal/web/item.go`) and give real
+  forms a plain 303 fallback. Stop double submits with `hx-sync` (plus
+  `hx-indicator` for a wider busy area), styled by the shared `.htmx-request`
+  rule in `assets/css/tailwind.css`; never `hx-disabled-elt`, which drops
+  keyboard focus. Swapped content keeps focus via stable ids or `autofocus`,
+  and live regions (`role="status"`) stay outside swapped elements.
 - Reusable dropdown: `views.Menu(label)` (compact, for card rows) and
   `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with

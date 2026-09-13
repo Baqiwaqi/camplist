@@ -394,8 +394,20 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(strings.TrimSpace(r.FormValue("name"))) > 200 {
-		http.Error(w, "Trip name must be at most 200 characters", 400)
+	name := strings.TrimSpace(r.FormValue("name"))
+	if len(name) > 200 {
+		errs := []string{"Trip name must be at most 200 characters"}
+		if isHTMX(r) {
+			render(w, r, views.StartTripForm(listID, name, errs, csrf.Token(r)))
+			return
+		}
+		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
+		if err != nil {
+			log.Printf("get packing list: %v", err)
+			storeError(w, err, "getting the list failed")
+			return
+		}
+		render(w, r, views.StartTripPage(list, name, errs, csrf.Token(r)))
 		return
 	}
 	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID, auth.UserName(ctx))
@@ -405,14 +417,18 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if name := strings.TrimSpace(r.FormValue("name")); name != "" {
+	if name != "" {
 		if _, err = h.packingStore.RenameTrip(ctx, ses.ID, userID, name); err != nil {
 			storeError(w, err, "Could not name trip")
 			return
 		}
 	}
-	w.Header().Set("HX-Redirect", "/trips/"+ses.ID)
-	w.WriteHeader(http.StatusOK)
+	// A new trip is a new page: the offline module only starts on a full load.
+	if isHTMX(r) {
+		w.Header().Set("HX-Redirect", "/trips/"+ses.ID)
+		return
+	}
+	http.Redirect(w, r, "/trips/"+ses.ID, http.StatusSeeOther)
 }
 
 func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
@@ -479,8 +495,8 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if r.Header.Get("HX-Request") == "true" {
-		render(w, r, views.PackingChecklist(session, csrf.Token(r)))
+	if isHTMX(r) {
+		render(w, r, views.PackingChecklistUpdate(session, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+sessionID, http.StatusSeeOther)

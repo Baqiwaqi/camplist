@@ -49,14 +49,15 @@ func (h *handler) EditItemPage(w http.ResponseWriter, r *http.Request) {
 	h.renderItemForm(w, r, list, item, packing.EditItemForm(list.ID, item))
 }
 
-// ItemRowHandler returns the read-only row, which is how an inline edit is cancelled.
+// ItemRowHandler returns the read-only row, which is how an inline edit is
+// cancelled. The row's Edit link takes focus back from the removed form.
 func (h *handler) ItemRowHandler(w http.ResponseWriter, r *http.Request) {
 	_, list, item, ok := h.loadItem(w, r)
 	if !ok {
 		return
 	}
 	if isHTMX(r) {
-		render(w, r, views.ItemRow(list.ID, item, csrf.Token(r)))
+		render(w, r, views.FocusedItemRow(list.ID, item, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)

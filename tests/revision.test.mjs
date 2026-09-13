@@ -25,8 +25,28 @@ function listPage({ inputs, buttons }) {
       return []
     },
   }
-  vm.runInNewContext(source, { document })
+  vm.runInNewContext(source, { document, window: { addEventListener() {} } })
   return detail => listener({ detail })
+}
+
+function startTripPage(form) {
+  let pageshow
+  const reloads = []
+  const window = {
+    addEventListener(event, handler) {
+      if (event === 'pageshow') pageshow = handler
+    },
+  }
+  const document = {
+    addEventListener() {},
+    getElementById(id) { return id === 'start-trip' ? form : null },
+  }
+  const location = { reload() { reloads.push(true) } }
+  vm.runInNewContext(source, { document, window, location })
+  return persisted => {
+    pageshow({ persisted })
+    return reloads.length
+  }
 }
 
 test('mark done advances only controls still on the revision it was sent with', () => {
@@ -53,4 +73,16 @@ test('a trigger without both revisions changes nothing', () => {
   const advance = listPage({ inputs: [input], buttons: [] })
   advance({ from: '', to: 'r2' })
   assert.equal(input.value, '')
+})
+
+test('a list page restored from the back/forward cache reloads so Start trip works again', () => {
+  assert.equal(startTripPage({})(true), 1)
+})
+
+test('a fresh page load does not reload', () => {
+  assert.equal(startTripPage({})(false), 0)
+})
+
+test('pages without Start trip ignore a restore', () => {
+  assert.equal(startTripPage(null)(true), 0)
 })

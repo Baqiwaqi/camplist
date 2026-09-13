@@ -23,6 +23,7 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 	for _, want := range []string{
 		`aria-haspopup="menu"`,
 		`role="menu"`,
+		`x-bind:class="{ 'menu-popup-start': alignStart }"`,
 		`role="menuitem" href="/sharing/packing-session/` + session.ID + `"`,
 		`role="menuitem" href="/trips/` + session.ID + `/review"`,
 		`role="separator"`,

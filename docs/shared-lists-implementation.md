@@ -24,8 +24,17 @@ invitation had been approved, and are then managed and removed from each trip's
 own sharing page. The list approval commits first and trips are then granted only
 while the account is a list member, so a list at its member limit shares no trips,
 a failed trip grant leaves the list shared (resubmission is idempotent), and a
-removed list member is never re-added or given trips by a stale approval. Later
-trips stay private.
+removed list member is never re-added or given trips by a stale approval.
+
+Starting a trip from a list with members asks the list owner which of them join
+the new trip. **Start trip** opens the prompt in place with htmx
+(`/packing-lists/{id}/start`, a page of its own without scripts); members stay
+unticked by default and **Select all** ticks everyone. Ticked members become trip
+members in the trip's first write, after their discovery references, exactly as
+if a trip invitation had been approved. A subject that is not a current list
+member rejects the start before anything is written. List members who start a
+trip get no prompt, because only the owner sees the list's members; their trips
+start private. A list without members starts a trip with no extra step.
 The MVP allows 20 members and 20 unexpired invitation records per resource.
 
 Trip packers can read the checklist and mark equipment. Template editors can

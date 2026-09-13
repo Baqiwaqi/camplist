@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -507,13 +508,8 @@ func (s *Store) ApproveInvitationWithTrips(ctx context.Context, listID, actor, h
 // addTripMember mirrors RequestAccess and DecideInvitation for an owner-approved
 // account: the discovery reference first, then membership in one conditional write.
 func (s *Store) addTripMember(ctx context.Context, tripID, owner string, member Member) error {
-	ref := sharedReference{ID: referenceID("packing-session", tripID), UserID: member.Subject, Type: "shared-reference", Kind: "packing-session", ResourceID: tripID, Owner: owner}
-	data, _ := json.Marshal(ref)
-	if _, err := s.container.CreateItem(ctx, azcosmos.NewPartitionKeyString(member.Subject), data, nil); err != nil {
-		var response *azcore.ResponseError
-		if !errors.As(err, &response) || response.StatusCode != 409 {
-			return err
-		}
+	if err := s.writeReference(ctx, "packing-session", tripID, owner, member.Subject); err != nil {
+		return err
 	}
 	return s.updateSharing(ctx, "packing-session", tripID, owner, func(sharing *Sharing) error {
 		if _, ok := sharing.Members[member.Subject]; ok {
@@ -528,4 +524,60 @@ func (s *Store) addTripMember(ctx context.Context, tripID, owner string, member 
 		sharing.Members[member.Subject] = member
 		return nil
 	})
+}
+
+// writeReference creates a member's discovery reference to a resource. An
+// existing reference is fine: it grants nothing on its own.
+func (s *Store) writeReference(ctx context.Context, kind, id, owner, subject string) error {
+	ref := sharedReference{ID: referenceID(kind, id), UserID: subject, Type: "shared-reference", Kind: kind, ResourceID: id, Owner: owner}
+	data, _ := json.Marshal(ref)
+	if _, err := s.container.CreateItem(ctx, azcosmos.NewPartitionKeyString(subject), data, nil); err != nil {
+		var response *azcore.ResponseError
+		if !errors.As(err, &response) || response.StatusCode != 409 {
+			return err
+		}
+	}
+	return nil
+}
+
+// ErrNotListMember rejects a trip member who is not (or no longer) a member of
+// the list the trip starts from.
+var ErrNotListMember = fmt.Errorf("%w: not a member of this list", ErrInvalid)
+
+// TripMemberChoices lists who actor may add to a trip started from this list,
+// ordered by name. Only the owner manages list membership and sees its members,
+// so only the owner is offered them; everyone else starts a private trip.
+func (l PackingList) TripMemberChoices(actor string) []Member {
+	if l.UserID != actor {
+		return nil
+	}
+	members := make([]Member, 0, len(l.Sharing.Members))
+	for _, member := range l.Sharing.Members {
+		members = append(members, member)
+	}
+	sort.Slice(members, func(i, j int) bool {
+		if members[i].Name != members[j].Name {
+			return members[i].Name < members[j].Name
+		}
+		return members[i].Subject < members[j].Subject
+	})
+	return members
+}
+
+func chosenTripMembers(list PackingList, actor string, subjects []string) (map[string]Member, error) {
+	if len(subjects) == 0 {
+		return nil, nil
+	}
+	if list.UserID != actor {
+		return nil, ErrForbidden
+	}
+	chosen := map[string]Member{}
+	for _, subject := range subjects {
+		member, ok := list.Sharing.Members[subject]
+		if !ok || subject == actor {
+			return nil, ErrNotListMember
+		}
+		chosen[subject] = member
+	}
+	return chosen, nil
 }

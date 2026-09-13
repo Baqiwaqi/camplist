@@ -49,9 +49,30 @@ func (s *Store) clock() time.Time {
 }
 
 func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID string, ownerName ...string) (PackingSession, error) {
+	name := ""
+	if len(ownerName) > 0 {
+		name = ownerName[0]
+	}
+	return s.createPackingSession(ctx, listID, userID, name, nil)
+}
+
+// StartTripWithMembers starts a trip from a list and adds the chosen list
+// members to it, as if each had been approved through a trip invitation. Only
+// the list owner may choose, and only from the list's current members
+// (PackingList.TripMemberChoices); any other subject fails with
+// ErrNotListMember before anything is written.
+func (s *Store) StartTripWithMembers(ctx context.Context, listID, actor, ownerName string, subjects []string) (PackingSession, error) {
+	return s.createPackingSession(ctx, listID, actor, ownerName, subjects)
+}
+
+func (s *Store) createPackingSession(ctx context.Context, listID, userID, ownerName string, subjects []string) (PackingSession, error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
 		return PackingSession{}, fmt.Errorf("get packing list: %w", err)
+	}
+	members, err := chosenTripMembers(list, userID, subjects)
+	if err != nil {
+		return PackingSession{}, err
 	}
 
 	sessions, err := s.ListPackingSession(ctx, userID)
@@ -66,10 +87,13 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 	}
 	session := NewPackingSession(list)
 	session.UserID = userID
-	if len(ownerName) > 0 && len(ownerName[0]) <= 200 {
-		session.OwnerName = ownerName[0]
+	if len(ownerName) <= 200 {
+		session.OwnerName = ownerName
 	}
 	session.Name = list.Name + " – " + session.CreatedAt.Format("Jan 2, 2006")
+	if len(members) > 0 {
+		session.Sharing.Members = members
+	}
 	session.expandPersonalEntries()
 	if len(session.List.Items)+len(session.List.Tasks) > 2000 {
 		return PackingSession{}, ErrInvalid
@@ -80,6 +104,14 @@ func (s *Store) CreatePackingSession(ctx context.Context, listID string, userID 
 		firstNew++
 	}
 	session.Improvements = append([]string{}, list.Changes[firstNew:]...)
+
+	// Discovery references come first, as in RequestAccess: without the trip
+	// they point at nothing and grant nothing.
+	for subject := range members {
+		if err = s.writeReference(ctx, "packing-session", session.ID, userID, subject); err != nil {
+			return PackingSession{}, fmt.Errorf("share packing session: %w", err)
+		}
+	}
 
 	pk := azcosmos.NewPartitionKeyString(userID)
 

@@ -100,6 +100,7 @@ func Routes(cfg Config) *chi.Mux {
 
 		r.Post("/packing-list/start-session", h.CreateSessionHandler)
 		r.Post("/packing-lists/start-session", h.CreateSessionHandler)
+		r.Get("/packing-lists/{id}/start", h.StartTripPrompt)
 		r.Get("/packing-session/{id}", h.SessionDetailsPage)
 		r.Get("/trips/{id}", h.SessionDetailsPage)
 		r.Get("/packing-session/{id}/review", h.ReviewPage)

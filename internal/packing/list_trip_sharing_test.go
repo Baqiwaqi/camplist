@@ -279,3 +279,50 @@ func TestApprovingWithTripsRequiresOwnerAndTheListsOwnTrips(t *testing.T) {
 		t.Fatalf("open invitation: %v", err)
 	}
 }
+
+func TestStartTripWithMembersGrantsOnlyChosenListMembers(t *testing.T) {
+	f := newListTripFixture(t)
+	ctx := context.Background()
+	if err := f.store.DecideInvitation(ctx, "packing-list", f.list.ID, "owner", f.link.Hash(), true); err != nil {
+		t.Fatal(err)
+	}
+	list, err := f.store.GetPackingList(ctx, f.list.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.Items = append(list.Items, packing.PackingItem{ID: "sleeping-bag", Name: "Sleeping bag", Scope: "person"})
+	if err = f.store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	if got := list.TripMemberChoices("guest"); len(got) != 0 {
+		t.Fatalf("a list member is offered %v", got)
+	}
+	if got := list.TripMemberChoices("owner"); len(got) != 1 || got[0].Subject != "guest" {
+		t.Fatalf("owner is offered %v, want the guest", got)
+	}
+	for _, subjects := range [][]string{{"stranger"}, {"owner"}} {
+		if _, err = f.store.StartTripWithMembers(ctx, f.list.ID, "owner", "Owner", subjects); !errors.Is(err, packing.ErrNotListMember) {
+			t.Fatalf("%v: got %v, want ErrNotListMember", subjects, err)
+		}
+	}
+	if _, err = f.store.StartTripWithMembers(ctx, f.list.ID, "guest", "Guest", []string{"guest"}); !errors.Is(err, packing.ErrForbidden) {
+		t.Fatalf("a list member added trip members: %v", err)
+	}
+	trip, err := f.store.StartTripWithMembers(ctx, f.list.ID, "owner", "Owner", []string{"guest", "guest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	shared, err := f.store.GetPackingSession(ctx, trip.ID, "guest")
+	if err != nil || len(shared.Sharing.Members) != 1 {
+		t.Fatalf("guest cannot open the new trip (%v) or members are %v", err, shared.Sharing.Members)
+	}
+	bags := map[string]bool{}
+	for _, item := range shared.List.Items {
+		if item.SourceID == "sleeping-bag" {
+			bags[item.Assignee] = true
+		}
+	}
+	if !bags["owner"] || !bags["guest"] {
+		t.Errorf("personal items were not copied for each person: %v", bags)
+	}
+}

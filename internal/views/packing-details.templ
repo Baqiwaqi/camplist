@@ -110,9 +110,9 @@ templ PreparationTasks(list packing.PackingList, csrfToken string) {
 // signer may add to the new trip (PackingList.TripMemberChoices); with none,
 // Start trip posts straight away as before.
 type StartTrip struct {
-	List    packing.PackingList
-	Name    string
-	Errors  []string
+	List   packing.PackingList
+	Name   string
+	Errors []string
 	// MemberError marks Errors as about the chosen members, not the name.
 	MemberError bool
 	Members     []packing.Member

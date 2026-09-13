@@ -541,8 +541,9 @@
   }
 
   /* Meta text and tags the offline scripts create: "Updated by ..." under a
-     packing row (checklist.mjs) and "Available offline" on a trip card
-     (account.mjs). Same look as the text-muted and tag utilities in views. */
+     packing row (checklist.mjs), and "Available offline" or a deleted trip's
+     red "Deleted online" tag on a trip card (account.mjs). Same look as the
+     text-muted and tag utilities in views. */
   .muted {
     @apply text-sm text-muted;
   }

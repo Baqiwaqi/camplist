@@ -105,16 +105,15 @@ window.addEventListener('online',synchronizeSaved);
 // A saved copy the server did not list is never offered as a trip: the
 // overview asks the server about it first and shows a card only for a
 // deleted trip, or one this account lost, whose copy still holds unsynced changes.
-const TAG='inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase px-2 py-0.5 rounded-full';
-function label(card,text,colours){
+function label(card,text,colours=''){
  let tag=card.querySelector('[data-offline-label]');
  if(!tag){tag=document.createElement('p');tag.dataset.offlineLabel='';card.append(tag);}
- tag.className=TAG+' mt-3 '+colours;tag.textContent=text;
+ tag.className=('tag '+colours).trim();tag.textContent=text;
 }
 function goneCard(copy){
  const card=document.createElement('article');card.className='card';card.dataset.offlineCopy=copy.id;
  const heading=document.createElement('h2');const link=document.createElement('a');link.className='no-underline';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
- const detail=document.createElement('p');detail.className='text-muted';detail.textContent='Open it to export your changes from Recovery options.';
+ const detail=document.createElement('p');detail.className='muted';detail.textContent='Open it to export your changes from Recovery options.';
  card.append(heading,detail);
  label(card,`${copy.issue==='deleted'?'Deleted online':'Access removed'} · ${copy.unsynced} unsynced change(s)`,'text-red-800 bg-red-100');
  return card;
@@ -126,11 +125,11 @@ async function showSavedCopies(){
  const cards=[...document.querySelectorAll('[data-saved-trip]')];
  if(archive){
   const saved=new Set((await db.list(identity.userId)).map(record=>record.id));
-  for(const card of cards)if(saved.has(card.dataset.savedTrip))label(card,'Available offline','text-pine-700 bg-pine-100');
+  for(const card of cards)if(saved.has(card.dataset.savedTrip))label(card,'Available offline');
   return;
  }
  const {available,gone}=await packing.reconcile(identity.userId,cards.map(card=>card.dataset.savedTrip));
- for(const card of cards)if(available.includes(card.dataset.savedTrip))label(card,'Available offline','text-pine-700 bg-pine-100');
+ for(const card of cards)if(available.includes(card.dataset.savedTrip))label(card,'Available offline');
  for(const card of document.querySelectorAll('[data-offline-copy]'))card.remove();
  for(const copy of gone)overview.append(goneCard(copy));
 }

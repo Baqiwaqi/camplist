@@ -156,6 +156,7 @@ shell. Chromium at a 390px phone viewport against the in-memory fixture
 | Owner offline, fresh tab on the deleted trip URL | Offline shell lists only the remaining copies |
 | Member reloads `/trips` after the owner deleted a shared trip or removed them | Both copies removed (404 and 403 `access_removed`) |
 | Member with an unsynced check when the owner deletes | Copy kept; `/trips` shows "Deleted online · 1 unsynced change(s)" linking to the shell; the trip page and the offline shell (also offline in a fresh tab) keep the deleted status and disable packing |
+| Owner with an unsynced change deletes the trip from its card | Copy kept and marked deleted in place; a "Deleted online · 1 unsynced change(s)" card appears without a reload |
 | Member has the trip page open when the owner deletes it or removes them | Page says "This trip was deleted" or "Your access to this trip was removed" and disables packing |
 
 Take one host offline with `network?offline=1&host=camplist-member.localhost:3001`.

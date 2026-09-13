@@ -168,7 +168,7 @@ templ PackingItemToggle(sessionID string, item packing.PackingItem, csrfToken st
 	>
 		<span class="tick" aria-hidden="true"></span>
 		<span class="pack-name">{ item.Name }</span>
-		if item.ChangedBy!="" {
+		if item.ChangedBy!="" && item.ChangedByID!=auth.Subject(ctx) {
 			<span class="text-muted text-sm">{ item.ChangedBy }</span>
 		}
 		<span class="pack-action">

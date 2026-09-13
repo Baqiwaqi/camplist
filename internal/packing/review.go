@@ -22,6 +22,7 @@ type PreparationTask struct {
 	Assignee     string `json:"assignee,omitempty"`
 	AssigneeName string `json:"assigneeName,omitempty"`
 	ChangedBy    string `json:"changedBy,omitempty"`
+	ChangedByID  string `json:"changedById,omitempty"`
 	ID           string `json:"id"`
 	Name         string `json:"name"`
 	Done         bool   `json:"done"`

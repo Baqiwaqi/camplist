@@ -182,4 +182,9 @@ func TestPreparationFallbackUpdatesAttributionAfterAnotherParticipant(t *testing
 	if trip.List.Tasks[0].ChangedBy != "Trip owner" {
 		t.Fatalf("stale attribution %s", trip.List.Tasks[0].ChangedBy)
 	}
+	for _, item := range trip.Snapshot("guest").List.Items {
+		if item.ID == "car" && item.ChangedByID != "owner" {
+			t.Fatalf("snapshot should name the author's account so devices can hide their own changes, got %q", item.ChangedByID)
+		}
+	}
 }

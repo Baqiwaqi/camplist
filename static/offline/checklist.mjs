@@ -20,7 +20,8 @@ export function renderEntries(container,view,kind,onToggle,onResolve) {
    const tick=document.createElement('span');tick.className='tick';tick.setAttribute('aria-hidden','true');button.append(tick);
    const name=document.createElement('span');name.className='pack-name';name.textContent=item.name+(item.category?' · '+item.category:'');button.append(name);
    const action=document.createElement('span');action.className='pack-action';action.textContent=kind==='task'?(item.checked?'Undo':'Mark done'):(item.checked?'Unpack':'Pack');button.append(action);row.append(button);
-   if(item.changedBy){const attribution=document.createElement('span');attribution.className='muted';attribution.textContent='Updated by '+item.changedBy;row.append(attribution);}
+   // Attribution is for other campers' changes; the viewer knows what they did.
+   if(item.changedBy&&item.changedById!==(view.session.accountId||view.session.userId)){const attribution=document.createElement('span');attribution.className='muted';attribution.textContent='Updated by '+item.changedBy;row.append(attribution);}
    const remote=view.conflicts[item.id];
    if(remote){
     const conflict=document.createElement('div');const explanation=document.createElement('p');explanation.textContent=`${remote.changedBy||'Another camper'} marked this ${remote.checked?'done':'not done'}. Your waiting change would mark it ${item.checked?'done':'not done'}.`;conflict.append(explanation);

@@ -104,7 +104,7 @@ export class OfflinePacking {
       if(!result.futureSaveError)await this.db.update(owner,id,record=>{delete record.futureSaves?.[future.itemId];return record;});
       continue;
      }
-     const remote = await this.transport.getSession(owner,id,identity);
+     const remote = await this.transport.getSession(owner,id,identity).catch(error=>{throw Object.assign(error,{trip:true});});
      await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;record.issue=null;delete record.gone;return record;});
      return this.open(owner,id);
     }
@@ -145,7 +145,11 @@ export class OfflinePacking {
     });
    }
   } catch(error) {
-   const issue = error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
+   let issue = classify(error);
+   if (issue === 'deleted' && !error.trip) {
+    try { await this.transport.getSession(owner,id); issue = 'network'; }
+    catch (check) { issue = classify(check); }
+   }
    if (GONE.includes(issue)) return this.gone(owner,id,issue,error);
    await this.db.update(owner,id,record => {
     if (!record) throw error;
@@ -184,6 +188,9 @@ export class OfflinePacking {
 }
 
 const GONE = ['deleted','access_removed'];
+function classify(error) {
+ return error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
+}
 export function unsynced(record) {
  return Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length;
 }

@@ -90,6 +90,7 @@ test('expired login, account changes and deleted sessions preserve pending work'
  assert.equal(remote.receipts.size,0);
  remote.identity=async()=>({userId:'camper'});
  remote.send=async()=>{throw Object.assign(new Error('Deleted'),{status:404});};
+ remote.getSession=remote.send;
  const view=await packing.sync('camper','trip');
  assert.equal(view.issue,'deleted');assert.equal(view.pending,1);
  const exported=JSON.parse(await packing.export('camper','trip'));
@@ -226,6 +227,20 @@ test('a deleted trip with unsynced work stays marked deleted through later offli
  server.identity = async () => ({ userId: 'camper' }); server.send = async () => { throw new TypeError('Failed to fetch'); };
  view = await packing.sync('camper', 'trip');
  assert.equal(view.issue, 'deleted');
+});
+
+test('a pending check whose item was removed online does not mark the trip gone', async () => {
+ const db = await database(), remote = server();
+ const packing = new OfflinePacking(db, remote);
+ await packing.save('camper', trip()); await packing.set('camper', 'trip', 'tent', true);
+ remote.send = async () => { throw Object.assign(new Error('Item no longer available'), { status: 404, code: 'unavailable' }); };
+ let view = await packing.sync('camper', 'trip');
+ assert.equal(view.issue, 'network'); assert.equal(view.pending, 1);
+ assert.equal((await db.get('camper', 'trip')).gone, undefined);
+ remote.send = async () => { throw Object.assign(new Error('Conflict'), { status: 409, code: 'conflict', session: { ...structuredClone(remote.state), list: { ...remote.state.list, items: [] } } }); };
+ view = await packing.sync('camper', 'trip');
+ assert.equal(view.issue, 'network'); assert.equal(view.pending, 1);
+ assert.equal((await db.get('camper', 'trip')).gone, undefined);
 });
 
 test('a gone marker clears only after a successful refresh', async () => {

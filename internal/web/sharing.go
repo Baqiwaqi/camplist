@@ -152,7 +152,8 @@ func (h *handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 }
 
 // decidedInvitation answers an htmx approve or revoke with the decided row and,
-// after an approval, the member card out of band.
+// after an approval, the member card out of band. An expired invitation is no
+// longer listed, so its row is replaced with nothing.
 func (h *handler) decidedInvitation(w http.ResponseWriter, r *http.Request, hash string, approved bool) {
 	view, err := h.packingStore.GetSharing(r.Context(), chi.URLParam(r, "kind"), chi.URLParam(r, "id"), auth.Subject(r.Context()))
 	if err != nil {
@@ -165,7 +166,9 @@ func (h *handler) decidedInvitation(w http.ResponseWriter, r *http.Request, hash
 			return
 		}
 	}
-	http.Error(w, "That invitation is no longer available.", http.StatusNotFound)
+	if approved {
+		render(w, r, views.MemberList(view, true, false, csrf.Token(r)))
+	}
 }
 func invitationLink(r *http.Request) packing.InvitationLink {
 	return packing.InvitationLink{Kind: chi.URLParam(r, "kind"), ID: chi.URLParam(r, "id"), Owner: chi.URLParam(r, "owner"), Token: chi.URLParam(r, "token")}

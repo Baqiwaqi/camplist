@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -226,6 +227,32 @@ func TestDecideInvitationSwapsRowAndSupportsNormalForms(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestRevokeExpiredInvitationRemovesRow(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+	store := packing.NewStore(testsupport.NewDocuments(), packing.WithClock(func() time.Time { return now }))
+	list := packing.NewList("owner", "Weekend", "")
+	store.SavePackingList(ctx, list)
+	link, _ := store.CreateInvitation(ctx, "packing-list", list.ID, "owner")
+	store.RequestAccess(ctx, link, packing.Member{Subject: "guest", Name: "Robin"})
+	now = now.Add(8 * 24 * time.Hour)
+	h := handler{packingStore: store}
+	base := "/sharing/packing-list/" + list.ID
+	params := map[string]string{"kind": "packing-list", "id": list.ID, "hash": link.Hash()}
+	r := sharingRequest("POST", base+"/invitations/"+link.Hash(), "owner", params, url.Values{"decision": {"revoke"}})
+	r.Header.Set("HX-Request", "true")
+	w := httptest.NewRecorder()
+	h.DecideInvitation(w, r)
+	if w.Code != http.StatusOK || strings.TrimSpace(w.Body.String()) != "" {
+		t.Fatalf("saved revoke of an expired invitation should remove the row: %d\n%s", w.Code, w.Body.String())
+	}
+	now = now.Add(-8 * 24 * time.Hour)
+	view, err := store.GetSharing(ctx, "packing-list", list.ID, "owner")
+	if err != nil || len(view.Sharing.Invitations) != 1 || view.Sharing.Invitations[0].Status != "revoked" {
+		t.Fatalf("revoke not saved: %v %+v", err, view.Sharing.Invitations)
 	}
 }
 

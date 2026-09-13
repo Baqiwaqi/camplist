@@ -160,15 +160,6 @@
     @apply cursor-wait opacity-50;
   }
 
-  /* htmx marks the requesting element (or its hx-indicator) while a request is
-     in flight. Dim its buttons and ignore pointer presses instead of disabling
-     them, so the pressed button keeps keyboard focus; pair with hx-sync so a
-     repeat key press is dropped too. */
-  .htmx-request :is(.btn, .pack-row),
-  :is(.btn, .pack-row).htmx-request {
-    @apply pointer-events-none opacity-60;
-  }
-
   .btn-primary {
     @apply bg-pine-700 text-white border-pine-700;
   }

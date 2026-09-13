@@ -96,7 +96,7 @@ func shell(title string, bodyAttrs templ.Attributes) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " – Camplist</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/logomark.svg\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap\"><link rel=\"stylesheet\" href=\"/static/tailwind.css\"><script src=\"/static/htmx.min.js\"></script><script src=\"/static/menu.js\" defer></script><script src=\"/static/request-error.js\" defer></script><script src=\"/static/select.js\" defer></script><script src=\"/static/sharing.js\" defer></script><script src=\"/static/revision.js\" defer></script><script src=\"/static/removal-focus.js\" defer></script><script src=\"/static/alpine.min.js\" defer></script><noscript><style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; } .select-native { display: block !important; } .select-trigger { display: none !important; }</style></noscript><script type=\"module\" src=\"/static/offline/account.mjs\"></script></head><body")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " – Camplist</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/logomark.svg\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap\"><link rel=\"stylesheet\" href=\"/static/tailwind.css\"><script src=\"/static/htmx.min.js\"></script><script src=\"/static/menu.js\" defer></script><script src=\"/static/request-error.js\" defer></script><script src=\"/static/select.js\" defer></script><script src=\"/static/sharing.js\" defer></script><script src=\"/static/revision.js\" defer></script><script src=\"/static/removal-focus.js\" defer></script><script src=\"/static/trip-cards.js\" defer></script><script src=\"/static/alpine.min.js\" defer></script><noscript><style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; } .select-native { display: block !important; } .select-trigger { display: none !important; }</style></noscript><script type=\"module\" src=\"/static/offline/account.mjs\"></script></head><body")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -182,7 +182,7 @@ func Layout(title string, csrfToken string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></nav></header><main class=\"max-w-[900px] mx-auto px-4 py-8\"><div id=\"request-error\" class=\"error error-toast\" role=\"alert\" hidden x-data=\"requestError\" x-bind:class=\"{ 'toast-leave': leaving }\" x-on:htmx:before-request.window=\"reset()\" x-on:htmx:response-error.window=\"failed($event.detail.xhr)\" x-on:htmx:send-error.window=\"lost()\"><div><p class=\"error-title\">That did not save</p><p id=\"request-error-message\" x-text=\"message\"></p></div><button type=\"button\" class=\"btn btn-link error-dismiss\" x-show=\"reload\" x-cloak x-on:click=\"location.reload()\">Reload</button> <button type=\"button\" class=\"btn btn-link error-dismiss\" x-on:click=\"dismiss()\">Dismiss</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></nav></header><main class=\"max-w-[900px] mx-auto px-4 py-8\"><div id=\"request-error\" class=\"error error-toast\" role=\"alert\" hidden x-data=\"requestError\" x-bind:class=\"{ 'toast-leave': leaving }\" x-on:htmx:before-request.window=\"reset()\" x-on:htmx:response-error.window=\"failed($event.detail.xhr)\" x-on:htmx:send-error.window=\"lost()\" x-on:mouseenter=\"hold('hovered', true)\" x-on:mouseleave=\"hold('hovered', false)\" x-on:focusin=\"hold('focused', true)\" x-on:focusout=\"hold('focused', $root.contains($event.relatedTarget))\"><div><p class=\"error-title\">That did not save</p><p id=\"request-error-message\" x-text=\"message\"></p></div><button type=\"button\" class=\"btn btn-link error-dismiss\" x-show=\"reload\" x-cloak x-on:click=\"location.reload()\">Reload</button> <button type=\"button\" class=\"btn btn-link error-dismiss\" x-on:click=\"dismiss()\">Dismiss</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -286,7 +286,7 @@ func NavLink(href string, label string, current bool, panel bool) templ.Componen
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 137, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 142, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -309,7 +309,7 @@ func NavLink(href string, label string, current bool, panel bool) templ.Componen
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 141, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 146, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -381,7 +381,7 @@ func AccountMenu(csrfToken string) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 152, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 157, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -434,7 +434,7 @@ func AccountLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 163, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 168, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 		if templ_7745c5c3_Err != nil {
@@ -447,7 +447,7 @@ func AccountLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(auth.UserName(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 166, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 171, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {

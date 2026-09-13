@@ -5,10 +5,12 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
@@ -56,5 +58,130 @@ func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
 	h.SessionDetailsPage(w, r)
 	if !strings.Contains(w.Body.String(), "<h3>Alex</h3>") || !strings.Contains(w.Body.String(), "<h3>Sam</h3>") {
 		t.Fatal("server task fallback lacks participant groups")
+	}
+}
+
+// sharedTrip stores a trip owned by "owner" and shared with "member".
+func sharedTrip(t *testing.T) (*packing.Store, packing.PackingSession) {
+	t.Helper()
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("owner", "Camping", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	trip, err := store.CreatePackingSession(ctx, list.ID, "owner", "Alex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	link, err := store.CreateInvitation(ctx, "packing-session", trip.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.RequestAccess(ctx, link, packing.Member{Subject: "member", Name: "Sam"}); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.DecideInvitation(ctx, link.Kind, trip.ID, "owner", link.Hash(), true); err != nil {
+		t.Fatal(err)
+	}
+	return store, trip
+}
+
+// visibleEmptyState is the out-of-band empty state without its hidden attribute.
+const visibleEmptyState = `<div id="trips-empty" class="card" tabindex="-1" hx-swap-oob="true">`
+
+// tripRequest sends method to path as userID with the trip id route param.
+func tripRequest(method, path, userID, tripID string) *http.Request {
+	r := httptest.NewRequest(method, path, nil)
+	r.Header.Set("HX-Request", "true")
+	return withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, userID)), tripID, "")
+}
+
+func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
+	ctx := context.Background()
+	store, trip := sharedTrip(t)
+	h := handler{packingStore: store}
+	deleteAs := func(userID, tripID string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+tripID+"?view=archive", userID, tripID))
+		return w
+	}
+
+	if w := deleteAs("member", trip.ID); w.Code != http.StatusForbidden {
+		t.Fatalf("member delete got %d, want 403", w.Code)
+	}
+	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err != nil {
+		t.Fatalf("member delete removed the trip: %v", err)
+	}
+	if w := deleteAs("stranger", trip.ID); w.Code == http.StatusOK {
+		t.Fatal("a user without access deleted the trip")
+	}
+
+	w := deleteAs("owner", trip.ID)
+	if w.Code != http.StatusOK || w.Header().Get("HX-Refresh") != "" {
+		t.Fatalf("owner delete got %d refresh=%q, want 200 without a page refresh", w.Code, w.Header().Get("HX-Refresh"))
+	}
+	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") || strings.Contains(body, "trip-archive-link") {
+		t.Fatalf("deleting the last archive card does not reveal the archive's empty state: %s", body)
+	}
+	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err == nil {
+		t.Fatal("owner delete left the trip in storage")
+	}
+	if w := deleteAs("owner", trip.ID); w.Code != http.StatusNotFound {
+		t.Fatalf("repeat delete got %d, want 404", w.Code)
+	}
+}
+
+func TestArchiveAndRestoreTripAreOwnerOnlyAndHideItForMembers(t *testing.T) {
+	ctx := context.Background()
+	store, trip := sharedTrip(t)
+	h := handler{packingStore: store}
+	archivedFor := func(userID string) bool {
+		sessions, err := store.ListPackingSession(ctx, userID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, archived := packing.PartitionSessions(sessions, time.Now().UTC())
+		return len(archived) == 1 && archived[0].ID == trip.ID
+	}
+
+	w := httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/archive", "member", trip.ID))
+	if w.Code != http.StatusForbidden || archivedFor("owner") {
+		t.Fatalf("member archive got %d, archived=%v; want 403 and the trip still active", w.Code, archivedFor("owner"))
+	}
+
+	w = httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/archive", "owner", trip.ID))
+	if w.Code != http.StatusOK {
+		t.Fatalf("owner archive got %d: %s", w.Code, w.Body.String())
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, `id="trip-archive-link"`) || !strings.Contains(body, "Archive (1)") || !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No trips in progress.") {
+		t.Fatalf("archiving the last trip does not update the archive count and empty state: %s", body)
+	}
+	if !archivedFor("owner") || !archivedFor("member") {
+		t.Fatal("archived trip is still active for the owner or the member")
+	}
+
+	w = httptest.NewRecorder()
+	h.RestoreTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/restore", "member", trip.ID))
+	if w.Code != http.StatusForbidden || !archivedFor("owner") {
+		t.Fatalf("member restore got %d; want 403 and the trip still archived", w.Code)
+	}
+
+	w = httptest.NewRecorder()
+	h.RestoreTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/restore", "owner", trip.ID))
+	if w.Code != http.StatusOK || archivedFor("owner") || archivedFor("member") {
+		t.Fatalf("owner restore got %d; want the trip active again for everyone", w.Code)
+	}
+	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") {
+		t.Fatalf("restoring the last archived trip does not reveal the archive's empty state: %s", body)
+	}
+
+	w = httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/missing/archive", "owner", "missing"))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("archiving a missing trip got %d, want 404", w.Code)
 	}
 }

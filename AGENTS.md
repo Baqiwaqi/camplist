@@ -36,7 +36,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   its own write made (see `EditPreparationTask`, `listItemsChanged`). Failed htmx
   requests answer with a user-facing plain-text reason (`http.Error`); the
   layout's error toast (`static/request-error.js`) shows it for statuses under
-  500 and offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`).
+  500, offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`), and
+  auto-hides after 6s unless it offers Reload or reports a lost connection.
 - htmx mutations: branch on `isHTMX(r)` (`internal/web/item.go`) and give real
   forms a plain 303 fallback. Stop double submits with `hx-sync` (plus
   `hx-indicator` for a wider busy area), styled by the shared `.htmx-request`
@@ -47,9 +48,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
-  `static/menu.js`, loaded before Alpine. Build destructive items with the
-  `confirmDelete` helper so the confirm dialog stays consistent;
-  `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
+  `static/menu.js`, loaded before Alpine; it also flips the popup to open
+  rightward (`.menu-popup-start`) when it would cross the left edge. Build
+  destructive items with the `confirmDelete` helper so the confirm dialog stays
+  consistent; `confirmDeleteCard` removes a card in place (the handler branches
+  on `HX-Target`).
 - Form dropdown: `views.Select` (Pines UI style listbox, `static/select.js`)
   keeps a hidden native `<select>` as the submitted field and no-JS fallback.
   Inside htmx-swapped content toggle Alpine state with `hidden`, not `x-show`:

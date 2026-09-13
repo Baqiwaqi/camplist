@@ -21,7 +21,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						@ListSummary(list.Items, false)
 					</div>
 					<div class="flex flex-wrap items-end gap-2 sm:pt-6">
-						@StartTripForm(list.ID, list.Name+" – "+time.Now().Format("Jan 2, 2006"), nil, csrfToken)
+						@StartTripForm(StartTrip{List: list, Name: list.Name + " – " + time.Now().Format("Jan 2, 2006"), Members: list.TripMemberChoices(auth.Subject(ctx))}, csrfToken)
 						@PageMenu("More") {
 							@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
 							@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
@@ -179,58 +179,183 @@ templ PreparationTasks(list packing.PackingList, csrfToken string, editing bool,
 	</ul>
 }
 
+// StartTrip is the start-trip form's state. Members are the list members the
+// signer may add to the new trip (PackingList.TripMemberChoices); with none,
+// Start trip posts straight away as before.
+type StartTrip struct {
+	List   packing.PackingList
+	Name   string
+	Errors []string
+	// MemberError marks Errors as about the chosen members, not the name.
+	MemberError bool
+	Members     []packing.Member
+	// Chosen keeps ticked members when the prompt comes back with an error.
+	Chosen map[string]bool
+	// Prompt shows the member checkboxes; Page is the no-script page, whose
+	// Cancel is a plain link; Focus puts the keyboard on Start trip after Cancel.
+	Prompt, Page, Focus bool
+}
+
 // StartTripForm sits in the pine hero. A started trip is a new page, so the
 // server redirects; a rejected name swaps the form back in place with the
 // error. hx-sync drops repeat presses while a start is in flight; once the
 // redirect arrives the button is disabled, so neither a click nor Enter can
 // start a second trip while the trip page loads (static/revision.js reloads
 // the page when it returns from the back/forward cache).
-templ StartTripForm(listID string, name string, errs []string, csrfToken string) {
-	<form
-		id="start-trip"
-		method="post"
-		action="/packing-lists/start-session"
-		hx-post="/packing-lists/start-session"
-		hx-target="this"
-		hx-swap="outerHTML"
-		hx-sync="this:drop"
-		hx-on::after-request="if (event.detail.xhr.getResponseHeader('HX-Redirect')) this.querySelector('button').disabled = true"
-		class="flex flex-wrap items-end gap-2 max-sm:w-full"
-	>
-		<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ listID }/>
-		<div class="grid gap-1 max-sm:w-full">
-			<label for="trip-name" class="text-sm font-bold text-pine-100">Trip name</label>
-			<input
-				id="trip-name"
-				name="name"
-				value={ name }
-				required
-				maxlength="200"
-				class="min-h-11 w-64 max-w-full max-sm:w-full rounded-sm border border-pine-500 bg-white px-3 py-2 text-ink-900 focus-visible:outline-offset-0 aria-invalid:border-red-300"
-				if len(errs) > 0 {
-					aria-invalid="true"
-					aria-describedby="trip-name-error"
+//
+// When the list has members to offer, Start trip first asks for them: the
+// collapsed form GETs the prompt, which htmx swaps in place and which is a
+// page of its own without scripts. The prompt then posts like the plain form.
+templ StartTripForm(s StartTrip, csrfToken string) {
+	if len(s.Members) > 0 && !s.Prompt {
+		<form
+			id="start-trip"
+			method="get"
+			action={ startTripPromptPath(s.List.ID) }
+			hx-get={ string(startTripPromptPath(s.List.ID)) }
+			hx-target="this"
+			hx-swap="outerHTML"
+			hx-sync="this:drop"
+			class="flex flex-wrap items-end gap-2 max-sm:w-full"
+		>
+			<input type="hidden" name="choose" value="members"/>
+			@startTripName(s)
+			<button
+				class="btn btn-accent max-sm:flex-auto"
+				if s.Focus {
 					autofocus
 				}
-			/>
-		</div>
-		<button class="btn btn-accent max-sm:flex-auto">Start trip</button>
-		if len(errs) > 0 {
-			<div id="trip-name-error" class="basis-full *:mb-0">
-				@ErrorBanner(errs)
-			</div>
-		}
-	</form>
+			>Start trip</button>
+		</form>
+	} else {
+		<form
+			id="start-trip"
+			method="post"
+			action="/packing-lists/start-session"
+			hx-post="/packing-lists/start-session"
+			hx-target="this"
+			hx-swap="outerHTML"
+			hx-sync="this:drop"
+			hx-on::after-request="if (event.detail.xhr.getResponseHeader('HX-Redirect')) this.querySelector('button[type=submit]').disabled = true"
+			class={ "flex flex-wrap items-end gap-2 max-sm:w-full", templ.KV("sm:max-w-[26rem]", s.Prompt) }
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ s.List.ID }/>
+			@startTripName(s)
+			if s.Prompt {
+				@startTripMembers(s)
+			}
+			<button type="submit" class="btn btn-accent max-sm:flex-auto">Start trip</button>
+			if s.Prompt && s.Page {
+				<a class="btn btn-secondary max-sm:flex-auto" href={ templ.SafeURL("/packing-lists/" + s.List.ID) }>Cancel</a>
+			} else if s.Prompt {
+				<a
+					class="btn btn-secondary max-sm:flex-auto"
+					href={ templ.SafeURL("/packing-lists/" + s.List.ID) }
+					hx-get={ string(startTripPromptPath(s.List.ID)) }
+					hx-include="#trip-name"
+					hx-target="#start-trip"
+					hx-swap="outerHTML"
+				>Cancel</a>
+			}
+			if len(s.Errors) > 0 {
+				<div id="trip-name-error" class="basis-full *:mb-0">
+					@ErrorBanner(s.Errors)
+				</div>
+			}
+		</form>
+	}
 }
 
-// StartTripPage shows a rejected trip name when the form posted without scripts.
-templ StartTripPage(list packing.PackingList, name string, errs []string, csrfToken string) {
+templ startTripName(s StartTrip) {
+	<div class={ "grid gap-1 max-sm:w-full", templ.KV("basis-full", s.Prompt) }>
+		<label for="trip-name" class="text-sm font-bold text-pine-100">Trip name</label>
+		<input
+			id="trip-name"
+			name="name"
+			value={ s.Name }
+			required
+			maxlength="200"
+			class={ "min-h-11 max-w-full max-sm:w-full rounded-sm border border-pine-500 bg-white px-3 py-2 text-ink-900 focus-visible:outline-offset-0 aria-invalid:border-red-300", templ.KV("w-64", !s.Prompt), templ.KV("w-full", s.Prompt) }
+			if s.nameError() {
+				aria-invalid="true"
+				aria-describedby="trip-name-error"
+				autofocus
+			}
+		/>
+	</div>
+}
+
+// startTripMembers is the member prompt: everyone unticked, so a trip stays
+// private unless the owner picks people. Select all is a script shortcut.
+templ startTripMembers(s StartTrip) {
+	<fieldset
+		class="basis-full min-w-0 rounded-card border border-pine-500 bg-pine-900 p-3 my-1"
+		aria-labelledby="start-trip-members-label"
+		if s.MemberError {
+			aria-describedby="start-trip-members-hint trip-name-error"
+		} else {
+			aria-describedby="start-trip-members-hint"
+		}
+		x-data="{ picked: 0, total: 0, count() { const boxes = [...this.$root.querySelectorAll('input[name=member]')]; this.total = boxes.length; this.picked = boxes.filter(box => box.checked).length }, toggleAll() { const all = this.picked < this.total; this.$root.querySelectorAll('input[name=member]').forEach(box => box.checked = all); this.count() } }"
+		x-init="count()"
+		x-on:change="count()"
+	>
+		<div class="flex flex-wrap items-center justify-between gap-2">
+			<p id="start-trip-members-label" class="font-bold">Share this trip with list members?</p>
+			<button
+				type="button"
+				class="btn btn-secondary btn-sm"
+				x-cloak
+				x-on:click="toggleAll()"
+				x-text="picked < total ? 'Select all' : 'Clear all'"
+			>Select all</button>
+		</div>
+		<p id="start-trip-members-hint" class="text-sm text-pine-100 mt-1 mb-2">People you tick can open this trip and mark gear packed. Leave everyone unticked to keep it private.</p>
+		<div class="grid gap-1">
+			for i, member := range s.Members {
+				<label class="flex items-center gap-3 min-h-11 rounded-sm border border-transparent px-2 py-1 cursor-pointer has-checked:border-pine-100 has-checked:bg-pine-700">
+					<input
+						type="checkbox"
+						name="member"
+						value={ member.Subject }
+						checked?={ s.Chosen[member.Subject] }
+						class="shrink-0 accent-pine-500"
+						if i == 0 && !s.nameError() {
+							autofocus
+						}
+					/>
+					<span class="grid min-w-0">
+						<span class="font-bold wrap-anywhere">{ memberName(member) }</span>
+						if member.Email != "" {
+							<span class="text-sm text-pine-100 wrap-anywhere">{ member.Email }</span>
+						}
+					</span>
+				</label>
+			}
+		</div>
+	</fieldset>
+}
+
+func startTripPromptPath(listID string) templ.SafeURL {
+	return templ.SafeURL("/packing-lists/" + listID + "/start")
+}
+
+// nameError reports whether the error is about the trip name, which then takes focus.
+func (s StartTrip) nameError() bool {
+	return len(s.Errors) > 0 && !s.MemberError
+}
+
+// StartTripPage is the start-trip form without scripts: the member prompt, or
+// a rejected trip name.
+templ StartTripPage(s StartTrip, csrfToken string) {
 	@Layout("Start trip", csrfToken) {
 		<section class="card card-brand p-4 sm:p-6">
-			<p class="text-xs font-bold tracking-eyebrow uppercase text-pine-100 mb-2">{ list.Name }</p>
+			<p class="text-xs font-bold tracking-eyebrow uppercase text-pine-100 mb-2">{ s.List.Name }</p>
 			<h1>Start trip</h1>
-			@StartTripForm(list.ID, name, errs, csrfToken)
-			<p class="mt-4"><a class="text-white" href={ "/packing-lists/" + list.ID }>Back to the list</a></p>
+			@StartTripForm(s, csrfToken)
+			if !s.Prompt {
+				<p class="mt-4"><a class="text-white" href={ "/packing-lists/" + s.List.ID }>Back to the list</a></p>
+			}
 		</section>
 	}
 }

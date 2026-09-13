@@ -56,7 +56,7 @@ func TestAccountItemsSitBehindTheMemberName(t *testing.T) {
 	}
 }
 
-func TestErrorToastShowsServerReasonsWithAReloadAction(t *testing.T) {
+func TestLayoutWiresTheErrorToastBeforeAlpineStarts(t *testing.T) {
 	body := renderWithPath(t, "/trips")
 	for _, want := range []string{
 		`<script src="/static/request-error.js" defer></script>`,

@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check static/sharing.js && node --check static/revision.js && node --check static/offline/checklist.mjs && node --check static/offline/status.mjs && node --check static/offline/automatic.mjs && node --check static/offline/session.mjs && node --check static/offline/db.mjs && node --check static/offline/packing.mjs && node --check static/offline/ui.mjs && node --check static/offline/account.mjs && node --check static/offline/transport.mjs && node --check static/offline/sw.js",
+    "check": "node --check static/sharing.js && node --check static/request-error.js && node --check static/revision.js && node --check static/trip-cards.js && node --check static/offline/checklist.mjs && node --check static/offline/status.mjs && node --check static/offline/automatic.mjs && node --check static/offline/session.mjs && node --check static/offline/db.mjs && node --check static/offline/packing.mjs && node --check static/offline/ui.mjs && node --check static/offline/account.mjs && node --check static/offline/transport.mjs && node --check static/offline/sw.js",
     "css": "tailwindcss -i assets/css/tailwind.css -o static/tailwind.css",
     "css:watch": "tailwindcss -i assets/css/tailwind.css -o static/tailwind.css --watch",
     "css:build": "tailwindcss -i assets/css/tailwind.css -o static/tailwind.css --minify"

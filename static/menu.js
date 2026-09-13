@@ -1,15 +1,31 @@
 // Dropdown behaviour for views.Menu (internal/views/menu.templ): open and
-// close, arrow-key movement between items, focus back on the trigger.
+// close, arrow-key movement between items, focus back on the trigger, and
+// which side of the trigger the popup opens toward.
 // Registered before Alpine starts so every menu shares one definition.
 document.addEventListener('alpine:init', () => {
   Alpine.data('menu', () => ({
     open: false,
+    // The popup lines up with the trigger's right edge and grows left. A
+    // trigger near the left edge (a phone card row) flips it to grow right.
+    alignStart: false,
     toggle() {
       this.open ? this.close() : this.show()
     },
     show(index) {
       this.open = true
-      if (index !== undefined) this.$nextTick(() => this.focus(index))
+      this.$nextTick(() => {
+        this.place()
+        if (index !== undefined) this.focus(index)
+      })
+    },
+    place() {
+      const gutter = 8
+      const width = this.$refs.popup.offsetWidth
+      const trigger = this.$refs.trigger.getBoundingClientRect()
+      const viewport = document.documentElement.clientWidth
+      const overflowsLeft = trigger.right - width < gutter
+      const fitsRight = trigger.left + width <= viewport - gutter
+      this.alignStart = overflowsLeft && (fitsRight || trigger.left < viewport - trigger.right)
     },
     close(returnFocus = true) {
       if (!this.open) return

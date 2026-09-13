@@ -25,12 +25,14 @@ const (
 // ErrListFull reports an add that would take a list past MaxListEntries.
 var ErrListFull = errors.New("the list has reached its item limit")
 
-// AddItemsResult reports what a bulk add wrote. List is the saved list, whose
-// Revision is current for the page that submitted the add.
+// AddItemsResult reports what a bulk add wrote. List is the saved list, or the
+// current one when nothing was added. Replaced is the revision the write
+// replaced, so a page showing an older revision knows it is out of date.
 type AddItemsResult struct {
-	List    PackingList
-	Added   []PackingItem
-	Skipped []string
+	List     PackingList
+	Replaced string
+	Added    []PackingItem
+	Skipped  []string
 }
 
 // itemKey is how item names compare when skipping duplicates.
@@ -65,7 +67,7 @@ func (s *Store) AddItems(ctx context.Context, listID, actor string, items []Pack
 		if err != nil {
 			return AddItemsResult{}, err
 		}
-		result := AddItemsResult{Added: []PackingItem{}, Skipped: []string{}}
+		result := AddItemsResult{Replaced: list.Revision(), Added: []PackingItem{}, Skipped: []string{}}
 		seen := map[string]bool{}
 		categories := map[string]string{}
 		for _, existing := range list.Items {

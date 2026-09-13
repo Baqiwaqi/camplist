@@ -89,6 +89,11 @@ func Routes(cfg Config) *chi.Mux {
 
 		r.Post("/packing-list/{id}/add-item", h.AddItemHandler)
 		r.Post("/packing-lists/{id}/add-item", h.AddItemHandler)
+		r.Get("/packing-lists/{id}/add-several", h.AddSeveralPage)
+		r.Post("/packing-lists/{id}/add-several", h.AddSeveralHandler)
+		r.Get("/packing-lists/{id}/add-from", h.AddFromListPage)
+		r.Get("/packing-lists/{id}/add-from/{sourceId}", h.AddFromListItemsPage)
+		r.Post("/packing-lists/{id}/add-from/{sourceId}", h.AddFromListHandler)
 		r.Delete("/packing-list/{id}/remove-item/{itemId}", h.RemoveItemHandler)
 		r.Delete("/packing-lists/{id}/remove-item/{itemId}", h.RemoveItemHandler)
 		r.Get("/packing-list/{id}/items/{itemId}", h.ItemRowHandler)

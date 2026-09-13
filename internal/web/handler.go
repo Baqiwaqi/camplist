@@ -57,6 +57,8 @@ type packingStore interface {
 	RememberCategory(context.Context, string, string) error
 	RenameCategory(context.Context, string, string, string) (packing.CategoryRename, error)
 	ForgetCategory(context.Context, string, string) error
+	AddItems(context.Context, string, string, []packing.PackingItem) (packing.AddItemsResult, error)
+	CopyItems(context.Context, string, string, string, []string) (packing.AddItemsResult, error)
 }
 
 type handler struct {

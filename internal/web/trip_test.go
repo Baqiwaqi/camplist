@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
@@ -60,7 +61,9 @@ func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
 	}
 }
 
-func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
+// sharedTrip stores a trip owned by "owner" and shared with "member".
+func sharedTrip(t *testing.T) (*packing.Store, packing.PackingSession) {
+	t.Helper()
 	ctx := context.Background()
 	store := packing.NewStore(testsupport.NewDocuments())
 	list := packing.NewList("owner", "Camping", "")
@@ -81,13 +84,23 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	if err = store.DecideInvitation(ctx, link.Kind, trip.ID, "owner", link.Hash(), true); err != nil {
 		t.Fatal(err)
 	}
+	return store, trip
+}
+
+// tripRequest sends method to path as userID with the trip id route param.
+func tripRequest(method, path, userID, tripID string) *http.Request {
+	r := httptest.NewRequest(method, path, nil)
+	r.Header.Set("HX-Request", "true")
+	return withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, userID)), tripID, "")
+}
+
+func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
+	ctx := context.Background()
+	store, trip := sharedTrip(t)
 	h := handler{packingStore: store}
 	deleteAs := func(userID, tripID string) *httptest.ResponseRecorder {
-		r := httptest.NewRequest("DELETE", "/trips/"+tripID, nil)
-		r.Header.Set("HX-Request", "true")
-		r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, userID)), tripID, "")
 		w := httptest.NewRecorder()
-		h.DeletePackingSession(w, r)
+		h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+tripID, userID, tripID))
 		return w
 	}
 
@@ -110,5 +123,56 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	}
 	if w := deleteAs("owner", trip.ID); w.Code != http.StatusNotFound {
 		t.Fatalf("repeat delete got %d, want 404", w.Code)
+	}
+}
+
+func TestArchiveAndRestoreTripAreOwnerOnlyAndHideItForMembers(t *testing.T) {
+	ctx := context.Background()
+	store, trip := sharedTrip(t)
+	h := handler{packingStore: store}
+	archivedFor := func(userID string) bool {
+		sessions, err := store.ListPackingSession(ctx, userID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, archived := packing.PartitionSessions(sessions, time.Now().UTC())
+		return len(archived) == 1 && archived[0].ID == trip.ID
+	}
+
+	w := httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/archive", "member", trip.ID))
+	if w.Code != http.StatusForbidden || archivedFor("owner") {
+		t.Fatalf("member archive got %d, archived=%v; want 403 and the trip still active", w.Code, archivedFor("owner"))
+	}
+
+	w = httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/archive", "owner", trip.ID))
+	if w.Code != http.StatusOK {
+		t.Fatalf("owner archive got %d: %s", w.Code, w.Body.String())
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, `id="trip-archive-link"`) || !strings.Contains(body, `hx-swap-oob="true"`) || !strings.Contains(body, "Archive (1)") {
+		t.Fatalf("archive response does not update the archive count: %s", body)
+	}
+	if !archivedFor("owner") || !archivedFor("member") {
+		t.Fatal("archived trip is still active for the owner or the member")
+	}
+
+	w = httptest.NewRecorder()
+	h.RestoreTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/restore", "member", trip.ID))
+	if w.Code != http.StatusForbidden || !archivedFor("owner") {
+		t.Fatalf("member restore got %d; want 403 and the trip still archived", w.Code)
+	}
+
+	w = httptest.NewRecorder()
+	h.RestoreTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/restore", "owner", trip.ID))
+	if w.Code != http.StatusOK || archivedFor("owner") || archivedFor("member") {
+		t.Fatalf("owner restore got %d; want the trip active again for everyone", w.Code)
+	}
+
+	w = httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/missing/archive", "owner", "missing"))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("archiving a missing trip got %d, want 404", w.Code)
 	}
 }

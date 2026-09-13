@@ -20,6 +20,8 @@ import (
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
 	RenameTrip(context.Context, string, string, string) (packing.PackingSession, error)
+	ArchiveTrip(context.Context, string, string) (packing.PackingSession, error)
+	RestoreTrip(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
 	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) (packing.PackingList, error)
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)

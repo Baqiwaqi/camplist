@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
 	"net/http"
+	"time"
 )
 
 func (h *handler) RenameTrip(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +23,45 @@ func (h *handler) RenameTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/trips/"+id, http.StatusSeeOther)
 }
+
+// ArchiveTrip archives a trip from its card. The card's swap removes it from
+// the trips overview; the out-of-band link keeps the archive count current.
+func (h *handler) ArchiveTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if _, err := h.packingStore.ArchiveTrip(ctx, chi.URLParam(r, "id"), userID); err != nil {
+		storeError(w, err, "Could not archive trip")
+		return
+	}
+	sessions, err := h.packingStore.ListPackingSession(ctx, userID)
+	if err != nil {
+		storeError(w, err, "Could not count archived trips")
+		return
+	}
+	_, archived := packing.PartitionSessions(sessions, time.Now().UTC())
+	render(w, r, views.TripArchiveLink(len(archived), true))
+}
+
+// RestoreTrip undoes a manual archive; the card's swap removes it from the
+// archive page.
+func (h *handler) RestoreTrip(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID, err := auth.UserID(ctx)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if _, err := h.packingStore.RestoreTrip(ctx, chi.URLParam(r, "id"), userID); err != nil {
+		storeError(w, err, "Could not restore trip")
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {
 		return

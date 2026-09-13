@@ -13,6 +13,7 @@ type PackingSession struct {
 	Improvements   []string                    `json:"improvements,omitempty"`
 	Operations     map[string]PackingOperation `json:"operations,omitempty"`
 	ReviewTargetID string                      `json:"reviewTargetId,omitempty"`
+	ArchivedAt     *time.Time                  `json:"archivedAt,omitempty"`
 	etag           string
 	Review         []ReviewEntry `json:"review,omitempty"`
 	ID             string        `json:"id"`

@@ -5,6 +5,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"camplist/internal/auth"
 	"camplist/internal/packing"
@@ -29,6 +30,7 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 		`role="separator"`,
 		`hx-delete="/trips/` + session.ID + `"`,
 		`data-confirm-action="Delete trip"`,
+		`hx-post="/trips/` + session.ID + `/archive"`,
 		`hx-target="closest [data-saved-trip]"`,
 		`hx-swap="delete"`,
 		`class="menu-item menu-item-danger"`,
@@ -82,7 +84,7 @@ func TestVisitorsOfSharedSessionsCannotSeeOwnerActions(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := out.String()
-	if strings.Contains(body, "hx-delete") || strings.Contains(body, "/review") {
+	if strings.Contains(body, "hx-delete") || strings.Contains(body, "/review") || strings.Contains(body, "/archive\" hx-") {
 		t.Error("guest sees delete or review for a session they do not own")
 	}
 	if !strings.Contains(body, `href="/sharing/packing-session/`+session.ID+`"`) {
@@ -110,5 +112,27 @@ func TestDetailsHeroMenuKeepsStartSessionVisible(t *testing.T) {
 	}
 	if strings.Contains(body, `class="btn btn-secondary" href="/packing-lists/`+list.ID+`/edit"`) {
 		t.Error("edit is still a loose button next to the menu")
+	}
+}
+
+func TestArchivePageOffersRestoreOnlyForManuallyArchivedTrips(t *testing.T) {
+	now := time.Now().UTC()
+	manual := packing.NewPackingSession(packing.NewList("user", "Manual", ""))
+	manual.ArchivedAt = &now
+	packed := packing.NewPackingSession(packing.NewList("user", "Packed", ""))
+	packed.List.Items = []packing.PackingItem{packing.NewItem("Tent", "")}
+	packed.List.Items[0].Checked = true
+	packed.List.Items[0].UpdatedAt = now.Add(-48 * time.Hour)
+	ctx := context.WithValue(context.Background(), auth.USER_ID_KEY, "user")
+	var out bytes.Buffer
+	if err := ArchivedPackingSessionsPage("Trip archive", []packing.PackingSession{manual, packed}, "token").Render(ctx, &out); err != nil {
+		t.Fatal(err)
+	}
+	body := out.String()
+	if !strings.Contains(body, `hx-post="/trips/`+manual.ID+`/restore"`) {
+		t.Error("manually archived trip has no Restore")
+	}
+	if strings.Contains(body, packed.ID+`/restore"`) || strings.Contains(body, `/archive" hx-`) {
+		t.Error("archive page offers Restore for an automatic archive or Archive again")
 	}
 }

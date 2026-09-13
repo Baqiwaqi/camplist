@@ -17,7 +17,7 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 					<p class="text-muted max-w-[60ch]">Prepare and pack together. Your reusable packing lists stay separate.</p>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
-					<a class="btn btn-secondary max-sm:flex-auto" href="/trips/archive">Archive ({ fmt.Sprint(archivedCount) })</a>
+					@TripArchiveLink(archivedCount, false)
 				</div>
 			</div>
 			if len(sessions) == 0 {
@@ -25,9 +25,22 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 					<p class="text-muted">No trips in progress. <a href="/packing-lists">Choose a list</a> to start packing.</p>
 				</div>
 			}
-			@PackingSessionCards(sessions, csrfToken)
+			@PackingSessionCards(sessions, false, csrfToken)
 		</section>
 	}
+}
+
+// TripArchiveLink leads from the trips overview to the archive. Archiving a
+// trip sends it again out of band so the count follows the removed card.
+templ TripArchiveLink(count int, oob bool) {
+	<a
+		id="trip-archive-link"
+		class="btn btn-secondary max-sm:flex-auto"
+		href="/trips/archive"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>Archive ({ fmt.Sprint(count) })</a>
 }
 
 templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession, csrfToken string) {
@@ -37,7 +50,7 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
 					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trips</p>
 					<h1>Trip archive</h1>
-					<p class="text-muted max-w-[60ch]">Fully packed trips move here automatically after 24 hours.</p>
+					<p class="text-muted max-w-[60ch]">Fully packed trips move here automatically after 24 hours. Trips you archive yourself can be restored.</p>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
 					<a class="btn btn-secondary max-sm:flex-auto" href="/trips">Current trips</a>
@@ -48,12 +61,14 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 					<p class="text-muted">No archived trips yet.</p>
 				</div>
 			}
-			@PackingSessionCards(sessions, csrfToken)
+			@PackingSessionCards(sessions, true, csrfToken)
 		</section>
 	}
 }
 
-templ PackingSessionCards(sessions []packing.PackingSession, csrfToken string) {
+// PackingSessionCards lists trips on the overview or, with archived, on the
+// archive page, where the owner's Archive item becomes Restore.
+templ PackingSessionCards(sessions []packing.PackingSession, archived bool, csrfToken string) {
 	for _, s := range sessions {
 		<article class="card" data-saved-trip={ s.ID }>
 			if s.IsShared() {
@@ -74,6 +89,11 @@ templ PackingSessionCards(sessions []packing.PackingSession, csrfToken string) {
 						@MenuLink("/sharing/packing-session/"+s.ID, "Sharing")
 						if s.UserID == auth.Subject(ctx) {
 							@MenuLink("/trips/"+s.ID+"/review", "Review this trip")
+							if !archived {
+								@MenuButton("Archive trip", false, tripCardAction("/trips/"+s.ID+"/archive"))
+							} else if s.CanRestore(time.Now().UTC()) {
+								@MenuButton("Restore trip", false, tripCardAction("/trips/"+s.ID+"/restore"))
+							}
 							@MenuSeparator()
 							@MenuButton("Delete trip", true, deleteTripAttrs(s.ID))
 						}

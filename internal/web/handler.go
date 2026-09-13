@@ -522,6 +522,6 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
+	// The trip card's delete swap removes just that card.
 	w.WriteHeader(http.StatusOK)
 }

@@ -29,6 +29,8 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 		`role="separator"`,
 		`hx-delete="/trips/` + session.ID + `"`,
 		`data-confirm-action="Delete trip"`,
+		`hx-target="closest [data-saved-trip]"`,
+		`hx-swap="delete"`,
 		`class="menu-item menu-item-danger"`,
 	} {
 		if !strings.Contains(body, want) {

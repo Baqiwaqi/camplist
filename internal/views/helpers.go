@@ -128,6 +128,15 @@ func confirmDeleteCard(url, cardID, question, action, detail string) templ.Attri
 	return attrs
 }
 
+// deleteTripAttrs deletes a trip from its card and removes only that card,
+// so the rest of the trips page keeps its state.
+func deleteTripAttrs(tripID string) templ.Attributes {
+	attrs := confirmDelete("/trips/"+tripID, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays.")
+	attrs["hx-target"] = "closest [data-saved-trip]"
+	attrs["hx-swap"] = "delete"
+	return attrs
+}
+
 // removeTaskAttrs builds the htmx attributes that remove a preparation task
 // through the existing edit endpoint, with the confirm dialog texts.
 func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask) templ.Attributes {

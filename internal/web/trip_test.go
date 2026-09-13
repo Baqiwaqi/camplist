@@ -5,6 +5,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -56,5 +57,58 @@ func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
 	h.SessionDetailsPage(w, r)
 	if !strings.Contains(w.Body.String(), "<h3>Alex</h3>") || !strings.Contains(w.Body.String(), "<h3>Sam</h3>") {
 		t.Fatal("server task fallback lacks participant groups")
+	}
+}
+
+func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("owner", "Camping", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	trip, err := store.CreatePackingSession(ctx, list.ID, "owner", "Alex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	link, err := store.CreateInvitation(ctx, "packing-session", trip.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.RequestAccess(ctx, link, packing.Member{Subject: "member", Name: "Sam"}); err != nil {
+		t.Fatal(err)
+	}
+	if err = store.DecideInvitation(ctx, link.Kind, trip.ID, "owner", link.Hash(), true); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+	deleteAs := func(userID, tripID string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest("DELETE", "/trips/"+tripID, nil)
+		r.Header.Set("HX-Request", "true")
+		r = withItemRoute(r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, userID)), tripID, "")
+		w := httptest.NewRecorder()
+		h.DeletePackingSession(w, r)
+		return w
+	}
+
+	if w := deleteAs("member", trip.ID); w.Code != http.StatusForbidden {
+		t.Fatalf("member delete got %d, want 403", w.Code)
+	}
+	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err != nil {
+		t.Fatalf("member delete removed the trip: %v", err)
+	}
+	if w := deleteAs("stranger", trip.ID); w.Code == http.StatusOK {
+		t.Fatal("a user without access deleted the trip")
+	}
+
+	w := deleteAs("owner", trip.ID)
+	if w.Code != http.StatusOK || w.Header().Get("HX-Refresh") != "" || w.Body.Len() != 0 {
+		t.Fatalf("owner delete got %d refresh=%q body=%q, want an empty 200 for the card swap", w.Code, w.Header().Get("HX-Refresh"), w.Body.String())
+	}
+	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err == nil {
+		t.Fatal("owner delete left the trip in storage")
+	}
+	if w := deleteAs("owner", trip.ID); w.Code != http.StatusNotFound {
+		t.Fatalf("repeat delete got %d, want 404", w.Code)
 	}
 }

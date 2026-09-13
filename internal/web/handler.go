@@ -52,6 +52,8 @@ type packingStore interface {
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
+	RememberedCategories(context.Context, string) ([]string, error)
+	RememberCategory(context.Context, string, string) error
 }
 
 type handler struct {
@@ -130,6 +132,7 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := packing.NewCreateItemForm(id)
+	form.Categories = h.categorySuggestions(ctx, userID, list.Items)
 
 	render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
 }
@@ -331,18 +334,19 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	form.Initial = false
 	form.Name = strings.TrimSpace(form.Name)
+	form.Category = packing.MatchCategory(form.Category)
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		if isHTMX(r) {
-			render(w, r, views.AddItemForm(form, csrf.Token(r), true))
-			return
-		}
-
 		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
 		if err != nil {
 			log.Printf("render ui: %v", err)
 			storeError(w, err, "getting the list failed")
+			return
+		}
+		form.Categories = h.categorySuggestions(ctx, userID, list.Items)
+		if isHTMX(r) {
+			render(w, r, views.AddItemForm(form, csrf.Token(r), true))
 			return
 		}
 		render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
@@ -358,6 +362,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Storing item on packing list failed")
 		return
 	}
+	h.rememberCategory(ctx, userID, item.Category)
 
 	if !isHTMX(r) {
 		http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
@@ -370,8 +375,10 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	added, _ := list.FindItem(item.ID)
+	fresh := packing.NewCreateItemForm(listID)
+	fresh.Categories = h.categorySuggestions(ctx, userID, list.Items)
 	render(w, r, templ.Join(
-		views.AddItemForm(packing.NewCreateItemForm(listID), csrf.Token(r), true),
+		views.AddItemForm(fresh, csrf.Token(r), true),
 		views.ItemsAppended(listID, []packing.PackingItem{added}),
 		listItemsChanged(list),
 	))
@@ -400,13 +407,11 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // listItemsChanged is the out-of-band update after an item write on the list
-// page: the item count, empty text, category suggestions and the revision the
-// write made.
+// page: the item count, empty text and the revision the write made.
 func listItemsChanged(list packing.PackingList) templ.Component {
 	return templ.Join(
 		views.ListSummary(list.Items, true),
 		views.ListEmpty(list.Items, true),
-		views.ListCategories(list.Items, true),
 		views.ListRevision(list, true),
 	)
 }
@@ -536,7 +541,7 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 		_, templateErr := h.packingStore.GetPackingList(ctx, ses.TemplateID(), userID)
 		canReview = templateErr == nil
 	}
-	render(w, r, views.PackingSessionPage(ses.DisplayName(), ses, canReview, csrf.Token(r)))
+	render(w, r, views.PackingSessionPage(ses.DisplayName(), ses, canReview, h.categorySuggestions(ctx, userID, ses.List.Items), csrf.Token(r)))
 }
 
 func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) {

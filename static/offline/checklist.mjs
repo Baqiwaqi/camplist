@@ -33,9 +33,16 @@ export function renderEntries(container,view,kind,onToggle,onResolve) {
  }
  if(active)document.getElementById(active)?.focus({preventScroll:true});
 }
-export function updateCategories(datalist,items) {
- if(!datalist)return;datalist.replaceChildren();
- for(const category of [...new Set(items.map(item=>item.category).filter(Boolean))]){const option=document.createElement('option');option.value=category;datalist.append(option);}
+// Replace the trip's categories in the picker's options: the default categories
+// the session snapshot carries, then those on its items. Options the server
+// rendered (defaults and remembered categories) stay; case and spaces do not
+// make a second option.
+export function updateCategories(datalist,session) {
+ if(!datalist)return;
+ for(const option of Array.from(datalist.options))if('trip' in option.dataset)option.remove();
+ const key=value=>value.trim().toLowerCase();
+ const known=new Set(Array.from(datalist.options,option=>key(option.value)));
+ for(const value of [...(session.categories||[]),...session.list.items.map(item=>item.category)]){const category=(value||'').trim();if(!category||known.has(key(category)))continue;known.add(key(category));const option=document.createElement('option');option.value=category;option.dataset.trip='';datalist.append(option);}
 }
 export function entryFromForm(form){return {name:form.elements.name.value,category:form.elements.category.value,kind:form.elements.kind.value,scope:form.elements.scope.value,saveForFuture:form.elements.saveForFuture.checked};}
 export function renderFutureSaves(container,view,onCancel) {

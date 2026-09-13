@@ -211,16 +211,7 @@ func (s *Store) SetSessionItem(ctx context.Context, sessionID, userID, itemID st
 }
 
 func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingList, error) {
-	pk := azcosmos.NewPartitionKeyString(userID)
-	query := "SELECT * FROM lists l WHERE l.userId = @userID AND l.type = 'packing-list' AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt)) ORDER BY l.createdAt DESC"
-	queryOptions := azcosmos.QueryOptions{
-		QueryParameters: []azcosmos.QueryParameter{
-			{Name: "@userID", Value: userID},
-		},
-	}
-	pager := s.container.NewQueryItemsPager(query, pk, &queryOptions)
-
-	items, err := mapPackingList(ctx, pager)
+	items, err := s.ownPackingLists(ctx, userID)
 	if err != nil {
 		return items, err
 	}
@@ -238,6 +229,18 @@ func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingLi
 		}
 	}
 	return items, nil
+}
+
+// ownPackingLists returns the active lists stored in userID's partition.
+func (s *Store) ownPackingLists(ctx context.Context, userID string) ([]PackingList, error) {
+	pk := azcosmos.NewPartitionKeyString(userID)
+	query := "SELECT * FROM lists l WHERE l.userId = @userID AND l.type = 'packing-list' AND (NOT IS_DEFINED(l.deletedAt) OR IS_NULL(l.deletedAt)) ORDER BY l.createdAt DESC"
+	queryOptions := azcosmos.QueryOptions{
+		QueryParameters: []azcosmos.QueryParameter{
+			{Name: "@userID", Value: userID},
+		},
+	}
+	return mapPackingList(ctx, s.container.NewQueryItemsPager(query, pk, &queryOptions))
 }
 
 func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {

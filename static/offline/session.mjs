@@ -30,7 +30,7 @@ export async function mountSession(packing, readyForOffline) {
   let preparation=document.querySelector('#session-preparation [data-trip-tasks]');
   if(!preparation){const fallback=document.querySelector('#session-preparation .item-list');if(fallback){preparation=document.createElement('div');preparation.dataset.tripTasks='';fallback.replaceWith(preparation);}}
   if(preparation)renderEntries(preparation,view,'task',toggle,resolve);
-  updateCategories(document.getElementById('trip-categories'),view.session.list.items);
+  updateCategories(document.getElementById('trip-categories'),view.session);
   const heading=document.querySelector('h1');if(heading)heading.textContent=view.session.name||view.session.list.name;
   const gear=view.session.list.items.filter(item=>item.kind!=="task"),total=gear.length,checked=gear.filter(item=>item.checked).length;
   const complete=total>0&&checked===total;

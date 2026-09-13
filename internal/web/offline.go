@@ -86,6 +86,9 @@ func (h *handler) SyncSessionAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	op := packing.PackingOperation{Action: input.Action, Kind: input.Kind, Name: input.Name, Category: input.Category, Scope: input.Scope, SaveForFuture: input.SaveForFuture, ID: input.ID, ItemID: input.ItemID, Checked: *input.Checked, ExpectedRevision: *input.ExpectedRevision}
 	session, err := h.packingStore.SyncSessionItem(r.Context(), chi.URLParam(r, "id"), user, op)
+	if op.Action == "add" && op.Kind != "task" && (err == nil || errors.Is(err, packing.ErrFutureSave)) {
+		h.rememberCategory(r.Context(), user, op.Category)
+	}
 	session.Operations = nil
 	if errors.Is(err, packing.ErrFutureSave) {
 		jsonResponse(w, 200, map[string]any{"operationId": op.ID, "session": session.Snapshot(user), "futureSaveError": true})

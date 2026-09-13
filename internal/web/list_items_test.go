@@ -12,8 +12,8 @@ import (
 
 // The add item form used to be boosted: every add swapped the whole body,
 // scrolled to the top and pushed a history entry whose URL answered 405. htmx
-// adds now swap the form, append the row and update the parts of the page that
-// count or suggest items; a normal form post still redirects.
+// adds now swap the form, whose category picker suggests the new category,
+// append the row and update the parts of the page that count items; a normal form post still redirects.
 func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 	ctx := context.Background()
 	store := packing.NewStore(testsupport.NewDocuments())
@@ -41,7 +41,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 	}
 
 	opened := current()
-	w := add(url.Values{"name": {"Headlamp"}, "category": {"Light"}, "scope": {"shared"}, "revision": {opened.Revision()}}, true)
+	w := add(url.Values{"name": {"Headlamp"}, "category": {"Night hike"}, "scope": {"shared"}, "revision": {opened.Revision()}}, true)
 	saved := current()
 	if len(saved.Items) != 1 || saved.Items[0].Name != "Headlamp" {
 		t.Fatalf("item not saved: %+v", saved.Items)
@@ -60,7 +60,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 		`id="item-` + saved.Items[0].ID + `"`,
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">1 item</p>`,
 		`<p id="list-empty" class="text-muted mb-3" hidden hx-swap-oob="true">`,
-		`<datalist id="list-categories" hx-swap-oob="true"><option value="Light">`,
+		`<option value="Night hike">`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("add response missing %q", want)
@@ -91,7 +91,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 }
 
 // Delete used to answer HX-Refresh. htmx removes the row itself; the response
-// updates the count, the empty text, the suggestions and the list revision.
+// updates the count, the empty text and the list revision.
 // Private lists have no revision conflicts, so a stale page still deletes.
 func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 	ctx := context.Background()
@@ -143,7 +143,6 @@ func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 	for _, want := range []string{
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">No items yet</p>`,
 		`<p id="list-empty" class="text-muted mb-3" hx-swap-oob="true">No items yet.`,
-		`<datalist id="list-categories" hx-swap-oob="true"></datalist>`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("delete response missing %q", want)

@@ -8,7 +8,7 @@ import (
 // CSRFProtection is shared by the production server and browser validation.
 // A new name avoids older, path-scoped cookies shadowing the root cookie.
 func CSRFProtection(key []byte, secure bool, trustedHost string) func(http.Handler) http.Handler {
-	protect := csrf.Protect(key, csrf.Path("/"), csrf.CookieName("camplist-csrf"), csrf.Secure(secure), csrf.FieldName("_csrf"), csrf.TrustedOrigins([]string{trustedHost}))
+	protect := csrf.Protect(key, csrf.Path("/"), csrf.CookieName("camplist-csrf"), csrf.Secure(secure), csrf.FieldName("_csrf"), csrf.TrustedOrigins([]string{trustedHost}), csrf.ErrorHandler(http.HandlerFunc(csrfFailure)))
 	return func(next http.Handler) http.Handler {
 		guarded := protect(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -22,4 +22,11 @@ func CSRFProtection(key []byte, secure bool, trustedHost string) func(http.Handl
 			guarded.ServeHTTP(w, r)
 		})
 	}
+}
+
+// csrfFailure marks the rejection so the error toast can tell an expired
+// session apart from other 403s, whose plain-text reason it shows as sent.
+func csrfFailure(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Camplist-Error", "csrf")
+	http.Error(w, "Your session expired. Reload the page and try again.", http.StatusForbidden)
 }

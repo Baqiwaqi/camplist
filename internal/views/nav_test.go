@@ -55,3 +55,20 @@ func TestAccountItemsSitBehindTheMemberName(t *testing.T) {
 		t.Error("the device page is still a primary link")
 	}
 }
+
+func TestErrorToastShowsServerReasonsWithAReloadAction(t *testing.T) {
+	body := renderWithPath(t, "/trips")
+	for _, want := range []string{
+		`<script src="/static/request-error.js" defer></script>`,
+		`x-data="requestError"`,
+		`x-on:htmx:response-error.window="failed($event.detail.xhr)"`,
+		`x-show="reload"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("layout is missing %s", want)
+		}
+	}
+	if strings.Index(body, "/static/request-error.js") > strings.Index(body, "/static/alpine.min.js") {
+		t.Error("request-error.js must load before Alpine starts")
+	}
+}

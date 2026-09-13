@@ -1,0 +1,78 @@
+package views
+
+import "strconv"
+
+// SelectOption is one choice in a Select.
+type SelectOption struct {
+	Value string
+	Label string
+}
+
+// Select is a Pines UI style dropdown: a combobox button and a scrollable
+// listbox, driven by Alpine.data("select") in static/select.js. The native
+// <select> stays in the form and carries the value, so a plain post, an htmx
+// swap and a re-rendered error all keep the choice; without JavaScript the
+// layout's noscript style shows the native control instead.
+templ Select(id string, name string, label string, options []SelectOption, selected string) {
+	<div class="my-3 max-w-[34rem]" x-data="select" x-on:click.outside="close(false)" x-on:focusout="leave($event)">
+		<label id={ id + "-label" } for={ id } class="block text-sm font-bold" x-on:click.prevent="$refs.trigger.focus()">{ label }</label>
+		<select id={ id } name={ name } x-ref="native" tabindex="-1" class="select-native w-full mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white">
+			for _, option := range options {
+				<option value={ option.Value } selected?={ option.Value == selected }>{ option.Label }</option>
+			}
+		</select>
+		<div class="relative">
+			<button
+				type="button"
+				id={ id + "-trigger" }
+				x-ref="trigger"
+				class="select-trigger"
+				role="combobox"
+				aria-haspopup="listbox"
+				aria-labelledby={ id + "-label" }
+				aria-controls={ id + "-listbox" }
+				x-bind:aria-expanded="open"
+				x-bind:aria-activedescendant={ "open ? '" + id + "-option-' + active : null" }
+				x-on:click="toggle()"
+				x-on:keydown="key($event)"
+			>
+				<span class="min-w-0 truncate" x-text="label()">{ selectedLabel(options, selected) }</span>
+			</button>
+			<ul
+				id={ id + "-listbox" }
+				x-ref="listbox"
+				role="listbox"
+				aria-labelledby={ id + "-label" }
+				class="select-popup"
+				x-bind:class="up && 'select-popup-up'"
+				x-show="open"
+				x-cloak
+				x-on:mousedown.prevent
+			>
+				for i, option := range options {
+					<li
+						id={ id + "-option-" + strconv.Itoa(i) }
+						role="option"
+						class="select-option"
+						x-bind:aria-selected={ "selected === " + strconv.Itoa(i) }
+						x-bind:data-active={ "active === " + strconv.Itoa(i) }
+						x-on:mousemove={ "active = " + strconv.Itoa(i) }
+						x-on:click={ "choose(" + strconv.Itoa(i) + ")" }
+					>{ option.Label }</li>
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+func selectedLabel(options []SelectOption, selected string) string {
+	for _, option := range options {
+		if option.Value == selected {
+			return option.Label
+		}
+	}
+	if len(options) > 0 {
+		return options[0].Label
+	}
+	return ""
+}

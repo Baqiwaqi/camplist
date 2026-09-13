@@ -95,14 +95,38 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderReview(w, r, entry, message, status)
 		return
 	}
+	name := strings.TrimSpace(entry.Name)
+	saved := "Saved “" + name + "”. Not applied yet: select it under Trip observations and apply it to change future trips."
+	if entry.Action == packing.ReviewObserve {
+		saved = "Saved “" + name + "” with this trip. Your reusable list does not change."
+	}
+	// "Save and apply now" runs the same apply as the observations card, with
+	// the list revision the form was showing, so a stale list still conflicts.
+	apply := r.PostForm.Get("apply") == "true" && entry.Action != packing.ReviewObserve
+	message, status := "", http.StatusOK
+	if apply {
+		if _, err := h.packingStore.ApplyReview(r.Context(), chi.URLParam(r, "id"), user, r.PostForm.Get("revision"), []string{entry.ID}); err != nil {
+			var detail string
+			status, detail = storeErrorDetails(err, "Could not apply review")
+			message = "Saved “" + name + "”, but its change was not applied. " + detail
+			saved = ""
+		} else {
+			saved = "Saved and applied “" + name + "”. Your reusable list is updated for future trips."
+		}
+	}
 	if isHTMX(r) {
-		// Swap in a fresh form and the updated observations instead of reloading.
+		// Swap in a fresh form and the updated cards instead of reloading.
 		session, list, available, _, ok := h.loadReview(w, r)
 		if !ok {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, "Saved “"+strings.TrimSpace(entry.Name)+"”.", csrf.Token(r)))
+		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, saved, message, apply, csrf.Token(r)))
+		return
+	}
+	if message != "" {
+		// The observation is saved, so the page gets a fresh form with the message.
+		h.renderReview(w, r, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, message, status)
 		return
 	}
 	http.Redirect(w, r, "/trips/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
@@ -111,12 +135,12 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 // renderReviewFormError returns the form with the submitted values and the
 // message. It answers 200 so htmx swaps it; the plain form keeps the real status.
 func (h *handler) renderReviewFormError(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string) {
-	session, _, _, _, ok := h.loadReview(w, r)
+	session, list, available, _, ok := h.loadReview(w, r)
 	if !ok {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	render(w, r, views.ReviewFormError(session, entry, message, csrf.Token(r)))
+	render(w, r, views.ReviewFormError(session, list, available, entry, message, csrf.Token(r)))
 }
 func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {

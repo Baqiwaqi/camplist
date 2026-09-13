@@ -25,7 +25,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-				@ReviewForm(session, entry, "", csrfToken)
+				@ReviewForm(session, list, available, entry, "", csrfToken)
 				@reviewSaveStatus("")
 			</section>
 		}
@@ -45,20 +45,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		}
 		@TripObservations(session, list, available, session.UserID == auth.Subject(ctx) || !available, csrfToken, nil)
 		if available {
-			<section class="card mt-8">
-				<h2>Current reusable list: { list.Name }</h2>
-				<p class="mb-3">Compare your proposals with the current list before applying.</p>
-				<ul class="list-disc pl-10 mb-3">
-					for _, item := range list.Items {
-						<li>{ item.Name } — { item.Category }</li>
-					}
-				</ul>
-				<ul class="list-disc pl-10">
-					for _, task := range list.Tasks {
-						<li>{ task.Name }</li>
-					}
-				</ul>
-			</section>
+			@CurrentReviewList(list, nil)
 		}
 	}
 }
@@ -66,7 +53,9 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 // ReviewForm records one observation. htmx swaps the form in place, so a save
 // comes back as a fresh form (new entry ID) or the submitted values with an
 // error; without JavaScript it posts normally and the handler redirects.
-templ ReviewForm(session packing.PackingSession, entry packing.ReviewEntry, message string, csrfToken string) {
+// "Save and apply now" also applies the proposed change, so it is offered only
+// while the reusable list is available and a change is proposed.
+templ ReviewForm(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
 	<form
 		id="review-form"
 		method="post"
@@ -75,18 +64,16 @@ templ ReviewForm(session packing.PackingSession, entry packing.ReviewEntry, mess
 		hx-target="this"
 		hx-swap="outerHTML"
 		hx-sync="this:drop"
+		x-data="{ action: '' }"
+		x-init="action = $el.elements.action.value"
+		x-on:change="if ($event.target.name === 'action') action = $event.target.value"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="entryId" value={ entry.ID }/>
-		<label class="block my-3 text-sm font-bold">
-			Existing gear (optional)
-			<select name="itemId" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal">
-				<option value="">New or missing gear</option>
-				for _, item := range session.List.Items {
-					<option value={ item.ID } selected?={ item.ID == entry.ItemID }>{ item.Name }</option>
-				}
-			</select>
-		</label>
+		if available {
+			<input type="hidden" name="revision" value={ list.Revision() }/>
+		}
+		@Select("review-item", "itemId", "Existing gear (optional)", reviewItemOptions(session), entry.ItemID)
 		<label class="block my-3 text-sm font-bold">Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
 		<label class="block my-3 text-sm font-bold">Category <input name="category" maxlength="100" value={ entry.Category } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
 		<fieldset class="min-w-0 mb-4">
@@ -96,23 +83,43 @@ templ ReviewForm(session packing.PackingSession, entry packing.ReviewEntry, mess
 			<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention } class="min-h-8 align-middle"/>Needs repair or replacement</label>
 		</fieldset>
 		<label class="block my-3 text-sm font-bold">Notes <textarea name="note" maxlength="2000" class="block w-full max-w-[34rem] mt-1 min-h-22 px-3 py-2 rounded-sm border border-sand-300 bg-white font-normal">{ entry.Note }</textarea></label>
-		<label class="block my-3 text-sm font-bold">
-			Proposed change
-			<select name="action" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal">
-				<option value="none" selected?={ entry.Action == packing.ReviewObserve }>Keep observation only</option>
-				<option value="add" selected?={ entry.Action == packing.ReviewAdd }>Add gear to future lists</option>
-				<option value="remove" selected?={ entry.Action == packing.ReviewRemove }>Remove selected existing gear</option>
-				<option value="task" selected?={ entry.Action == packing.ReviewTask }>Create a preparation task</option>
-			</select>
-		</label>
+		@Select("review-action", "action", "Proposed change", reviewActionOptions, string(entry.Action))
 		<label class="block my-3 text-sm font-bold">Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
-		<p class="text-muted mb-3">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
-		// The error sits by the button, where a phone user who just tapped it is looking.
+		<p class="text-muted mb-3">Saving keeps the observation with this trip. A proposed change reaches your reusable list only when you apply it. Unused safety equipment may still be essential; nothing is removed automatically.</p>
+		// The error sits by the buttons, where a phone user who just tapped one is looking.
 		if message != "" {
 			<p class="error" role="alert">{ message }</p>
 		}
-		<button id="review-submit" class="btn btn-primary mt-2 in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress" type="submit">Save observation</button>
+		<div class="flex flex-wrap items-center gap-2 mt-2">
+			<button id="review-submit" class="btn btn-primary in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress" type="submit">Save observation</button>
+			if available {
+				<button
+					id="review-save-apply"
+					class="btn btn-secondary in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress"
+					type="submit"
+					name="apply"
+					value="true"
+					hidden?={ entry.Action == "" || entry.Action == packing.ReviewObserve }
+					x-bind:hidden="action === 'none'"
+				>Save and apply now</button>
+			}
+		</div>
 	</form>
+}
+
+var reviewActionOptions = []SelectOption{
+	{Value: string(packing.ReviewObserve), Label: "Keep observation only"},
+	{Value: string(packing.ReviewAdd), Label: "Add gear to future lists"},
+	{Value: string(packing.ReviewRemove), Label: "Remove selected existing gear"},
+	{Value: string(packing.ReviewTask), Label: "Create a preparation task"},
+}
+
+func reviewItemOptions(session packing.PackingSession) []SelectOption {
+	options := []SelectOption{{Value: "", Label: "New or missing gear"}}
+	for _, item := range session.List.Items {
+		options = append(options, SelectOption{Value: item.ID, Label: item.Name})
+	}
+	return options
 }
 
 // reviewSaveStatus stays in the page so screen readers announce the text an
@@ -121,8 +128,22 @@ templ reviewSaveStatus(text string) {
 	<p id="review-save-status" role="status" class="text-sm text-muted mt-3 empty:mt-0">{ text }</p>
 }
 
+// reviewChange describes a proposed change in words, for the apply checkbox.
+func reviewChange(observation packing.ReviewEntry) string {
+	switch observation.Action {
+	case packing.ReviewAdd:
+		return "Add " + observation.Name + " to future lists"
+	case packing.ReviewRemove:
+		return "Remove " + observation.Name + " from future lists"
+	case packing.ReviewTask:
+		return "Preparation task: " + observation.Task
+	}
+	return string(observation.Action)
+}
+
 // TripObservations lists this trip's observations with the apply form. spaced
-// adds the gap it needs when another card sits above it.
+// adds the gap it needs when another card sits above it. Each proposed change
+// is labelled applied or waiting, from the list's applied reviews.
 templ TripObservations(session packing.PackingSession, list packing.PackingList, available bool, spaced bool, csrfToken string, attrs templ.Attributes) {
 	<section id="trip-observations" class={ "card", templ.KV("mt-8", spaced) } { attrs... }>
 		<h2>Trip observations</h2>
@@ -134,7 +155,18 @@ templ TripObservations(session packing.PackingSession, list packing.PackingList,
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			for _, observation := range session.Review {
 				<article class="py-3 border-b border-sand-100 last-of-type:border-b-0">
-					<h3 class="mt-0">{ observation.Name }</h3>
+					<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+						<h3 class="mt-0">{ observation.Name }</h3>
+						if observation.Action != packing.ReviewObserve {
+							if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
+								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">Applied</span>
+							} else if available {
+								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Waiting to be applied</span>
+							} else {
+								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Not applied</span>
+							}
+						}
+					</div>
 					<p class="mb-3">
 						if observation.Forgotten {
 							<span>Forgotten. </span>
@@ -149,11 +181,11 @@ templ TripObservations(session packing.PackingSession, list packing.PackingList,
 					</p>
 					if observation.Action != packing.ReviewObserve {
 						if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
-							<p class="mb-3">Applied to future trips.</p>
+							<p class="mb-3">{ reviewChange(observation) }: applied to future trips.</p>
 						} else if available {
 							<label class="flex items-center gap-2 mt-3 mb-2">
 								<input type="checkbox" name="selected" value={ observation.ID } class="min-h-8 align-middle"/>
-								{ string(observation.Action) }: { observation.Name } { observation.Task }
+								{ reviewChange(observation) }
 							</label>
 						}
 					}
@@ -166,17 +198,40 @@ templ TripObservations(session packing.PackingSession, list packing.PackingList,
 	</section>
 }
 
+// CurrentReviewList shows the reusable list the proposals compare against.
+templ CurrentReviewList(list packing.PackingList, attrs templ.Attributes) {
+	<section id="current-review-list" class="card mt-8" { attrs... }>
+		<h2>Current reusable list: { list.Name }</h2>
+		<p class="mb-3">Compare your proposals with the current list before applying.</p>
+		<ul class="list-disc pl-10 mb-3">
+			for _, item := range list.Items {
+				<li>{ item.Name } — { item.Category }</li>
+			}
+		</ul>
+		<ul class="list-disc pl-10">
+			for _, task := range list.Tasks {
+				<li>{ task.Name }</li>
+			}
+		</ul>
+	</section>
+}
+
 // ReviewSaved answers an htmx save: a fresh form, the confirmation, and the
-// observations card with the new entry.
-templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, saved string, csrfToken string) {
-	@ReviewForm(session, entry, "", csrfToken)
+// observations card with the new entry. message reports a change that was
+// saved but could not be applied; listChanged also refreshes the list card
+// after an apply attempt.
+templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, saved string, message string, listChanged bool, csrfToken string) {
+	@ReviewForm(session, list, available, entry, message, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML">{ saved }</div>
 	@TripObservations(session, list, available, true, csrfToken, templ.Attributes{"hx-swap-oob": "outerHTML"})
+	if listChanged && available {
+		@CurrentReviewList(list, templ.Attributes{"hx-swap-oob": "outerHTML"})
+	}
 }
 
 // ReviewFormError answers a failed htmx save with the form, the submitted
 // values and the message, and clears an earlier confirmation.
-templ ReviewFormError(session packing.PackingSession, entry packing.ReviewEntry, message string, csrfToken string) {
-	@ReviewForm(session, entry, message, csrfToken)
+templ ReviewFormError(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
+	@ReviewForm(session, list, available, entry, message, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML"></div>
 }

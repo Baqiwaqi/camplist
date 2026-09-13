@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -216,5 +217,141 @@ func TestAddReviewErrorKeepsSubmittedValues(t *testing.T) {
 				t.Fatalf("normal form error should re-render the page: %d", w.Code)
 			}
 		})
+	}
+}
+
+func reviewFixture(t *testing.T) (*packing.Store, packing.PackingList, packing.PackingSession, handler) {
+	t.Helper()
+	store := packing.NewStore(testsupport.NewDocuments())
+	ctx := context.Background()
+	list := packing.NewList("user", "Weekend", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter")}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	session, err := store.CreatePackingSession(ctx, list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	list, err = store.GetPackingList(ctx, list.ID, "user")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store, list, session, handler{packingStore: store}
+}
+
+func TestSaveAndApplyNowAppliesTheProposedChange(t *testing.T) {
+	for _, htmx := range []bool{true, false} {
+		t.Run(fmt.Sprint(htmx), func(t *testing.T) {
+			store, list, session, h := reviewFixture(t)
+			r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}, "apply": {"true"}, "revision": {list.Revision()}}), session.ID, "")
+			if htmx {
+				r.Header.Set("HX-Request", "true")
+			}
+			w := httptest.NewRecorder()
+			h.AddReviewHandler(w, r)
+			got, _ := store.GetPackingList(context.Background(), list.ID, "user")
+			if len(got.Items) != 2 || got.Items[1].Name != "Matches" || !slices.Contains(got.AppliedReviews, session.ID+":matches") {
+				t.Fatalf("change not applied: %+v", got.Items)
+			}
+			body := w.Body.String()
+			if !htmx {
+				if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/trips/"+session.ID+"/review" {
+					t.Fatalf("normal form missing redirect: %d", w.Code)
+				}
+				return
+			}
+			for _, want := range []string{"Saved and applied “Matches”.", `id="current-review-list" class="card mt-8" hx-swap-oob="outerHTML"`, "<li>Matches — </li>", ">Applied</span>", `name="revision" value="` + got.Revision() + `"`} {
+				if !strings.Contains(body, want) {
+					t.Errorf("missing %q", want)
+				}
+			}
+		})
+	}
+}
+
+func TestSaveOnlyLeavesTheListAndSaysSo(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}, "revision": {list.Revision()}}), session.ID, "")
+	r.Header.Set("HX-Request", "true")
+	w := httptest.NewRecorder()
+	h.AddReviewHandler(w, r)
+	got, _ := store.GetPackingList(context.Background(), list.ID, "user")
+	if len(got.Items) != 1 || len(got.AppliedReviews) != 0 {
+		t.Fatal("save only changed the reusable list")
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "Not applied yet") || !strings.Contains(body, ">Waiting to be applied</span>") || strings.Contains(body, `id="current-review-list"`) {
+		t.Fatalf("save only response unclear: %s", body)
+	}
+}
+
+func TestSaveAndApplyNowKeepsConflictHandling(t *testing.T) {
+	for _, htmx := range []bool{true, false} {
+		t.Run(fmt.Sprint(htmx), func(t *testing.T) {
+			store, list, session, h := reviewFixture(t)
+			stale := list.Revision()
+			list.Description = "Changed elsewhere"
+			if err := store.SavePackingList(context.Background(), list); err != nil {
+				t.Fatal(err)
+			}
+			r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}, "apply": {"true"}, "revision": {stale}}), session.ID, "")
+			if htmx {
+				r.Header.Set("HX-Request", "true")
+			}
+			w := httptest.NewRecorder()
+			h.AddReviewHandler(w, r)
+			got, _ := store.GetPackingList(context.Background(), list.ID, "user")
+			saved, _ := store.GetPackingSession(context.Background(), session.ID, "user")
+			if len(got.Items) != 1 || len(saved.Review) != 1 {
+				t.Fatalf("stale apply overwrote the list or lost the observation: %d items, %d reviews", len(got.Items), len(saved.Review))
+			}
+			body := w.Body.String()
+			if !strings.Contains(body, "but its change was not applied. The saved version changed.") {
+				t.Fatalf("conflict message missing: %s", body)
+			}
+			if htmx && (w.Code != http.StatusOK || !strings.Contains(body, ">Waiting to be applied</span>")) {
+				t.Fatalf("htmx conflict: %d", w.Code)
+			}
+			if !htmx && w.Code != http.StatusConflict {
+				t.Fatalf("plain conflict status %d", w.Code)
+			}
+		})
+	}
+}
+
+func TestReviewPageLabelsProposalsAndUsesListboxSelects(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	ctx := context.Background()
+	for _, entry := range []packing.ReviewEntry{
+		{ID: "note", Name: "Chair", Unused: true, Action: packing.ReviewObserve},
+		{ID: "pending", Name: "Stove", Forgotten: true, Action: packing.ReviewAdd},
+		{ID: "applied", Name: "Matches", Forgotten: true, Action: packing.ReviewAdd},
+	} {
+		if _, err := store.AddReviewEntry(ctx, session.ID, "user", entry); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := store.ApplyReview(ctx, session.ID, "user", list.Revision(), []string{"applied"}); err != nil {
+		t.Fatal(err)
+	}
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", nil), session.ID, "")
+	w := httptest.NewRecorder()
+	h.ReviewPage(w, r)
+	body := w.Body.String()
+	for _, want := range []string{
+		`<h3 class="mt-0">Chair</h3></div>`,
+		`<h3 class="mt-0">Stove</h3><span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Waiting to be applied</span>`,
+		`<h3 class="mt-0">Matches</h3><span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">Applied</span>`,
+		`role="combobox"`, `role="listbox"`, `role="option"`,
+		`<select id="review-item" name="itemId"`, `<select id="review-action" name="action"`,
+		`id="review-save-apply"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	if !strings.Contains(body, `value="true" hidden`) {
+		t.Error("Save and apply now should start hidden for Keep observation only")
 	}
 }

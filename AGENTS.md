@@ -40,15 +40,19 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
   `static/menu.js`, loaded before Alpine. Build destructive items with the
-  `confirmDelete` helper so the CSRF header and confirm dialog stay consistent;
+  `confirmDelete` helper so the confirm dialog stays consistent;
   `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
   `views.PublicFooter` on `Shell`; `Layout` is for signed-in pages only.
-- CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`.
-  Note: Go's `ParseForm` ignores request bodies for `DELETE`, so send the CSRF
-  token via the `X-CSRF-Token` header (not a form field) on htmx delete requests.
+- CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`. `Layout`
+  sets the header once via `hx-headers` on `<body>`, so htmx requests (including
+  `DELETE`, whose body Go ignores) need no per-element token; keep hidden `_csrf`
+  fields on forms that must work without JS.
+- History: `Shell` disables the htmx history cache (pages are `no-store`). A
+  boosted POST that renders instead of redirecting gets `HX-Push-Url: false`
+  from `render`, because htmx 2 ignores `hx-push-url="false"` on boosted forms.
 - Storage: Cosmos DB. Lists and sessions share a container; filter queries by
   `type` as well as user ID. Lists soft-delete via a conditional replacement setting `deletedAt`; `deletedAt` is
   `omitempty`, so active docs have **no** field — filter with

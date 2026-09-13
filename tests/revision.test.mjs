@@ -7,8 +7,10 @@ const source = await readFile(new URL('../static/revision.js', import.meta.url),
 
 // listPage runs revision.js against a list page whose #list-revision holds
 // revision and returns a dispatcher for the htmx events it listens to.
-// render puts a control with id on the page, detaching any control that had
-// that id, as a card swap does; triggering it saves from it again.
+// render puts a control with id on the page (a form, or with a question a
+// button in one) holding fields, detaching any control that had that id. A
+// swapped control, as a card swap inserts it, starts saving on its trigger
+// only once htmx has processed it.
 function listPage(revision) {
   const listeners = {}
   const current = { value: revision }
@@ -20,7 +22,9 @@ function listPage(revision) {
     dispatchEvent(event) { skipped.push(event.type) },
   }
   class Event { constructor(type) { this.type = type } }
-  vm.runInNewContext(source, { document, window: { addEventListener() {} }, Event, CustomEvent: Event })
+  class FormData { constructor(form) { return Object.entries(form.fields).map(([name, field]) => [name, field.value]) } }
+  const htmx = { process(elt) { elt.processed = true } }
+  vm.runInNewContext(source, { document, window: { addEventListener() {} }, Event, CustomEvent: Event, FormData, htmx })
   const fire = (event, detail) => {
     const result = { prevented: false, stopped: false }
     for (const handler of listeners[event] || []) {
@@ -30,10 +34,18 @@ function listPage(revision) {
     return result
   }
   const page = { current, fire, skipped, saves: [] }
-  page.render = (id, options = {}) => {
+  page.render = (id, options = {}, { fields = {}, swapped = false } = {}) => {
     const old = controls.get(id)
     if (old) old.isConnected = false
-    const elt = { id, isConnected: true, dispatchEvent: event => page.saves.push({ id, type: event.type, ...save(page, elt, options) }) }
+    const form = { fields, elements: { namedItem: name => fields[name] ?? null } }
+    const elt = options.question ? { closest: () => form } : form
+    Object.assign(elt, {
+      id,
+      isConnected: true,
+      processed: !swapped,
+      dispatchEvent: event => { if (elt.processed) page.saves.push({ id, type: event.type, ...save(page, elt, options) }) },
+    })
+    form.closest = () => form
     controls.set(id, elt)
     return elt
   }
@@ -41,21 +53,28 @@ function listPage(revision) {
     controls.get(id).isConnected = false
     controls.delete(id)
   }
+  page.input = (id, value = '') => {
+    const input = { value }
+    controls.set(id, input)
+    return input
+  }
   return page
 }
 
 // save models one htmx save from elt: confirm (a question opens the dialog,
 // which the user accepts), then (when issued) the request htmx builds at that
-// moment and its completion.
+// moment from elt's form and its completion.
 function save(page, elt, { question, formRevision, headerRevision } = {}) {
   const sent = []
-  const xhr = {}
+  const listeners = []
+  const xhr = { addEventListener(event, handler) { if (event === 'loadend') listeners.push(handler) } }
   const request = () => {
     const formData = new Map(formRevision === undefined ? [] : [['revision', formRevision]])
     const headers = headerRevision === undefined ? {} : { 'X-Camplist-Revision': headerRevision }
     page.fire('htmx:configRequest', { formData, headers, verb: 'post' })
     page.fire('htmx:beforeRequest', { requestConfig: { verb: 'post' }, xhr, elt })
-    sent.push({ form: formData.get('revision'), header: headers['X-Camplist-Revision'] })
+    const name = elt.closest?.('form').fields.name?.value
+    sent.push({ form: formData.get('revision'), header: headers['X-Camplist-Revision'], ...(name === undefined ? {} : { name }) })
   }
   const triggeringEvent = { type: question ? 'click' : 'submit' }
   const detail = { elt, question, verb: 'post', triggeringEvent, issueRequest: () => request() }
@@ -65,7 +84,7 @@ function save(page, elt, { question, formRevision, headerRevision } = {}) {
     asked = true
     detail.issueRequest()
   } else if (!prevented) request()
-  return { sent, asked, finish: newRevision => { page.current.value = newRevision; page.fire('htmx:afterRequest', { xhr }) } }
+  return { sent, asked, finish: newRevision => { page.current.value = newRevision; for (const handler of listeners) handler() } }
 }
 
 function startTripPage(form) {
@@ -127,7 +146,7 @@ test('repeating a save from a control that is already saving or waiting is dropp
   assert.equal(repeatWaiting.sent.length, 0)
 })
 
-test('a waiting save whose control a swap replaced is sent from the replacement without asking again', () => {
+test('a waiting save whose control a swap replaced is sent from the replacement once htmx processed it, without asking again', () => {
   const page = listPage('r1')
   const toggleB = { formRevision: 'r1' }
   const removeC = { headerRevision: 'r1', question: 'Remove this preparation task?' }
@@ -136,8 +155,9 @@ test('a waiting save whose control a swap replaced is sent from the replacement 
   const remove = save(page, page.render('task-remove-c', removeC), removeC)
   assert.equal(toggle.sent.length + remove.sent.length, 0)
   const repeat = save(page, page.render('task-toggle-b', toggleB), toggleB)
-  page.render('task-toggle-a')
-  page.render('task-remove-c', removeC)
+  page.render('task-toggle-a', {}, { swapped: true })
+  page.render('task-toggle-b', toggleB, { swapped: true })
+  page.render('task-remove-c', removeC, { swapped: true })
 
   first.finish('r2')
   assert.equal(toggle.sent.length + remove.sent.length + repeat.sent.length, 0)
@@ -149,17 +169,43 @@ test('a waiting save whose control a swap replaced is sent from the replacement 
   assert.deepEqual(page.skipped, [])
 })
 
-test('a waiting save whose control is gone after the swap is skipped and the user is told', () => {
+test('a task added while another save runs is sent with the name the user typed, not the empty new form', () => {
+  const page = listPage('r1')
+  const first = save(page, page.render('task-toggle-a'), { formRevision: 'r1' })
+  const add = page.render('add-task', { formRevision: 'r1' }, { fields: { name: { value: 'Buy fuel' } } })
+  save(page, add, { formRevision: 'r1' })
+  page.render('add-task', { formRevision: 'r1' }, { fields: { name: { value: '' } }, swapped: true })
+
+  first.finish('r2')
+  assert.deepEqual(page.saves.map(s => [s.id, s.sent]), [['add-task', [{ form: 'r2', header: undefined, name: 'Buy fuel' }]]])
+  assert.deepEqual(page.skipped, [])
+})
+
+test('a rename saved while a removal runs is sent with the new name, not the one the card re-renders', () => {
   const page = listPage('r1')
   const first = save(page, page.render('task-remove-a', { question: 'Remove?' }), { headerRevision: 'r1', question: 'Remove?' })
-  const gone = save(page, page.render('task-toggle-a'), { formRevision: 'r1' })
-  const unnamed = save(page, { isConnected: true }, { formRevision: 'r1' })
-  const next = save(page, page.render('add-task'), { formRevision: 'r1' })
+  const rename = page.render('task-rename-b', { formRevision: 'r1' }, { fields: { name: { value: 'Charge car' } } })
+  save(page, rename, { formRevision: 'r1' })
   page.remove('task-remove-a')
-  page.remove('task-toggle-a')
+  page.render('task-rename-b', { formRevision: 'r1' }, { fields: { name: { value: 'Charge phone' } }, swapped: true })
+
+  first.finish('r2')
+  assert.deepEqual(page.saves.map(s => [s.id, s.sent]), [['task-rename-b', [{ form: 'r2', header: undefined, name: 'Charge car' }]]])
+})
+
+test('a waiting save whose control is gone after the swap is skipped, keeps the typed name and tells the user', () => {
+  const page = listPage('r1')
+  const newTask = page.input('new-task')
+  const first = save(page, page.render('task-remove-a', { question: 'Remove?' }), { headerRevision: 'r1', question: 'Remove?' })
+  const gone = save(page, page.render('task-rename-a', {}, { fields: { name: { value: 'Buy fuel' } } }), { formRevision: 'r1' })
+  const unnamed = save(page, { isConnected: true }, { formRevision: 'r1' })
+  const next = save(page, page.render('task-toggle-b'), { formRevision: 'r1' })
+  page.remove('task-remove-a')
+  page.remove('task-rename-a')
 
   first.finish('r2')
   assert.equal(gone.sent.length, 0)
+  assert.equal(newTask.value, 'Buy fuel')
   assert.deepEqual(unnamed.sent, [{ form: 'r2', header: undefined }])
   assert.deepEqual(page.skipped, [])
   unnamed.finish('r3')

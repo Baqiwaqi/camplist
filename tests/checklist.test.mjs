@@ -11,9 +11,22 @@ const { updateCategories } = await import('../static/offline/checklist.mjs')
 test('trip categories are replaced per trip while rendered options stay', () => {
   datalist.options = [option('Shelter'), option('Tarps')]
 
-  updateCategories(datalist, [{ category: 'Fishing' }, { category: ' tarps ' }, { category: '' }, { category: 'fishing' }])
+  const trip = items => ({ list: { items: items.map(category => ({ category })) } })
+
+  updateCategories(datalist, trip(['Fishing', ' tarps ', '', 'fishing']))
   assert.deepEqual(datalist.options.map(o => o.value), ['Shelter', 'Tarps', 'Fishing'])
 
-  updateCategories(datalist, [{ category: 'Paddling' }])
+  updateCategories(datalist, trip(['Paddling']))
   assert.deepEqual(datalist.options.map(o => o.value), ['Shelter', 'Tarps', 'Paddling'])
+})
+
+test('the offline shell offers the snapshot defaults before the trip categories', () => {
+  datalist.options = []
+  const session = { categories: ['Shelter', 'Kitchen and cooking'], list: { items: [{ category: 'kitchen AND cooking' }, { category: 'Fishing' }] } }
+
+  updateCategories(datalist, session)
+  assert.deepEqual(datalist.options.map(o => o.value), ['Shelter', 'Kitchen and cooking', 'Fishing'])
+
+  updateCategories(datalist, { ...session, list: { items: [] } })
+  assert.deepEqual(datalist.options.map(o => o.value), ['Shelter', 'Kitchen and cooking'])
 })

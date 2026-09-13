@@ -29,7 +29,7 @@ func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	operationID := r.PostForm.Get("operationId")
 	if _, err := uuid.Parse(operationID); err != nil {
-		http.Error(w, "Invalid operation ID", 400)
+		malformedRequest(w)
 		return
 	}
 	op := packing.PackingOperation{ID: operationID, ItemID: operationID, Action: "add", Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Kind: r.PostForm.Get("kind"), Scope: r.PostForm.Get("scope"), SaveForFuture: r.PostForm.Get("saveForFuture") == "true"}

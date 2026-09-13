@@ -18,6 +18,7 @@ templ Shell(title string) {
 			<link rel="stylesheet" href="/static/tailwind.css"/>
 			<script src="/static/htmx.min.js"></script>
 			<script src="/static/menu.js" defer></script>
+			<script src="/static/request-error.js" defer></script>
 			<script src="/static/sharing.js" defer></script>
 			<script src="/static/revision.js" defer></script>
 			<script src="/static/alpine.min.js" defer></script>
@@ -74,17 +75,18 @@ templ Layout(title string, csrfToken string) {
 				class="error error-toast"
 				role="alert"
 				hidden
-				x-data="{ message: '', leaving: false }"
+				x-data="requestError"
 				x-bind:class="{ 'toast-leave': leaving }"
-				x-on:htmx:before-request.window="$el.hidden = true"
-				x-on:htmx:response-error.window="message = $event.detail.xhr.status === 409 ? 'This list changed while you were working. Reload it before trying again.' : $event.detail.xhr.status === 403 ? 'Your session may have expired. Reload the page and try again.' : 'That change did not save. Try again or reload to see the latest saved state.'; $el.hidden = false"
-				x-on:htmx:send-error.window="message = 'Connection lost. Reconnect and reload to check the latest saved state.'; $el.hidden = false"
+				x-on:htmx:before-request.window="reset()"
+				x-on:htmx:response-error.window="failed($event.detail.xhr)"
+				x-on:htmx:send-error.window="lost()"
 			>
 				<div>
 					<p class="error-title">That did not save</p>
 					<p id="request-error-message" x-text="message"></p>
 				</div>
-				<button type="button" class="btn btn-link error-dismiss" x-on:click="leaving = true; setTimeout(() => { $root.hidden = true; leaving = false }, 160)">Dismiss</button>
+				<button type="button" class="btn btn-link error-dismiss" x-show="reload" x-cloak x-on:click="location.reload()">Reload</button>
+				<button type="button" class="btn btn-link error-dismiss" x-on:click="dismiss()">Dismiss</button>
 			</div>
 			{ children... }
 		</main>

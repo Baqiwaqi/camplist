@@ -23,7 +23,7 @@ func isHTMX(r *http.Request) bool {
 func (h *handler) loadItem(w http.ResponseWriter, r *http.Request) (userID string, list packing.PackingList, item packing.PackingItem, ok bool) {
 	userID, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return "", list, item, false
 	}
 	list, err = h.packingStore.GetPackingList(r.Context(), chi.URLParam(r, "id"), userID)
@@ -34,7 +34,7 @@ func (h *handler) loadItem(w http.ResponseWriter, r *http.Request) (userID strin
 	}
 	item, ok = list.FindItem(chi.URLParam(r, "itemId"))
 	if !ok {
-		http.Error(w, "item not found", http.StatusNotFound)
+		http.Error(w, "That item no longer exists. Reload the page to see the latest list.", http.StatusNotFound)
 		return "", list, item, false
 	}
 	return userID, list, item, true
@@ -69,7 +69,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	form := packing.EditItemForm(list.ID, item)
@@ -77,7 +77,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 	dec := schema.NewDecoder()
 	dec.IgnoreUnknownKeys(true)
 	if err := dec.Decode(&form, r.PostForm); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	form.Initial = false

@@ -1,12 +1,14 @@
 package web
 
 import (
+	"camplist/internal/packing"
 	"github.com/gorilla/csrf"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -83,5 +85,45 @@ func TestNoReferrerFormsRequireSameOriginMetadataAndValidToken(t *testing.T) {
 		if response.Code != tc.want {
 			t.Fatalf("site %q token-present %v: got %d want %d", tc.site, tc.token != "", response.Code, tc.want)
 		}
+	}
+}
+
+func TestCSRFFailureIsMarkedForTheErrorToast(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204) })
+	protected := CSRFProtection([]byte("01234567890123456789012345678901"), false, "camplist.test")(handler)
+	for _, htmx := range []bool{true, false} {
+		request := httptest.NewRequest("POST", "https://camplist.test/packing-lists", nil)
+		request.Header.Set("Origin", "https://camplist.test")
+		if htmx {
+			request.Header.Set("HX-Request", "true")
+		}
+		response := httptest.NewRecorder()
+		protected.ServeHTTP(response, request)
+		if response.Code != http.StatusForbidden {
+			t.Fatalf("htmx %v: got %d want 403", htmx, response.Code)
+		}
+		if got := response.Header().Get("X-Camplist-Error"); got != "csrf" {
+			t.Errorf("htmx %v: X-Camplist-Error = %q, want csrf", htmx, got)
+		}
+		if got := response.Header().Get("Content-Type"); !strings.HasPrefix(got, "text/plain") {
+			t.Errorf("htmx %v: Content-Type = %q, want text/plain", htmx, got)
+		}
+		if body := response.Body.String(); !strings.Contains(body, "Your session expired") {
+			t.Errorf("htmx %v: body %q does not explain the expired session", htmx, body)
+		}
+	}
+}
+
+func TestStoreErrorsStayPlainTextWithoutTheCSRFMarker(t *testing.T) {
+	response := httptest.NewRecorder()
+	storeError(response, packing.ErrForbidden, "Could not save.")
+	if response.Code != http.StatusForbidden || response.Header().Get("X-Camplist-Error") != "" {
+		t.Fatalf("got %d with marker %q", response.Code, response.Header().Get("X-Camplist-Error"))
+	}
+	if got := response.Header().Get("Content-Type"); !strings.HasPrefix(got, "text/plain") {
+		t.Errorf("Content-Type = %q, want text/plain", got)
+	}
+	if body := strings.TrimSpace(response.Body.String()); body != "Only the owner can do that." {
+		t.Errorf("body = %q", body)
 	}
 }

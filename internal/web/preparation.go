@@ -48,12 +48,12 @@ func (h *handler) SetSessionPreparationTask(w http.ResponseWriter, r *http.Reque
 	}
 	done, err := strconv.ParseBool(r.PostForm.Get("done"))
 	if err != nil {
-		http.Error(w, "invalid task state", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	revision, err := strconv.ParseInt(r.PostForm.Get("expectedRevision"), 10, 64)
 	if err != nil || revision < 0 {
-		http.Error(w, "invalid task revision", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	session, err := h.packingStore.SetSessionPreparationTask(r.Context(), chi.URLParam(r, "id"), auth.Subject(r.Context()), r.PostForm.Get("taskId"), done, revision)

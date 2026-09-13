@@ -33,8 +33,8 @@ rename the list, add/edit/remove equipment and preparation tasks, and create
 private trips. Template membership does not reveal anyone else's trips. Trip
 membership does not grant template access. Only owners delete resources and
 manage invitations. Only a trip's owner archives or restores it; the archive is
-stored on the trip, so it moves to the archive for every member. For the unresolved observation-submission choice, this
-release keeps new trip observations owner-only. Applying existing observations
+stored on the trip, so it moves to the archive for every member. For the
+unresolved observation-submission choice, this release keeps new trip observations owner-only. Applying existing observations
 requires both source-trip access and independent destination-template access.
 
 Opening a trip prepares an account-specific local copy automatically. Shared

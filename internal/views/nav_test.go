@@ -42,7 +42,7 @@ func TestAccountItemsSitBehindTheMemberName(t *testing.T) {
 		`aria-haspopup="menu"`,
 		`>Sam Camper</button>`,
 		`role="menuitem" href="/offline">Saved on this device</a>`,
-		`class="menu-item" role="menuitem">Sign out</button>`,
+		`class="option" role="menuitem">Sign out</button>`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("header missing %q", want)

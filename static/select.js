@@ -11,6 +11,17 @@ document.addEventListener('alpine:init', () => {
     typed: '',
     typedAt: 0,
     init() {
+      this.sync()
+      // A form reset (the trip entry form after an add) puts the native
+      // select back to its default option; show that choice too.
+      this.form = this.$refs.native.form
+      this.onReset = () => setTimeout(() => this.sync())
+      this.form?.addEventListener('reset', this.onReset)
+    },
+    destroy() {
+      this.form?.removeEventListener('reset', this.onReset)
+    },
+    sync() {
       this.selected = Math.max(0, this.$refs.native.selectedIndex)
     },
     options() {
@@ -23,12 +34,17 @@ document.addEventListener('alpine:init', () => {
       this.open ? this.close() : this.show()
     },
     show(index = this.selected) {
-      // Open upwards when the space below the trigger cannot hold the list.
-      const box = this.$refs.trigger.getBoundingClientRect()
-      const below = window.innerHeight - box.bottom
-      this.up = below < 280 && box.top > below
       this.open = true
+      this.$nextTick(() => this.place())
       this.move(index)
+    },
+    // Open upwards when the space below the trigger cannot hold the list but
+    // the space above is larger. The list is measured once it is shown.
+    place() {
+      const gutter = 8
+      const box = this.$refs.trigger.getBoundingClientRect()
+      const below = document.documentElement.clientHeight - box.bottom
+      this.up = this.$refs.listbox.offsetHeight + gutter > below && box.top > below
     },
     close(returnFocus = true) {
       if (!this.open) return

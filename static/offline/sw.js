@@ -1,6 +1,6 @@
 // Only this public shell and its static assets are cached. Never cache API/auth HTML.
-const CACHE = 'camplist-offline-v11';
-const ASSETS = ['/offline','/static/tailwind.css','/static/logomark.svg','/static/offline/ui.mjs','/static/offline/checklist.mjs','/static/offline/status.mjs','/static/offline/db.mjs','/static/offline/packing.mjs','/static/offline/transport.mjs'];
+const CACHE = 'camplist-offline-v12';
+const ASSETS = ['/offline','/static/tailwind.css','/static/logomark.svg','/static/select.js','/static/alpine.min.js','/static/offline/ui.mjs','/static/offline/checklist.mjs','/static/offline/status.mjs','/static/offline/db.mjs','/static/offline/packing.mjs','/static/offline/transport.mjs'];
 self.addEventListener('install', event => {
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });

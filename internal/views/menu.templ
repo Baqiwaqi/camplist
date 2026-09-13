@@ -1,8 +1,9 @@
 package views
 
-// Menu is a dropdown built the way Base UI structures its Menu: a trigger,
-// a popup with role="menu", and items that are links or actions. Behaviour
-// lives in static/menu.js (Alpine.data("menu")). The popup is server
+// Menu is the app's dropdown menu, a Pines UI style dropdown built the way
+// Base UI structures its Menu: a trigger, a popup with role="menu", and items
+// that are links or actions. Behaviour lives in static/menu.js
+// (Alpine.data("menu")), which keeps the popup inside the viewport. The popup is server
 // rendered, so without JavaScript the items show inline instead. This
 // compact size sits in card rows next to a small button.
 templ Menu(label string) {
@@ -40,8 +41,8 @@ templ menu(label string, trigger string) {
 			x-on:keydown.arrow-up.prevent="show(-1)"
 		>{ label }</button>
 		<div
-			class="menu-popup"
-			x-bind:class="{ 'menu-popup-start': alignStart }"
+			class="popup menu-popup"
+			x-bind:class="{ 'menu-popup-start': alignStart, 'menu-popup-up': up }"
 			role="menu"
 			x-ref="popup"
 			x-bind:id="$id('menu')"
@@ -57,6 +58,7 @@ templ menu(label string, trigger string) {
 			x-on:keydown.arrow-up.prevent="move(-1)"
 			x-on:keydown.home.prevent="focus(0)"
 			x-on:keydown.end.prevent="focus(-1)"
+			x-on:keydown="find($event)"
 			x-on:click="if ($event.target.closest('[role=menuitem]')) close(false)"
 		>
 			{ children... }
@@ -66,15 +68,15 @@ templ menu(label string, trigger string) {
 
 // MenuLink navigates somewhere.
 templ MenuLink(href string, label string) {
-	<a class="menu-item" role="menuitem" href={ href }>{ label }</a>
+	<a class="option" role="menuitem" href={ href }>{ label }</a>
 }
 
 // MenuButton performs an action. attrs carry the htmx attributes for the
 // request and its confirmation; danger marks destructive actions in red.
 templ MenuButton(label string, danger bool, attrs templ.Attributes) {
-	<button type="button" class={ "menu-item", templ.KV("menu-item-danger", danger) } role="menuitem" { attrs... }>{ label }</button>
+	<button type="button" class={ "option", templ.KV("option-danger", danger) } role="menuitem" { attrs... }>{ label }</button>
 }
 
 templ MenuSeparator() {
-	<div class="menu-separator" role="separator"></div>
+	<div class="popup-separator" role="separator"></div>
 }

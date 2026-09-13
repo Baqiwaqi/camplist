@@ -53,3 +53,68 @@ test('when neither side fits the popup opens toward the side with more room', ()
   const moreRoomLeft = openMenu({ trigger: { left: 200, right: 270 }, popupWidth: 300, viewport: 320 })
   assert.equal(moreRoomLeft.alignStart, false)
 })
+
+// Vertical placement and keyboard use of the Pines-style menu.
+
+function menuWithItems({ trigger = { left: 280, right: 350, top: 100, bottom: 144 }, height = 160, viewportHeight = 844, labels = [] } = {}) {
+  let init
+  let factory
+  const document = {
+    activeElement: null,
+    documentElement: { clientWidth: 390, clientHeight: viewportHeight },
+    addEventListener(event, handler) {
+      if (event === 'alpine:init') init = handler
+    },
+  }
+  const Alpine = {
+    data(name, build) {
+      if (name === 'menu') factory = build
+    },
+  }
+  vm.runInNewContext(source, { document, Alpine, Date })
+  init()
+  const menu = factory()
+  const items = labels.map(label => ({ textContent: label, disabled: false, focus() { document.activeElement = this } }))
+  menu.$refs = {
+    trigger: { getBoundingClientRect: () => trigger, focus() { document.activeElement = this } },
+    popup: { offsetWidth: 176, offsetHeight: height, querySelectorAll: () => items },
+  }
+  menu.$nextTick = callback => callback()
+  return { menu, items, document }
+}
+
+function key(value) {
+  return { key: value, prevented: false, preventDefault() { this.prevented = true } }
+}
+
+test('a menu near the bottom of the screen opens upward', () => {
+  const { menu } = menuWithItems({ trigger: { left: 280, right: 350, top: 760, bottom: 800 } })
+  menu.show()
+  assert.equal(menu.up, true)
+})
+
+test('a menu with room below opens downward', () => {
+  const { menu } = menuWithItems()
+  menu.show()
+  assert.equal(menu.up, false)
+})
+
+test('typing a letter moves to the next item starting with it', () => {
+  const { menu, items, document } = menuWithItems({ labels: ['Edit list', 'Sharing', 'Delete list'] })
+  menu.show(0)
+  assert.equal(document.activeElement, items[0])
+  const event = key('d')
+  menu.find(event)
+  assert.equal(document.activeElement, items[2])
+  assert.equal(event.prevented, true)
+})
+
+test('space and modified keys are left to the item', () => {
+  const { menu, items, document } = menuWithItems({ labels: ['Sharing', 'Sign out'] })
+  menu.show(0)
+  for (const event of [key(' '), { ...key('s'), ctrlKey: true }]) {
+    menu.find(event)
+    assert.equal(event.prevented, false)
+  }
+  assert.equal(document.activeElement, items[0])
+})

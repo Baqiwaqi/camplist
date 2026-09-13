@@ -24,7 +24,7 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 	for _, want := range []string{
 		`aria-haspopup="menu"`,
 		`role="menu"`,
-		`x-bind:class="{ 'menu-popup-start': alignStart }"`,
+		`x-bind:class="{ 'menu-popup-start': alignStart, 'menu-popup-up': up }"`,
 		`role="menuitem" href="/sharing/packing-session/` + session.ID + `"`,
 		`role="menuitem" href="/trips/` + session.ID + `/review"`,
 		`role="separator"`,
@@ -35,7 +35,7 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 		`hx-swap="delete"`,
 		`hx-sync="closest [data-saved-trip]:drop"`,
 		`<div id="trips-empty" class="card" tabindex="-1" hidden>`,
-		`class="menu-item menu-item-danger"`,
+		`class="option option-danger"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("session card menu missing %q", want)

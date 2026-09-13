@@ -229,19 +229,28 @@ test('a deleted trip with unsynced work stays marked deleted through later offli
  assert.equal(view.issue, 'deleted');
 });
 
-test('a pending check whose item was removed online does not mark the trip gone', async () => {
- const db = await database(), remote = server();
- const packing = new OfflinePacking(db, remote);
- await packing.save('camper', trip()); await packing.set('camper', 'trip', 'tent', true);
- remote.send = async () => { throw Object.assign(new Error('Item no longer available'), { status: 404, code: 'unavailable' }); };
- let view = await packing.sync('camper', 'trip');
- assert.equal(view.issue, 'network'); assert.equal(view.pending, 1);
- assert.equal((await db.get('camper', 'trip')).gone, undefined);
- remote.send = async () => { throw Object.assign(new Error('Conflict'), { status: 409, code: 'conflict', session: { ...structuredClone(remote.state), list: { ...remote.state.list, items: [] } } }); };
- view = await packing.sync('camper', 'trip');
- assert.equal(view.issue, 'network'); assert.equal(view.pending, 1);
- assert.equal((await db.get('camper', 'trip')).gone, undefined);
-});
+for (const [name, failure] of [
+ ['a 404', () => Object.assign(new Error('Item no longer available'), { status: 404, code: 'unavailable' })],
+ ['a conflict without the item', state => Object.assign(new Error('Conflict'), { status: 409, code: 'conflict', session: structuredClone(state) })]
+]) {
+ test(`a pending check whose item was removed online (${name}) is dropped and the rest still uploads`, async () => {
+  const { packingStatus } = await import('../static/offline/status.mjs');
+  const db = await database(), remote = server(), send = remote.send;
+  const packing = new OfflinePacking(db, remote);
+  await packing.save('camper', trip());
+  await packing.set('camper', 'trip', 'tent', true); await packing.set('camper', 'trip', 'stove', true);
+  remote.state.list.items = remote.state.list.items.filter(item => item.id !== 'tent');
+  remote.send = async (owner, id, op) => { if (op.itemId === 'tent') throw failure(remote.state); return send(owner, id, op); };
+  let view = await packing.sync('camper', 'trip');
+  assert.equal(view.issue, null); assert.equal(view.pending, 0); assert.equal(view.fresh, true);
+  assert.equal(remote.state.list.items[0].checked, true);
+  assert.deepEqual(view.session.list.items.map(item => item.id), ['stove']);
+  assert.equal((await db.get('camper', 'trip')).gone, undefined);
+  assert.match(packingStatus(view, true).text, /removed online/);
+  view = await packing.sync('camper', 'trip');
+  assert.equal(view.notice, null);
+ });
+}
 
 test('a gone marker clears only after a successful refresh', async () => {
  const db = await database(), remote = server(), send = remote.send;

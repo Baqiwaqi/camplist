@@ -1,6 +1,7 @@
 // A reconnect event is not evidence of a successful refresh.
 export function packingStatus(view, connected) {
  const conflicts=Object.keys(view.conflicts).length;
+ const notice=view.notice==='item_removed'?'An item you changed was removed online.':'';
  const exportHint='Export your changes from Saved on this device, under Recovery options.';
  const issues={signin:'Sign in again to sync. Your changes are saved on this device.',account:'Sign in to the account that saved this trip. Pending changes are preserved.',access_removed:'Your access was removed. Changes will not upload. '+exportHint,deleted:'This trip was deleted online. '+exportHint};
  if(view.session.shared){
@@ -17,9 +18,9 @@ export function packingStatus(view, connected) {
   }
   const warning=Boolean(view.issue||conflicts||view.pending||!view.fresh||!connected);
   const review=conflicts&&!reason.startsWith('Needs review')?'Conflicting changes need your review.':'';
-  return {text:[reason,pending,last,review].filter(Boolean).join(' '),warning};
+  return {text:[notice,reason,pending,last,review].filter(Boolean).join(' '),warning};
  }
- return {text:issues[view.issue]||(conflicts?'Needs review: another device changed an item.':!connected||view.issue==='network'?'Offline · Changes saved on this device. We’ll sync automatically when connected.':view.pending?'Saved on this device · Syncing…':'All changes saved'),warning:Boolean(view.issue||conflicts)};
+ return {text:[notice,issues[view.issue]||(conflicts?'Needs review: another device changed an item.':!connected||view.issue==='network'?'Offline · Changes saved on this device. We’ll sync automatically when connected.':view.pending?'Saved on this device · Syncing…':'All changes saved')].filter(Boolean).join(' '),warning:Boolean(view.issue||conflicts)};
 }
 
 // The trip was deleted or this account lost access: a kept copy only exports.

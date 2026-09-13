@@ -14,7 +14,7 @@ export class OfflinePacking {
   if (!record) return null;
   const session = structuredClone(record.session);
   for (const item of session.list.items) if (record.pending[item.id]) item.checked = record.pending[item.id].checked;
-  return { session, pending: Object.keys(record.pending).length+Object.keys(record.additions||{}).length, conflicts: structuredClone(record.conflicts), issue: record.issue, futureSaves: Object.keys(record.futureSaves||{}), lastSyncedAt:record.lastSyncedAt||null, fresh:record.fresh===true };
+  return { session, pending: Object.keys(record.pending).length+Object.keys(record.additions||{}).length, conflicts: structuredClone(record.conflicts), issue: record.issue, futureSaves: Object.keys(record.futureSaves||{}), notice:record.notice||null, lastSyncedAt:record.lastSyncedAt||null, fresh:record.fresh===true };
  }
  async add(owner,id,entry) {
   if(this.closing.has(owner))throw new Error('Sign-out is in progress.');
@@ -80,6 +80,7 @@ export class OfflinePacking {
    const identity = await this.transport.identity();
    if (identity.userId !== owner) throw Object.assign(new Error('Sign in to the account that saved this trip.'),{code:'account'});
    const retriedFuture=new Set();
+   let removed=false;
    for (;;) {
     let operation;
     const record = await this.db.update(owner,id, record => {
@@ -104,19 +105,30 @@ export class OfflinePacking {
       if(!result.futureSaveError)await this.db.update(owner,id,record=>{delete record.futureSaves?.[future.itemId];return record;});
       continue;
      }
-     const remote = await this.transport.getSession(owner,id,identity).catch(error=>{throw Object.assign(error,{trip:true});});
-     await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;record.issue=null;delete record.gone;return record;});
+     const remote = await this.transport.getSession(owner,id,identity);
+     await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;record.issue=null;delete record.gone;if(!removed)delete record.notice;return record;});
      return this.open(owner,id);
     }
     let result;
     try { result = await this.transport.send(owner,id,operation,identity); }
     catch (error) {
      if(operation.action==='add')throw error;
-     if (error.status !== 409 || error.code !== 'conflict' || !error.session?.list) throw error;
+     const conflict = error.status === 409 && error.code === 'conflict' && error.session?.list;
+     if (error.status === 404 || (conflict && !error.session.list.items.some(item => item.id === operation.itemId))) {
+      const remote = await this.transport.getSession(owner,id,identity);
+      if (remote.list.items.some(item => item.id === operation.itemId)) throw new Error('Could not synchronize.');
+      removed = true;
+      await this.db.update(owner,id,record => {
+       delete record.pending[operation.itemId]; delete record.flight[operation.itemId]; delete record.conflicts[operation.itemId];
+       record.notice = 'item_removed';
+       return mergeRemote(record,remote);
+      });
+      continue;
+     }
+     if (!conflict) throw error;
      await this.db.update(owner,id,record => {
       if (record.flight[operation.itemId]?.id !== operation.id) return record;
       const remoteItem = error.session.list.items.find(item => item.id === operation.itemId);
-      if (!remoteItem) throw Object.assign(new Error('Item no longer available.'),{status:404});
       delete record.flight[operation.itemId];
       if (record.pending[operation.itemId]?.checked === remoteItem.checked) delete record.pending[operation.itemId];
       else record.conflicts[operation.itemId] = structuredClone(remoteItem);
@@ -145,11 +157,7 @@ export class OfflinePacking {
     });
    }
   } catch(error) {
-   let issue = classify(error);
-   if (issue === 'deleted' && !error.trip) {
-    try { await this.transport.getSession(owner,id); issue = 'network'; }
-    catch (check) { issue = classify(check); }
-   }
+   const issue = error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
    if (GONE.includes(issue)) return this.gone(owner,id,issue,error);
    await this.db.update(owner,id,record => {
     if (!record) throw error;
@@ -188,9 +196,6 @@ export class OfflinePacking {
 }
 
 const GONE = ['deleted','access_removed'];
-function classify(error) {
- return error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
-}
 export function unsynced(record) {
  return Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length;
 }

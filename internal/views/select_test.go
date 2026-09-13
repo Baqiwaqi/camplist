@@ -157,7 +157,7 @@ func TestFormsHaveNoBareNativeSelects(t *testing.T) {
 		"add item":      ListItemForm(packing.NewCreateItemForm(list.ID), "token"),
 		"edit item row": ItemEditRow(list.ID, "item", packing.CreateItemForm{Scope: "person"}, "token"),
 		"task row":      PreparationTaskRow(list, task, "token"),
-		"trip entry":    TripEntryForm(session, "token"),
+		"trip entry":    TripEntryForm(session, nil, "token"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			doc := renderDoc(t, component)

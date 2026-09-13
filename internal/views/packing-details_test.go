@@ -61,7 +61,7 @@ func detailsOpen(t *testing.T, doc *html.Node) bool {
 	return open
 }
 
-func TestListItemFormKeepsOptionalFieldsFolded(t *testing.T) {
+func TestListItemFormKeepsWhoItIsForFolded(t *testing.T) {
 	doc := renderListItemForm(t, packing.NewCreateItemForm("list"))
 
 	label := findElement(doc, func(n *html.Node) bool { return n.Data == "label" && hasAttr("for", "item-name-new")(n) })
@@ -81,17 +81,52 @@ func TestListItemFormKeepsOptionalFieldsFolded(t *testing.T) {
 		}
 	}
 	if detailsOpen(t, doc) {
-		t.Error("optional fields open on an empty form")
+		t.Error("who it's for is open on an empty form")
 	}
 }
 
-func TestListItemFormOpensOptionalFieldsWhenFilled(t *testing.T) {
-	for name, form := range map[string]packing.CreateItemForm{
-		"category": {Category: "Light"},
-		"scope":    {Scope: "person"},
-	} {
-		if !detailsOpen(t, renderListItemForm(t, form)) {
-			t.Errorf("%s: optional fields stay folded after the form comes back filled in", name)
+func TestListItemFormOpensWhoItIsForWhenFilled(t *testing.T) {
+	if !detailsOpen(t, renderListItemForm(t, packing.CreateItemForm{Scope: "person"})) {
+		t.Error("who it's for stays folded after the form comes back with a scope")
+	}
+	if detailsOpen(t, renderListItemForm(t, packing.CreateItemForm{Category: "Light"})) {
+		t.Error("a category alone opened the toggle")
+	}
+}
+
+func TestListItemFormShowsCategoryPicker(t *testing.T) {
+	doc := renderListItemForm(t, packing.CreateItemForm{Category: "Light", Categories: []string{"Shelter", "Light"}})
+
+	details := findElement(doc, func(n *html.Node) bool { return n.Data == "details" })
+	if findElement(details, hasAttr("name", "category")) != nil {
+		t.Error("category is hidden behind the toggle")
+	}
+	input := findElement(doc, hasAttr("id", "item-category-new"))
+	if input == nil {
+		t.Fatal("add item form has no category field")
+	}
+	for key, want := range map[string]string{"name": "category", "value": "Light", "role": "combobox", "list": "item-category-new-options"} {
+		if got, _ := attr(input, key); got != want {
+			t.Errorf("category %s = %q, want %q", key, got, want)
 		}
+	}
+	if findElement(doc, func(n *html.Node) bool { return n.Data == "label" && hasAttr("for", "item-category-new")(n) }) == nil {
+		t.Error("category field has no label")
+	}
+	options := findElement(doc, hasAttr("id", "item-category-new-options"))
+	if options == nil {
+		t.Fatal("category picker has no options")
+	}
+	var values []string
+	for c := options.FirstChild; c != nil; c = c.NextSibling {
+		if v, ok := attr(c, "value"); ok {
+			values = append(values, v)
+		}
+	}
+	if len(values) != 2 || values[0] != "Shelter" || values[1] != "Light" {
+		t.Errorf("category options = %v", values)
+	}
+	if findElement(doc, hasAttr("role", "listbox")) == nil {
+		t.Error("category picker has no listbox popup")
 	}
 }

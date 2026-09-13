@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -124,5 +125,34 @@ func TestTripAdditionHTTPUsesAuthenticatedIdentityAndTaskSync(t *testing.T) {
 	w = send(`{"id":"spoof","itemId":"fake","action":"add","name":"Fake","assignee":"other"}`)
 	if w.Code != 400 {
 		t.Fatalf("accepted assignee injection %d", w.Code)
+	}
+}
+
+func TestSessionAPISnapshotCarriesDefaultCategories(t *testing.T) {
+	store := packing.NewStore(testsupport.NewDocuments())
+	ctx := context.Background()
+	list := packing.NewList("user", "Weekend", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Rod", "Fishing")}
+	store.SavePackingList(ctx, list)
+	ses, _ := store.CreatePackingSession(ctx, list.ID, "user")
+	h := handler{packingStore: store}
+
+	r := httptest.NewRequest("GET", "/api/sessions/"+ses.ID, nil)
+	route := chi.NewRouteContext()
+	route.URLParams.Add("id", ses.ID)
+	r = r.WithContext(context.WithValue(context.WithValue(r.Context(), chi.RouteCtxKey, route), auth.USER_ID_KEY, "user"))
+	w := httptest.NewRecorder()
+	h.SessionAPI(w, r)
+
+	var body struct {
+		Session struct {
+			Categories []string `json:"categories"`
+		} `json:"session"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &body); w.Code != 200 || err != nil {
+		t.Fatalf("session API: %d %v %s", w.Code, err, w.Body.String())
+	}
+	if !slices.Equal(body.Session.Categories, packing.DefaultCategories) {
+		t.Errorf("snapshot categories = %q, want the defaults", body.Session.Categories)
 	}
 }

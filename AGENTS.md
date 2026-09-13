@@ -60,6 +60,13 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `x-show`: htmx settles `style`/`class` on same-id elements. The offline shell
   copies the trip entry selects; `TestOfflineShellSelectsMatchSelectField`
   keeps the copy in sync.
+- Item categories: every category field is `views.CategoryPicker` (combobox in
+  `static/category-picker.js`; the text input posts `category`, options come
+  from its datalist). Build options with `handler.categorySuggestions`:
+  `packing.DefaultCategories`, the items in view, then the actor's remembered
+  categories (one `item-categories` doc per user partition). Call
+  `rememberCategory` after saving an item. Categories compare trimmed and
+  case-insensitively; never rewrite the category of a replayable operation.
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and

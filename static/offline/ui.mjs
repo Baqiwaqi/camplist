@@ -31,7 +31,7 @@ async function render(){
  const resolve=async(itemId,choice)=>{try{await packing.resolve(account,id,itemId,choice);await render();await synchronize();}catch(error){message(error.message);}};
  renderEntries(byId('offline-items'),view,'',toggle,resolve);
  renderEntries(byId('offline-tasks'),view,'task',toggle,resolve);
- updateCategories(byId('trip-categories'),view.session.list.items);
+ updateCategories(byId('trip-categories'),view.session);
 }
 async function synchronize(){
  if(!owner)return;

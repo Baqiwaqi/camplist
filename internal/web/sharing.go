@@ -62,7 +62,7 @@ func (h *handler) invitationRow(w http.ResponseWriter, r *http.Request, approvin
 	}
 	for _, invitation := range view.Sharing.Invitations {
 		if invitation.Hash == hash {
-			render(w, r, views.InvitationRow(view, invitation, trips, approving && invitation.Status == "pending" && len(trips) > 0, csrf.Token(r)))
+			render(w, r, views.InvitationRow(view, invitation, trips, approving && invitation.Status == "pending" && len(trips) > 0, false, csrf.Token(r)))
 			return
 		}
 	}
@@ -78,7 +78,20 @@ func (h *handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
 		scheme = "https"
 	}
-	h.renderSharing(w, r, scheme+"://"+r.Host+link.Path(), "")
+	joinURL := scheme + "://" + r.Host + link.Path()
+	if !isHTMX(r) {
+		// The one-time link cannot survive a redirect, so the plain form renders
+		// the page in the POST response.
+		h.renderSharing(w, r, joinURL, "")
+		return
+	}
+	actor := auth.Subject(r.Context())
+	view, err := h.packingStore.GetSharing(r.Context(), link.Kind, link.ID, actor)
+	if err != nil {
+		// The link exists and cannot be shown again, so show it without the new row.
+		view = packing.SharingView{Kind: link.Kind, ID: link.ID, Owner: actor, Actor: actor}
+	}
+	render(w, r, views.CreatedInvitation(view, joinURL, link.Hash(), csrf.Token(r)))
 }
 func (h *handler) DecideInvitation(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {
@@ -103,6 +116,10 @@ func (h *handler) DecideInvitation(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not change invitation")
 		return
 	}
+	if isHTMX(r) {
+		h.decidedInvitation(w, r, hash, decision == "approve")
+		return
+	}
 	http.Redirect(w, r, "/sharing/"+chi.URLParam(r, "kind")+"/"+chi.URLParam(r, "id"), http.StatusSeeOther)
 }
 func (h *handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
@@ -114,10 +131,44 @@ func (h *handler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if actor == subject {
+		if isHTMX(r) {
+			w.Header().Set("HX-Redirect", "/")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+	if isHTMX(r) {
+		view, err := h.packingStore.GetSharing(r.Context(), chi.URLParam(r, "kind"), chi.URLParam(r, "id"), actor)
+		if err != nil {
+			storeError(w, err, "Could not read sharing settings")
+			return
+		}
+		render(w, r, views.MemberList(view, false, true, csrf.Token(r)))
+		return
+	}
 	http.Redirect(w, r, "/sharing/"+chi.URLParam(r, "kind")+"/"+chi.URLParam(r, "id"), http.StatusSeeOther)
+}
+
+// decidedInvitation answers an htmx approve or revoke with the decided row and,
+// after an approval, the member card out of band. An expired invitation is no
+// longer listed, so its row is replaced with nothing.
+func (h *handler) decidedInvitation(w http.ResponseWriter, r *http.Request, hash string, approved bool) {
+	view, err := h.packingStore.GetSharing(r.Context(), chi.URLParam(r, "kind"), chi.URLParam(r, "id"), auth.Subject(r.Context()))
+	if err != nil {
+		storeError(w, err, "Could not read sharing settings")
+		return
+	}
+	for _, invitation := range view.Sharing.Invitations {
+		if invitation.Hash == hash {
+			render(w, r, views.DecidedInvitation(view, invitation, approved, csrf.Token(r)))
+			return
+		}
+	}
+	if approved {
+		render(w, r, views.MemberList(view, true, false, csrf.Token(r)))
+	}
 }
 func invitationLink(r *http.Request) packing.InvitationLink {
 	return packing.InvitationLink{Kind: chi.URLParam(r, "kind"), ID: chi.URLParam(r, "id"), Owner: chi.URLParam(r, "owner"), Token: chi.URLParam(r, "token")}

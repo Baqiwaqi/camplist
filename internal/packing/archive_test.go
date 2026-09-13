@@ -64,3 +64,21 @@ func TestPartitionSessionsSeparatesArchiveAndSortsNewestFirst(t *testing.T) {
 		t.Fatalf("unexpected archive: %+v", archive)
 	}
 }
+
+func TestManualArchiveCanBeRestoredUnlessThePackedTripWouldStayArchived(t *testing.T) {
+	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
+	session := NewPackingSession(NewList("camper", "Camping", ""))
+	session.ArchivedAt = &now
+	if !session.IsArchived(now) || !session.CanRestore(now) {
+		t.Fatal("manually archived trip is not archived and restorable")
+	}
+
+	packed := sessionCompletedAt(now.Add(-48 * time.Hour))
+	if packed.CanRestore(now) {
+		t.Fatal("automatically archived trip offers Restore")
+	}
+	packed.ArchivedAt = &now
+	if packed.CanRestore(now) {
+		t.Fatal("restore offered for a trip that would stay archived")
+	}
+}

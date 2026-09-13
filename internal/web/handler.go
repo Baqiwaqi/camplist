@@ -21,6 +21,8 @@ import (
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
 	RenameTrip(context.Context, string, string, string) (packing.PackingSession, error)
+	ArchiveTrip(context.Context, string, string) (packing.PackingSession, error)
+	RestoreTrip(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
 	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) (packing.PackingList, error)
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
@@ -571,6 +573,5 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusOK)
+	h.tripCardRemoved(w, r, userID, r.URL.Query().Get("view") == "archive")
 }

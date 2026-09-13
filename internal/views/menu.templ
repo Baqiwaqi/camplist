@@ -41,6 +41,7 @@ templ menu(label string, trigger string) {
 		>{ label }</button>
 		<div
 			class="menu-popup"
+			x-bind:class="{ 'menu-popup-start': alignStart }"
 			role="menu"
 			x-ref="popup"
 			x-bind:id="$id('menu')"

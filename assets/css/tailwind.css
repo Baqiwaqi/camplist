@@ -358,6 +358,12 @@
     @apply absolute top-[calc(100%+6px)] right-0 z-5 min-w-44 grid p-1 bg-white border border-sand-300 rounded-card;
   }
 
+  /* Set by static/menu.js when right alignment would push the popup past the
+     left edge of the viewport. */
+  .menu-popup-start {
+    @apply left-0 right-auto;
+  }
+
   .menu-item {
     @apply block w-full py-2 px-3 rounded-lg font-bold text-ink-900 text-left no-underline whitespace-nowrap cursor-pointer;
   }
@@ -425,6 +431,14 @@
 
   .select-option[aria-selected="true"] {
     @apply font-bold text-pine-700;
+  }
+
+  /* ---------- trip cards (static/trip-cards.js) ---------- */
+
+  /* An archive, restore or delete for this card is in flight; its button
+     sits in the closed menu, so the card carries the feedback. */
+  [data-saved-trip]:has(.htmx-request) {
+    @apply opacity-60 transition-opacity;
   }
 
   /* ---------- error banner and toast ---------- */

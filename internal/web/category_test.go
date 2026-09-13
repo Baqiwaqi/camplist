@@ -124,17 +124,18 @@ func TestEditingAnItemRecasesItsCustomCategory(t *testing.T) {
 	if err := store.RememberCategory(ctx, "user", "fishing"); err != nil {
 		t.Fatal(err)
 	}
-	rod := list.Items[0]
+	rod, net := list.Items[0], list.Items[1]
 
-	edit := func(category string) {
+	editItem := func(item packing.PackingItem, name, category string) {
 		t.Helper()
-		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+rod.ID, url.Values{"name": {"Rod"}, "category": {category}}), list.ID, rod.ID)
+		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {name}, "category": {category}}), list.ID, item.ID)
 		w := httptest.NewRecorder()
 		h.EditItemHandler(w, r)
 		if w.Code != 303 {
 			t.Fatalf("edit %q: status %d %s", category, w.Code, w.Body.String())
 		}
 	}
+	edit := func(category string) { t.Helper(); editItem(rod, "Rod", category) }
 	categories := func() []string {
 		t.Helper()
 		saved, err := store.GetPackingList(ctx, list.ID, "user")
@@ -150,6 +151,14 @@ func TestEditingAnItemRecasesItsCustomCategory(t *testing.T) {
 	}
 	if got, err := store.RememberedCategories(ctx, "user"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
 		t.Errorf("remembered %q, %v", got, err)
+	}
+
+	editItem(net, "Landing net", "fishing")
+	if got := categories(); !slices.Equal(got, []string{"Fishing", "fishing"}) {
+		t.Errorf("renaming changed saved categories to %q", got)
+	}
+	if got, err := store.RememberedCategories(ctx, "user"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
+		t.Errorf("renaming an item undid the recase: remembered %q, %v", got, err)
 	}
 
 	edit(" shelter")

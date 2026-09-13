@@ -95,6 +95,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
+	categoryChanged := item.Category != form.Category
 	item.SourceRevision = form.Revision
 	item.Name = form.Name
 	item.Category = form.Category
@@ -106,7 +107,9 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
-	h.rememberCategory(r.Context(), userID, item.Category)
+	if categoryChanged {
+		h.rememberCategory(r.Context(), userID, item.Category)
+	}
 	if isHTMX(r) {
 		// Read the committed row so subsequent actions use its current ETag.
 		h.ItemRowHandler(w, r)

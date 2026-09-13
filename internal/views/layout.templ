@@ -30,11 +30,12 @@ templ shell(title string, bodyAttrs templ.Attributes) {
 			<script src="/static/htmx.min.js"></script>
 			<script src="/static/menu.js" defer></script>
 			<script src="/static/request-error.js" defer></script>
+			<script src="/static/select.js" defer></script>
 			<script src="/static/sharing.js" defer></script>
 			<script src="/static/revision.js" defer></script>
 			<script src="/static/alpine.min.js" defer></script>
 			<noscript>
-				<style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; }</style>
+				<style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; } .select-native { display: block !important; } .select-trigger { display: none !important; }</style>
 			</noscript>
 			<script type="module" src="/static/offline/account.mjs"></script>
 		</head>

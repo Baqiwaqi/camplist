@@ -48,6 +48,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `static/menu.js`, loaded before Alpine. Build destructive items with the
   `confirmDelete` helper so the confirm dialog stays consistent;
   `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
+- Form dropdown: `views.Select` (Pines UI style listbox, `static/select.js`)
+  keeps a hidden native `<select>` as the submitted field and no-JS fallback.
+  Inside htmx-swapped content toggle Alpine state with `hidden`, not `x-show`:
+  htmx settles `style`/`class` on same-id elements and undoes inline display.
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
@@ -78,7 +82,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `@layer base` re-adds body colour, headings, links, focus ring and checkboxes,
   and `@layer components` keeps the classes that carry state, pseudo elements or
   runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
-  `.tick`, `.progress-*`, `.menu-*`, `.error`, `.dialog`, `.sync-status`, the
+  `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.error`, `.dialog`, `.sync-status`, the
   `drop-*`/toast transitions) plus rules for elements the offline scripts create
   without classes. Utilities are generated from `internal/views` and
   `static/offline` only.

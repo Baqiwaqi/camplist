@@ -384,6 +384,49 @@
     @apply h-px my-1 bg-sand-100;
   }
 
+  /* ---------- select (views.Select) ---------- */
+
+  /* The native select is the no-JS fallback and the submitted field; the
+     layout's noscript style shows it and hides the trigger. */
+  .select-native {
+    display: none;
+  }
+
+  .select-trigger {
+    @apply flex items-center justify-between gap-2 w-full mt-1 min-h-11 py-2 pl-2 pr-8 rounded-sm border border-sand-300 bg-white text-left cursor-pointer relative;
+  }
+
+  /* A plain caret drawn from borders, like the native control's. */
+  .select-trigger::after {
+    content: "";
+    @apply absolute right-3 top-1/2 size-2 border-r-2 border-b-2 border-ink-900;
+    transform: translateY(-70%) rotate(45deg);
+  }
+
+  .select-trigger[aria-expanded="true"] {
+    @apply border-pine-700;
+  }
+
+  .select-popup {
+    @apply absolute inset-x-0 top-full z-5 mt-1 max-h-64 overflow-y-auto overscroll-contain p-1 bg-white border border-sand-300 rounded-card;
+  }
+
+  .select-popup-up {
+    @apply top-auto bottom-full mt-0 mb-1;
+  }
+
+  .select-option {
+    @apply py-2 px-3 rounded-lg text-ink-900 cursor-pointer wrap-anywhere;
+  }
+
+  .select-option[data-active="true"] {
+    @apply bg-sand-50;
+  }
+
+  .select-option[aria-selected="true"] {
+    @apply font-bold text-pine-700;
+  }
+
   /* ---------- error banner and toast ---------- */
 
   /* The only semantic colour: a solid red block with a display heading.

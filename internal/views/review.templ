@@ -76,9 +76,6 @@ templ ReviewForm(session packing.PackingSession, entry packing.ReviewEntry, mess
 		hx-swap="outerHTML"
 		hx-sync="this:drop"
 	>
-		if message != "" {
-			<p class="error" role="alert">{ message }</p>
-		}
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="entryId" value={ entry.ID }/>
 		<label class="block my-3 text-sm font-bold">
@@ -110,6 +107,10 @@ templ ReviewForm(session packing.PackingSession, entry packing.ReviewEntry, mess
 		</label>
 		<label class="block my-3 text-sm font-bold">Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
 		<p class="text-muted mb-3">Unused safety equipment may still be essential. Nothing is removed automatically.</p>
+		// The error sits by the button, where a phone user who just tapped it is looking.
+		if message != "" {
+			<p class="error" role="alert">{ message }</p>
+		}
 		<button id="review-submit" class="btn btn-primary mt-2 in-[.htmx-request]:opacity-60 in-[.htmx-request]:cursor-progress" type="submit">Save observation</button>
 	</form>
 }

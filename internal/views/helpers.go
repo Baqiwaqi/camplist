@@ -158,13 +158,13 @@ func removesTripCard(attrs templ.Attributes) templ.Attributes {
 
 // preparationSwap builds the htmx attributes shared by every control in the
 // preparation card: post to the preparation endpoint and swap the card. hx-sync
-// drops a repeat press while the card is saving.
+// drops a repeat press while that control is saving.
 func preparationSwap(list packing.PackingList) templ.Attributes {
 	return templ.Attributes{
 		"hx-post":   "/packing-lists/" + list.ID + "/preparation/edit",
 		"hx-target": "#list-preparation",
 		"hx-swap":   "outerHTML",
-		"hx-sync":   "#list-preparation:drop",
+		"hx-sync":   "this:drop",
 	}
 }
 
@@ -175,6 +175,7 @@ func removeTaskAttrs(list packing.PackingList, next string) templ.Attributes {
 	vals, _ := json.Marshal(map[string]string{"action": "remove", "next": next})
 	attrs := preparationSwap(list)
 	attrs["hx-vals"] = string(vals)
+	attrs["hx-sync"] = "closest form:drop"
 	attrs["hx-confirm"] = "Remove this preparation task?"
 	attrs["data-confirm-action"] = "Remove task"
 	attrs["data-confirm-detail"] = "This removes the task from the reusable list."

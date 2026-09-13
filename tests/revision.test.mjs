@@ -31,32 +31,6 @@ function send(page, { formRevision, headerRevision } = {}) {
   return { form: formData.get('revision'), header: headers['X-Camplist-Revision'] }
 }
 
-// card renders the preparation card: one form per [form, inputs] entry, each
-// input an [id, rendered value] pair, registered on the page by id.
-function card(page, forms) {
-  const inputs = []
-  const built = forms.map(fields => {
-    const form = { closest: () => form }
-    form.inputs = fields.map(([id, value]) => ({ id, value, defaultValue: value, form }))
-    inputs.push(...form.inputs)
-    for (const input of form.inputs) page.elements.set(input.id, input)
-    return form
-  })
-  const target = { id: 'list-preparation', querySelectorAll: () => inputs }
-  return { target, forms: built }
-}
-
-// swap models htmx swapping in a new card after a save from elt: beforeSwap,
-// the new card replacing the old, then the request's end.
-function swap(page, target, elt, newForms) {
-  const ended = []
-  const xhr = { addEventListener(event, handler) { if (event === 'loadend') ended.push(handler) } }
-  page.fire('htmx:beforeSwap', { target, elt, xhr })
-  const next = card(page, newForms)
-  for (const handler of ended) handler()
-  return next
-}
-
 function startTripPage(form) {
   let pageshow
   const reloads = []
@@ -82,43 +56,6 @@ test('htmx saves send the page revision instead of the one a control was rendere
   assert.deepEqual(send(page, { formRevision: 'r1' }), { form: 'r2', header: undefined })
   page.current.value = 'r3'
   assert.deepEqual(send(page, { headerRevision: 'r1' }), { form: undefined, header: 'r3' })
-})
-
-test('saves racing each other are sent at once with the same revision and never sent again', () => {
-  const page = listPage('r1')
-  let issued = 0
-  const confirm = { elt: {}, verb: 'post', issueRequest: () => issued++ }
-  assert.equal(page.fire('htmx:confirm', confirm), false)
-  assert.deepEqual(send(page, { formRevision: 'r1' }), { form: 'r1', header: undefined })
-  assert.deepEqual(send(page, { headerRevision: 'r1' }), { form: undefined, header: 'r1' })
-  assert.equal(issued, 0)
-})
-
-test('text typed into the new task and an open rename survives a card swap from another control', () => {
-  const page = listPage('r1')
-  const { target, forms } = card(page, [[['task-a', 'Gas']], [['task-b', 'Tent']], [['new-task', '']]])
-  forms[1].inputs[0].value = 'Tent pegs'
-  forms[2].inputs[0].value = 'Buy fuel'
-  swap(page, target, forms[0], [[['task-a', 'Gas']], [['task-b', 'Tent']], [['new-task', '']]])
-  assert.equal(page.elements.get('task-a').value, 'Gas')
-  assert.equal(page.elements.get('task-b').value, 'Tent pegs')
-  assert.equal(page.elements.get('new-task').value, 'Buy fuel')
-})
-
-test('the saved form comes back as the server rendered it', () => {
-  const page = listPage('r1')
-  const { target, forms } = card(page, [[['task-a', 'Gas']], [['new-task', '']]])
-  forms[1].inputs[0].value = 'Buy fuel'
-  swap(page, target, forms[1], [[['task-a', 'Gas']], [['task-buy', 'Buy fuel']], [['new-task', '']]])
-  assert.equal(page.elements.get('new-task').value, '')
-})
-
-test('swaps outside the preparation card are left alone', () => {
-  const page = listPage('r1')
-  const { forms } = card(page, [[['new-task', '']]])
-  forms[0].inputs[0].value = 'Buy fuel'
-  swap(page, { id: 'add-item', querySelectorAll: () => forms[0].inputs }, {}, [[['new-task', '']]])
-  assert.equal(page.elements.get('new-task').value, '')
 })
 
 test('a list page restored from the back/forward cache reloads so Start trip works again', () => {

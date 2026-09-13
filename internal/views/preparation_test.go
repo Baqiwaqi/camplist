@@ -34,7 +34,7 @@ func TestPreparationRowsToggleRenameAndRemove(t *testing.T) {
 		`&#34;next&#34;:&#34;fixed&#34;`,
 		`id="task-fuel" name="name" value="Buy fuel"`,
 		`<ul id="preparation-tasks">`,
-		`method="post" action="/packing-lists/` + list.ID + `/preparation/edit" hx-post="/packing-lists/` + list.ID + `/preparation/edit" hx-swap="outerHTML" hx-sync="#list-preparation:drop" hx-target="#list-preparation"`,
+		`method="post" action="/packing-lists/` + list.ID + `/preparation/edit" hx-post="/packing-lists/` + list.ID + `/preparation/edit" hx-swap="outerHTML" hx-sync="this:drop" hx-target="#list-preparation"`,
 		`name="editing" x-bind:value="editing"`,
 		`id="task-done-fuel"`,
 		`<input type="hidden" id="list-revision" value="">`,

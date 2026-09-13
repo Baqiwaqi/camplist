@@ -40,3 +40,11 @@ func storeErrorDetails(err error, fallback string) (int, string) {
 	}
 	return http.StatusInternalServerError, fallback
 }
+
+func sessionExpired(w http.ResponseWriter) {
+	http.Error(w, "Your session expired. Reload the page and sign in again.", http.StatusUnauthorized)
+}
+
+func malformedRequest(w http.ResponseWriter) {
+	http.Error(w, "That change did not save. Reload the page and try again.", http.StatusBadRequest)
+}

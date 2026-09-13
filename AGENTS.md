@@ -34,7 +34,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `EditPreparationTask`) instead of re-rendering or re-reading. Failed htmx
   requests answer with a user-facing plain-text reason (`http.Error`); the
   layout's error toast (`static/request-error.js`) shows it for statuses under
-  500 and offers Reload on 401, 409 and CSRF failures (`X-Camplist-Error: csrf`).
+  500 and offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`).
 - Reusable dropdown: `views.Menu(label)` (compact, for card rows) and
   `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with

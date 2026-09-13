@@ -61,7 +61,7 @@ func (h *handler) MainPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (h *handler) sessionsPage(w http.ResponseWriter, r *http.Request, archive b
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -139,7 +139,7 @@ func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
 func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	dec.IgnoreUnknownKeys(true)
 	err = dec.Decode(&form, r.PostForm)
 	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -206,7 +206,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = r.ParseForm()
 	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -232,7 +232,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	dec.IgnoreUnknownKeys(true)
 	err = dec.Decode(&form, r.PostForm)
 	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -293,12 +293,12 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -307,7 +307,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	dec.IgnoreUnknownKeys(true)
 	err = dec.Decode(&form, r.PostForm)
 	if err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -346,7 +346,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -367,17 +367,17 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	listID := r.FormValue("listId")
 	if listID == "" {
-		http.Error(w, "listId is required", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 
@@ -407,7 +407,7 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
@@ -430,30 +430,30 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	sessionID := r.FormValue("sessionId")
 	itemID := r.FormValue("itemId")
 	if sessionID == "" || itemID == "" {
-		http.Error(w, "sessionId and itemId are required", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	checked, err := strconv.ParseBool(r.FormValue("checked"))
 	if err != nil {
-		http.Error(w, "checked must be true or false", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 	var session packing.PackingSession
 	if raw := r.PostForm.Get("expectedRevision"); raw != "" {
 		revision, parseErr := strconv.ParseInt(raw, 10, 64)
 		if parseErr != nil || revision < 0 {
-			http.Error(w, "Invalid item revision", 400)
+			malformedRequest(w)
 			return
 		}
 		session, err = h.packingStore.SyncSessionItem(ctx, sessionID, userID, packing.PackingOperation{ID: uuid.NewString(), ItemID: itemID, Checked: checked, ExpectedRevision: revision})
@@ -478,12 +478,12 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
 	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		sessionExpired(w)
 		return
 	}
 
 	if id == "" {
-		http.Error(w, "Missing session Id to delete packing session", http.StatusBadRequest)
+		malformedRequest(w)
 		return
 	}
 

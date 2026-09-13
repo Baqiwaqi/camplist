@@ -14,17 +14,10 @@ document.addEventListener('alpine:init', () => {
       this.reload = false
     },
     failed(xhr) {
-      const csrf = xhr.getResponseHeader('X-Camplist-Error') === 'csrf'
       const plain = (xhr.getResponseHeader('Content-Type') || '').startsWith('text/plain')
       const text = (xhr.responseText || '').trim()
-      if (csrf) {
-        this.message = 'Your session expired. Reload the page and try again.'
-      } else if (xhr.status < 500 && plain && text) {
-        this.message = text
-      } else {
-        this.message = fallback
-      }
-      this.reload = csrf || xhr.status === 401 || xhr.status === 409
+      this.message = xhr.status < 500 && plain && text ? text : fallback
+      this.reload = xhr.getResponseHeader('X-Camplist-Error') === 'csrf' || xhr.status === 409
       this.$el.hidden = false
     },
     lost() {

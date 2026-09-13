@@ -86,7 +86,7 @@ func (h *handler) DecideInvitation(w http.ResponseWriter, r *http.Request) {
 	}
 	decision := r.PostForm.Get("decision")
 	if decision != "approve" && decision != "revoke" {
-		http.Error(w, "Invalid decision", 400)
+		malformedRequest(w)
 		return
 	}
 	kind, id, actor, hash := chi.URLParam(r, "kind"), chi.URLParam(r, "id"), auth.Subject(r.Context()), chi.URLParam(r, "hash")

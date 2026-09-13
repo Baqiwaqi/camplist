@@ -17,7 +17,7 @@ func (h *handler) ReviewPage(w http.ResponseWriter, r *http.Request) {
 func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string, status int) {
 	user, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "Sign in required", 401)
+		sessionExpired(w)
 		return
 	}
 	session, err := h.packingStore.GetPackingSession(r.Context(), chi.URLParam(r, "id"), user)
@@ -47,7 +47,7 @@ func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry pac
 func parsePackingForm(w http.ResponseWriter, r *http.Request) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form", http.StatusBadRequest)
+		malformedRequest(w)
 		return false
 	}
 	return true
@@ -58,7 +58,7 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "Sign in required", 401)
+		sessionExpired(w)
 		return
 	}
 	entry := packing.ReviewEntry{ID: r.PostForm.Get("entryId"), ItemID: r.PostForm.Get("itemId"), Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Note: r.PostForm.Get("note"), Forgotten: r.PostForm.Get("forgotten") == "true", Unused: r.PostForm.Get("unused") == "true", NeedsAttention: r.PostForm.Get("needsAttention") == "true", Action: packing.ReviewAction(r.PostForm.Get("action")), Task: r.PostForm.Get("task")}
@@ -89,7 +89,7 @@ func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "Sign in required", 401)
+		sessionExpired(w)
 		return
 	}
 	list, err := h.packingStore.ApplyReview(r.Context(), chi.URLParam(r, "id"), user, r.PostForm.Get("revision"), r.PostForm["selected"])
@@ -103,7 +103,7 @@ func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 func (h *handler) RecoverReviewHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "Sign in required", 401)
+		sessionExpired(w)
 		return
 	}
 	_, err = h.packingStore.RecoverReviewTemplate(r.Context(), chi.URLParam(r, "id"), user)
@@ -119,12 +119,12 @@ func (h *handler) PreparationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := auth.UserID(r.Context())
 	if err != nil {
-		http.Error(w, "Sign in required", 401)
+		sessionExpired(w)
 		return
 	}
 	done, err := strconv.ParseBool(r.PostForm.Get("done"))
 	if err != nil {
-		http.Error(w, "Invalid task state", 400)
+		malformedRequest(w)
 		return
 	}
 	_, err = h.packingStore.SetPreparationTask(r.Context(), chi.URLParam(r, "id"), user, r.PostForm.Get("taskId"), done, r.PostForm.Get("revision"))

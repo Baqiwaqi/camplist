@@ -213,3 +213,22 @@ func groupPreparation(tasks []packing.PreparationTask) []preparationGroup {
 	}
 	return groups
 }
+
+// oobSwap marks a fragment's element for htmx's out-of-band swap by id.
+func oobSwap(oob bool) templ.Attributes {
+	if !oob {
+		return nil
+	}
+	return templ.Attributes{"hx-swap-oob": "true"}
+}
+
+// tripEntryRequest posts a trip entry without replacing the form. The
+// response's checklist and preparation sections swap by id.
+func tripEntryRequest(tripID string) templ.Attributes {
+	return templ.Attributes{
+		"hx-post":       "/trips/" + tripID + "/entries",
+		"hx-swap":       "none",
+		"hx-select-oob": "#packing-checklist,#session-preparation",
+		"hx-sync":       "this:drop",
+	}
+}

@@ -31,7 +31,6 @@ export async function mountSession(packing, readyForOffline) {
   if(!preparation){const fallback=document.querySelector('#session-preparation .item-list');if(fallback){preparation=document.createElement('div');preparation.dataset.tripTasks='';fallback.replaceWith(preparation);}}
   if(preparation)renderEntries(preparation,view,'task',toggle,resolve);
   updateCategories(document.getElementById('trip-categories'),view.session);
-  const heading=document.querySelector('h1');if(heading)heading.textContent=view.session.name||view.session.list.name;
   const gear=view.session.list.items.filter(item=>item.kind!=="task"),total=gear.length,checked=gear.filter(item=>item.checked).length;
   const complete=total>0&&checked===total;
   const count=`${checked} of ${total} items packed`;
@@ -60,6 +59,15 @@ export async function mountSession(packing, readyForOffline) {
   try {await automatic.set(form.elements.itemId.value,form.elements.checked.value==='true');}
   catch(error){await automatic.notify();render(null,error);}
  },true);
+ // The device view owns the checklist once mounted. A server swap still in
+ // flight from before would overwrite pending state, so fetch it instead.
+ document.addEventListener('htmx:oobBeforeSwap',event=>{
+  if(!event.target.closest('#packing-checklist'))return;
+  event.detail.shouldSwap=false;
+  automatic.sync().catch(error=>render(null,error));
+ });
+ // The heading is server HTML; a rename swaps it. Refresh the saved copy's name.
+ document.addEventListener('camplist:trip-renamed',()=>automatic.sync().catch(error=>render(null,error)));
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')automatic.sync().catch(error=>render(null,error));});
  window.addEventListener('pagehide',()=>automatic.stop(),{once:true});
  window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});

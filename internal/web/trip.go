@@ -18,8 +18,15 @@ func (h *handler) RenameTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := chi.URLParam(r, "id")
-	if _, err := h.packingStore.RenameTrip(r.Context(), id, auth.Subject(r.Context()), r.PostForm.Get("name")); err != nil {
+	session, err := h.packingStore.RenameTrip(r.Context(), id, auth.Subject(r.Context()), r.PostForm.Get("name"))
+	if err != nil {
 		storeError(w, err, "Could not rename trip")
+		return
+	}
+	if isHTMX(r) {
+		// The offline copy keeps its own snapshot; the event makes it fetch the new name.
+		w.Header().Set("HX-Trigger", "camplist:trip-renamed")
+		render(w, r, views.TripRenamed(session))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+id, http.StatusSeeOther)
@@ -92,11 +99,19 @@ func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {
 		h.rememberCategory(r.Context(), user, op.Category)
 	}
 	if errors.Is(err, packing.ErrFutureSave) {
+		if isHTMX(r) {
+			render(w, r, views.TripEntrySaved(session, op, h.categorySuggestions(r.Context(), user, session.List.Items), true, csrf.Token(r)))
+			return
+		}
 		render(w, r, views.FutureSaveResult(session, op, csrf.Token(r)))
 		return
 	}
 	if err != nil {
 		storeError(w, err, "Could not save entry")
+		return
+	}
+	if isHTMX(r) {
+		render(w, r, views.TripEntrySaved(session, op, h.categorySuggestions(r.Context(), user, session.List.Items), false, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+id, http.StatusSeeOther)

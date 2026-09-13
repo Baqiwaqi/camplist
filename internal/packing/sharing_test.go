@@ -171,17 +171,21 @@ func TestSharedTemplateFormsRejectStaleEditsAndEditorsManagePreparation(t *testi
 	}
 	current, _ := store.GetPackingList(ctx, list.ID, "editor")
 	task := packing.PreparationTask{ID: "fuel", Name: "Buy fuel"}
-	if err := store.EditPreparationTask(ctx, list.ID, "editor", task, false, current.Revision()); err != nil {
+	saved, err := store.EditPreparationTask(ctx, list.ID, "editor", task, false, current.Revision())
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.EditPreparationTask(ctx, list.ID, "editor", task, true, current.Revision()); !errors.Is(err, packing.ErrConflict) {
+	if _, err := store.EditPreparationTask(ctx, list.ID, "editor", task, true, current.Revision()); !errors.Is(err, packing.ErrConflict) {
 		t.Fatal("stale task form accepted", err)
 	}
 	current, _ = store.GetPackingList(ctx, list.ID, "editor")
 	if len(current.Tasks) != 1 {
 		t.Fatal("task not saved")
 	}
-	if err := store.EditPreparationTask(ctx, list.ID, "editor", task, true, current.Revision()); err != nil {
+	if saved.Revision() == "" || saved.Revision() != current.Revision() {
+		t.Fatalf("saved revision %q, stored %q", saved.Revision(), current.Revision())
+	}
+	if _, err := store.EditPreparationTask(ctx, list.ID, "editor", task, true, current.Revision()); err != nil {
 		t.Fatal(err)
 	}
 }

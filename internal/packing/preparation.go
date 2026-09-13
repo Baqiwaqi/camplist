@@ -6,36 +6,43 @@ import (
 	"strings"
 )
 
-func (s *Store) EditPreparationTask(ctx context.Context, id, actor string, task PreparationTask, remove bool, revision string) error {
+// EditPreparationTask returns the list as this edit saved it, carrying the
+// revision of that write rather than whatever was stored after it.
+func (s *Store) EditPreparationTask(ctx context.Context, id, actor string, task PreparationTask, remove bool, revision string) (PackingList, error) {
 	list, err := s.GetPackingList(ctx, id, actor)
 	if err != nil {
-		return err
+		return PackingList{}, err
 	}
 	if revision == "" || revision != list.Revision() {
-		return ErrConflict
+		return PackingList{}, ErrConflict
 	}
 	if !validScope(task.Scope, false) {
-		return ErrInvalid
+		return PackingList{}, ErrInvalid
 	}
 	task.Name = strings.TrimSpace(task.Name)
 	if task.ID == "" || len(task.ID) > 100 || !remove && (task.Name == "" || len(task.Name) > 200) {
-		return ErrInvalid
+		return PackingList{}, ErrInvalid
 	}
 	index := slices.IndexFunc(list.Tasks, func(current PreparationTask) bool { return current.ID == task.ID })
 	if remove {
 		if index < 0 {
-			return ErrNotFound
+			return PackingList{}, ErrNotFound
 		}
 		list.Tasks = append(list.Tasks[:index], list.Tasks[index+1:]...)
 	} else if index < 0 {
 		if len(list.Tasks) >= 200 {
-			return ErrInvalid
+			return PackingList{}, ErrInvalid
 		}
 		list.Tasks = append(list.Tasks, task)
 	} else {
 		list.Tasks[index] = task
 	}
-	return s.SavePackingList(ctx, list)
+	etag, err := s.saveList(ctx, list)
+	if err != nil {
+		return PackingList{}, err
+	}
+	list.etag = etag
+	return list, nil
 }
 
 // SetSessionPreparationTask records preparation for this trip only.

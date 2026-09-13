@@ -44,7 +44,7 @@ func (m *Documents) CreateItem(_ context.Context, pk azcosmos.PartitionKey, b []
 	}
 	m.docs[fmt.Sprint(pk)+doc.ID] = append([]byte(nil), b...)
 	m.versions[fmt.Sprint(pk)+doc.ID] = 1
-	return azcosmos.ItemResponse{Value: b}, nil
+	return azcosmos.ItemResponse{Value: b, Response: azcosmos.Response{ETag: "1"}}, nil
 }
 func (m *Documents) ReplaceItem(_ context.Context, pk azcosmos.PartitionKey, id string, b []byte, opts *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
 	m.mu.Lock()
@@ -57,7 +57,7 @@ func (m *Documents) ReplaceItem(_ context.Context, pk azcosmos.PartitionKey, id 
 	}
 	m.docs[fmt.Sprint(pk)+id] = append([]byte(nil), b...)
 	m.versions[fmt.Sprint(pk)+id]++
-	return azcosmos.ItemResponse{Value: b}, nil
+	return azcosmos.ItemResponse{Value: b, Response: azcosmos.Response{ETag: azcore.ETag(fmt.Sprint(m.versions[fmt.Sprint(pk)+id]))}}, nil
 }
 
 // NewQueryItemsPager evaluates the query predicates used by the public overviews.

@@ -2,7 +2,6 @@ package packing
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"camplist/internal/testsupport"
@@ -38,9 +37,8 @@ func TestUpdateItemChangesNameAndCategory(t *testing.T) {
 	}
 }
 
-// Item writes return the saved list. A revision given for a private list is
-// checked like a shared list's; adds never conflict but report the revision
-// they replaced.
+// Item writes return the saved list. Private lists never conflict: a stale
+// revision still saves. Adds report the revision they replaced.
 func TestItemWritesReturnTheSavedRevision(t *testing.T) {
 	ctx := context.Background()
 	store := NewStore(testsupport.NewDocuments())
@@ -59,18 +57,20 @@ func TestItemWritesReturnTheSavedRevision(t *testing.T) {
 		t.Fatalf("add returned revision %q, stored %q", added.Revision(), current.Revision())
 	}
 
-	if _, err := store.RemoveItem(ctx, list.ID, "user", list.Items[0].ID, opened.Revision()); !errors.Is(err, ErrConflict) {
-		t.Fatalf("remove from a stale revision: %v", err)
-	}
-	removed, err := store.RemoveItem(ctx, list.ID, "user", list.Items[0].ID, added.Revision())
-	if err != nil || len(removed.Items) != 2 {
-		t.Fatalf("remove: %v %+v", err, removed.Items)
+	removed, err := store.RemoveItem(ctx, list.ID, "user", list.Items[0].ID, opened.Revision())
+	if err != nil || len(removed.Items) != 2 || removed.Revision() == added.Revision() {
+		t.Fatalf("remove from a stale revision: %v %+v", err, removed.Items)
 	}
 
 	stale := removed.Items[0]
+	stale.Name = "Gas stove"
 	stale.SourceRevision = added.Revision()
-	if _, err := store.UpdateItem(ctx, list.ID, "user", stale); !errors.Is(err, ErrConflict) {
+	updated, err := store.UpdateItem(ctx, list.ID, "user", stale)
+	if err != nil {
 		t.Fatalf("update from a stale revision: %v", err)
+	}
+	if item, _ := updated.FindItem(stale.ID); item.Name != "Gas stove" {
+		t.Fatalf("update from a stale revision not saved: %+v", updated.Items)
 	}
 	if _, err := store.RemoveItem(ctx, list.ID, "user", list.Items[1].ID, ""); err != nil {
 		t.Fatalf("remove without a revision: %v", err)

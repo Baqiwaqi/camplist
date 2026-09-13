@@ -91,7 +91,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if list.StaleRevision(form.Revision) {
+	if list.IsShared() && form.Revision != list.Revision() {
 		form.Error = []string{"This list changed. Reload the list to review the current version."}
 		h.renderItemForm(w, r, list, item, form)
 		return

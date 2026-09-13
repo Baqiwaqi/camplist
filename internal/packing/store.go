@@ -324,14 +324,14 @@ func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) 
 	return PackingList{}, "", ErrConflict
 }
 
-// RemoveItem removes an item and returns the saved list. The removal is
-// refused when revision is stale (see StaleRevision).
+// RemoveItem removes an item and returns the saved list. On a shared list the
+// removal is refused when revision is stale.
 func (s *Store) RemoveItem(ctx context.Context, id, userID, itemID, revision string) (PackingList, error) {
 	list, err := s.GetPackingList(ctx, id, userID)
 	if err != nil {
 		return PackingList{}, err
 	}
-	if list.StaleRevision(revision) {
+	if list.IsShared() && revision != list.Revision() {
 		return PackingList{}, ErrConflict
 	}
 	if err := removeItemById(&list, itemID); err != nil {

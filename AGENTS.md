@@ -30,7 +30,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   list page's item and preparation controls return fragments; other mutations
   may redirect or refresh. The list page holds its ETag once in
   `#list-revision`: `static/revision.js` sends it as the `revision` field or
-  `X-Camplist-Revision` header of every htmx request there, so a fragment save
+  `X-Camplist-Revision` header of every htmx request there and runs those saves
+  one at a time, so a fragment save
   must swap `views.ListRevision(list, true)` out of band with the revision
   its own write made (see `EditPreparationTask`, `listItemsChanged`). Failed htmx
   requests answer with a user-facing plain-text reason (`http.Error`); the

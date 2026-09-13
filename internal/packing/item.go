@@ -16,14 +16,14 @@ func (l PackingList) FindItem(id string) (PackingItem, bool) {
 }
 
 // UpdateItem renames an item and changes its category and returns the saved
-// list. Other fields stay as stored. The update is refused when the item's
-// SourceRevision is stale (see StaleRevision).
+// list. Other fields stay as stored. On a shared list the update is refused
+// when the item's SourceRevision is stale.
 func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, item PackingItem) (PackingList, error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
 		return PackingList{}, err
 	}
-	if list.StaleRevision(item.SourceRevision) {
+	if list.IsShared() && item.SourceRevision != list.Revision() {
 		return PackingList{}, ErrConflict
 	}
 	index, err := getItemIndexById(list, item.ID)

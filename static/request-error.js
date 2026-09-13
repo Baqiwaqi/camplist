@@ -30,6 +30,11 @@ document.addEventListener('alpine:init', () => {
       this.reload = xhr.getResponseHeader('X-Camplist-Error') === 'csrf' || xhr.status === 409
       this.show(this.reload)
     },
+    skipped() {
+      this.message = 'A change could not be saved because the list changed before it was sent. Try again.'
+      this.reload = false
+      this.show(false)
+    },
     lost() {
       this.message = 'Connection lost. Reconnect and reload to check the latest saved state.'
       this.reload = false

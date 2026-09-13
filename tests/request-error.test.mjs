@@ -78,6 +78,17 @@ test('toasts offering Reload and the connection-lost toast stay until the user a
   assert.equal(component.message, 'Your session expired. Reload the page and try again.')
 })
 
+test('a queued change skipped after the list changed asks the user to try again and hides itself', () => {
+  const { component, advance } = toast()
+  component.failed(response(409, 'The saved version changed.'))
+  component.skipped()
+  assert.equal(component.$root.hidden, false)
+  assert.match(component.message, /Try again/)
+  assert.equal(component.reload, false)
+  advance(6160)
+  assert.equal(component.$root.hidden, true)
+})
+
 test('hovering or focusing the toast pauses the timer', () => {
   const { component, advance } = toast()
   component.failed(response(403, 'Only the owner can do that.'))

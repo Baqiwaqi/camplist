@@ -127,6 +127,7 @@ templ ListPreparation(list packing.PackingList, csrfToken string, editing bool, 
 			}
 		</div>
 		<form
+			id="add-task"
 			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-sand-100 bg-sand-50 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:px-6 rounded-b-card [&.htmx-request]:opacity-60"
 			method="post"
 			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
@@ -353,6 +354,7 @@ templ StartTripPage(s StartTrip, csrfToken string) {
 templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string, editing bool, focus string, next string) {
 	<li class="border-b border-sand-100 last:border-b-0">
 		<form
+			id={ "task-toggle-" + task.ID }
 			class="pack-form w-full [&.htmx-request]:opacity-60"
 			method="post"
 			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
@@ -380,6 +382,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			</button>
 		</form>
 		<form
+			id={ "task-rename-" + task.ID }
 			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto_auto] [&.htmx-request]:opacity-60"
 			method="post"
 			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
@@ -399,7 +402,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 				<label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
 			</div>
 			<button class="btn btn-secondary btn-sm min-h-11">Save</button>
-			<button type="button" class="btn btn-danger btn-sm max-sm:order-last justify-self-end sm:min-h-11" { removeTaskAttrs(list, next)... }>Remove</button>
+			<button id={ "task-remove-" + task.ID } type="button" class="btn btn-danger btn-sm max-sm:order-last justify-self-end sm:min-h-11" { removeTaskAttrs(list, next)... }>Remove</button>
 		</form>
 	</li>
 }

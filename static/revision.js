@@ -14,29 +14,57 @@ document.addEventListener('htmx:configRequest', event => {
 // Saves there run one at a time, so each is sent with the revision the save
 // before it swapped in. A save started while another runs waits its turn (a
 // confirmed delete waits after its dialog); a control that is already saving
-// or waiting drops the repeat.
+// or waiting drops the repeat. A save that finishes can swap out a waiting
+// control (the preparation card swaps whole), so the wait replays that save on
+// the control with the same id; without one it tells the user to try again
+// once the saves queued with it are done.
 let saving = null
+let replaying = null
+let skipped = false
 const waiting = []
 
 const isListSave = detail => detail.verb !== 'get' && document.getElementById('list-revision')
+const sameControl = (a, b) => a === b || (Boolean(a.id) && a.id === b.id)
 
-function issueInTurn(elt, issue) {
-  if (saving?.elt === elt || waiting.some(entry => entry.elt === elt)) return
-  if (saving) waiting.push({ elt, issue })
+function issueInTurn(detail, issue) {
+  const { elt } = detail
+  if ((saving && sameControl(saving.elt, elt)) || waiting.some(entry => sameControl(entry.elt, elt))) return
+  const entry = { elt, trigger: detail.triggeringEvent?.type, issue }
+  if (saving) waiting.push(entry)
   else issue()
+}
+
+function replay({ elt, trigger, issue }) {
+  if (elt.isConnected) {
+    issue()
+    return true
+  }
+  const replacement = elt.id && trigger && document.getElementById(elt.id)
+  if (!replacement) return false
+  replaying = replacement
+  replacement.dispatchEvent(new Event(trigger, { bubbles: true, cancelable: true }))
+  replaying = null
+  return true
 }
 
 document.addEventListener('htmx:confirm', event => {
   const { detail } = event
   if (!isListSave(detail)) return
   const issueRequest = detail.issueRequest
+  if (detail.elt === replaying) {
+    replaying = null
+    event.preventDefault()
+    event.stopPropagation()
+    issueRequest(true)
+    return
+  }
   if (detail.question) {
-    detail.issueRequest = () => issueInTurn(detail.elt, () => issueRequest(true))
+    detail.issueRequest = () => issueInTurn(detail, () => issueRequest(true))
     return
   }
   if (saving || waiting.length) {
     event.preventDefault()
-    issueInTurn(detail.elt, () => issueRequest(true))
+    issueInTurn(detail, () => issueRequest(true))
   }
 })
 
@@ -48,7 +76,11 @@ document.addEventListener('htmx:beforeRequest', event => {
 document.addEventListener('htmx:afterRequest', event => {
   if (event.detail.xhr !== saving?.xhr) return
   saving = null
-  while (!saving && waiting.length) waiting.shift().issue()
+  while (!saving && waiting.length) if (!replay(waiting.shift())) skipped = true
+  if (skipped && !saving) {
+    skipped = false
+    document.dispatchEvent(new CustomEvent('camplist:save-skipped', { bubbles: true }))
+  }
 })
 
 // Once a trip starts, Start trip stays disabled and htmx keeps the form busy

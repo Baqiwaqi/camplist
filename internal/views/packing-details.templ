@@ -75,14 +75,10 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				if len(list.Tasks) == 0 {
 					<p class="text-muted mb-3">No tasks yet.</p>
 				} else {
-					<ul>
-						for _, task := range list.Tasks {
-							@PreparationTaskRow(list, task, csrfToken)
-						}
-					</ul>
+					@PreparationTasks(list, csrfToken)
 				}
 				<form class="flex flex-wrap items-end gap-3 my-3" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
-					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
+					<input type="hidden" name="_csrf" value={ csrfToken }/>@preparationRevision(list, false)
 					<div class="grid gap-1 grow basis-56"><label class="sr-only" for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Add a task, like buying fuel" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
 					<div class="grid gap-1"><label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)</div>
 					<button class="btn btn-secondary">Add task</button>
@@ -101,13 +97,54 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 	}
 }
 
+// PreparationTasks is the task list on the reusable list page. Mark done swaps
+// only this list, because every row carries the list revision the toggle
+// just changed.
+templ PreparationTasks(list packing.PackingList, csrfToken string) {
+	<ul id="preparation-tasks">
+		for _, task := range list.Tasks {
+			@PreparationTaskRow(list, task, csrfToken)
+		}
+	</ul>
+}
+
+// PreparationTasksUpdate answers an htmx Mark done: the fresh task list plus
+// out-of-band revisions for the add task and add item forms, so the rest of
+// the page keeps its scroll position and any text being typed.
+templ PreparationTasksUpdate(list packing.PackingList, csrfToken string) {
+	@PreparationTasks(list, csrfToken)
+	@preparationRevision(list, true)
+	<input type="hidden" name="revision" value={ list.Revision() } id="item-revision-new" hx-swap-oob="true"/>
+}
+
+templ preparationRevision(list packing.PackingList, oob bool) {
+	<input
+		type="hidden"
+		name="revision"
+		value={ list.Revision() }
+		id="preparation-revision"
+		if oob {
+			hx-swap-oob="true"
+		}
+	/>
+}
+
 // PreparationTaskRow is one task on the reusable list. Normally it is a
 // checklist row that toggles done like a packing row; while the card is in
 // edit mode it becomes a rename field with Save and Remove. Everything posts
 // to the existing preparation endpoint.
 templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string) {
 	<li class="item-row py-0">
-		<form class="pack-form w-full" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" } x-show="!editing">
+		<form
+			class="pack-form w-full"
+			method="post"
+			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			hx-post={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			hx-target="#preparation-tasks"
+			hx-swap="outerHTML"
+			hx-sync="#preparation-tasks:drop"
+			x-show="!editing"
+		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			<input type="hidden" name="taskId" value={ task.ID }/>
@@ -115,7 +152,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="scope" value={ task.Scope }/>
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
-			<button type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
+			<button id={ "task-done-" + task.ID } type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
 				<span class="tick" aria-hidden="true"></span>
 				<span class="pack-name">{ task.Name }</span>
 				<span class="pack-action">
@@ -190,7 +227,7 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 // ItemFields is the name and category pair shared by the add and edit forms.
 // stacked puts the fields under each other for the inline edit row.
 templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
-	<input type="hidden" name="revision" value={ form.Revision }/>
+	<input type="hidden" name="revision" value={ form.Revision } id={ "item-revision-" + suffix }/>
 	<div class={ "grid", templ.KV("gap-3 mb-3", stacked), templ.KV("gap-4 mb-4 sm:grid-cols-[1fr_1fr]", !stacked) }>
 		<div class="grid gap-1">
 			<label for={ "item-name-" + suffix } class="text-sm font-bold">Name</label>

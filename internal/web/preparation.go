@@ -24,6 +24,17 @@ func (h *handler) EditPreparationTask(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not save preparation task")
 		return
 	}
+	// Mark done swaps only the task list; remove still reloads the page.
+	if isHTMX(r) && r.Header.Get("HX-Target") == "preparation-tasks" {
+		// Read the committed list so every row carries its current ETag.
+		list, err := h.packingStore.GetPackingList(r.Context(), chi.URLParam(r, "id"), auth.Subject(r.Context()))
+		if err != nil {
+			storeError(w, err, "Could not load preparation tasks")
+			return
+		}
+		render(w, r, views.PreparationTasksUpdate(list, csrf.Token(r)))
+		return
+	}
 	if isHTMX(r) {
 		w.Header().Set("HX-Redirect", "/packing-lists/"+chi.URLParam(r, "id"))
 		return

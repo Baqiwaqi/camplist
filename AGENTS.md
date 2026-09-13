@@ -97,8 +97,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.error`, `.dialog`, `.sync-status`, the
   `drop-*`/toast transitions, and the `.muted`/`.tag` the offline scripts set)
-  plus rules for elements the offline scripts create without classes. Utilities are generated from `internal/views` and
-  `static/offline` only.
+  plus rules for elements the offline scripts create without classes. Utilities
+  are generated from `internal/views` and `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)
 

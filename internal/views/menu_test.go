@@ -86,7 +86,7 @@ func TestVisitorsOfSharedSessionsCannotSeeOwnerActions(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := out.String()
-	if strings.Contains(body, "hx-delete") || strings.Contains(body, "/review") || strings.Contains(body, "/archive\" hx-") {
+	if strings.Contains(body, "hx-delete") || strings.Contains(body, "/review") || strings.Contains(body, `hx-post="/trips/`+session.ID+`/archive"`) {
 		t.Error("guest sees delete or review for a session they do not own")
 	}
 	if !strings.Contains(body, `href="/sharing/packing-session/`+session.ID+`"`) {
@@ -137,7 +137,7 @@ func TestArchivePageOffersRestoreOnlyForManuallyArchivedTrips(t *testing.T) {
 	if !strings.Contains(body, `hx-post="/trips/`+manual.ID+`/restore"`) {
 		t.Error("manually archived trip has no Restore")
 	}
-	if strings.Contains(body, packed.ID+`/restore"`) || strings.Contains(body, `/archive" hx-`) {
+	if strings.Contains(body, packed.ID+`/restore"`) || strings.Contains(body, `hx-post="/trips/`+manual.ID+`/archive"`) || strings.Contains(body, `hx-post="/trips/`+packed.ID+`/archive"`) {
 		t.Error("archive page offers Restore for an automatic archive or Archive again")
 	}
 }

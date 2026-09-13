@@ -47,6 +47,8 @@ type packingStore interface {
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
+	RememberedCategories(context.Context, string) ([]string, error)
+	RememberCategory(context.Context, string, string) error
 }
 
 type handler struct {
@@ -125,6 +127,7 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := packing.NewCreateItemForm(id)
+	form.Categories = h.categorySuggestions(ctx, userID, list.Items)
 
 	render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
 }
@@ -326,6 +329,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	form.Initial = false
 	form.Name = strings.TrimSpace(form.Name)
+	form.Category = packing.MatchCategory(form.Category, h.categorySuggestions(ctx, userID, nil))
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
@@ -336,6 +340,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 			storeError(w, err, "getting the list failed")
 			return
 		}
+		form.Categories = h.categorySuggestions(ctx, userID, list.Items)
 		render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
 		return
 	}
@@ -349,6 +354,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Storing item on packing list failed")
 		return
 	}
+	h.rememberCategory(ctx, userID, item.Category)
 
 	http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
 }
@@ -452,7 +458,7 @@ func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
 		_, templateErr := h.packingStore.GetPackingList(ctx, ses.TemplateID(), userID)
 		canReview = templateErr == nil
 	}
-	render(w, r, views.PackingSessionPage(ses.DisplayName(), ses, canReview, csrf.Token(r)))
+	render(w, r, views.PackingSessionPage(ses.DisplayName(), ses, canReview, h.categorySuggestions(ctx, userID, ses.List.Items), csrf.Token(r)))
 }
 
 func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) {

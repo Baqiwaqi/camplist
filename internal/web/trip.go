@@ -32,8 +32,13 @@ func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {
 		malformedRequest(w)
 		return
 	}
+	user := auth.Subject(r.Context())
+	// The category is stored as sent: a retry must replay the same operation.
 	op := packing.PackingOperation{ID: operationID, ItemID: operationID, Action: "add", Name: r.PostForm.Get("name"), Category: r.PostForm.Get("category"), Kind: r.PostForm.Get("kind"), Scope: r.PostForm.Get("scope"), SaveForFuture: r.PostForm.Get("saveForFuture") == "true"}
-	session, err := h.packingStore.SyncSessionItem(r.Context(), id, auth.Subject(r.Context()), op)
+	session, err := h.packingStore.SyncSessionItem(r.Context(), id, user, op)
+	if err == nil || errors.Is(err, packing.ErrFutureSave) {
+		h.rememberCategory(r.Context(), user, op.Category)
+	}
 	if errors.Is(err, packing.ErrFutureSave) {
 		render(w, r, views.FutureSaveResult(session, op, csrf.Token(r)))
 		return

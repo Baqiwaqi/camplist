@@ -35,9 +35,18 @@ func TestInvalidNewListPreservesForm(t *testing.T) {
 
 type fakePackingStore struct {
 	packingStore
-	list    packing.PackingList
-	session packing.PackingSession
-	setErr  error
+	list       packing.PackingList
+	session    packing.PackingSession
+	setErr     error
+	remembered []string
+}
+
+func (s *fakePackingStore) RememberedCategories(context.Context, string) ([]string, error) {
+	return s.remembered, nil
+}
+func (s *fakePackingStore) RememberCategory(_ context.Context, _ string, category string) error {
+	s.remembered = append(s.remembered, category)
+	return nil
 }
 
 func (s *fakePackingStore) GetPackingList(context.Context, string, string) (packing.PackingList, error) {

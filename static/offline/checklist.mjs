@@ -33,9 +33,14 @@ export function renderEntries(container,view,kind,onToggle,onResolve) {
  }
  if(active)document.getElementById(active)?.focus({preventScroll:true});
 }
+// Add the trip's categories to the picker's options. Options the server
+// rendered (defaults and remembered categories) stay; case and spaces do not
+// make a second option.
 export function updateCategories(datalist,items) {
- if(!datalist)return;datalist.replaceChildren();
- for(const category of [...new Set(items.map(item=>item.category).filter(Boolean))]){const option=document.createElement('option');option.value=category;datalist.append(option);}
+ if(!datalist)return;
+ const key=value=>value.trim().toLowerCase();
+ const known=new Set(Array.from(datalist.options,option=>key(option.value)));
+ for(const item of items){const category=(item.category||'').trim();if(!category||known.has(key(category)))continue;known.add(key(category));const option=document.createElement('option');option.value=category;datalist.append(option);}
 }
 export function entryFromForm(form){return {name:form.elements.name.value,category:form.elements.category.value,kind:form.elements.kind.value,scope:form.elements.scope.value,saveForFuture:form.elements.saveForFuture.checked};}
 export function renderFutureSaves(container,view,onCancel) {

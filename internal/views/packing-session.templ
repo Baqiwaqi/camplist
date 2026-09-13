@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, csrfToken string) {
+templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, categories []string, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
@@ -39,7 +39,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			@PackingProgressStatus(session, false)
 			@SessionPreparation(session, csrfToken)
 			@PackingChecklist(session, csrfToken)
-			@TripEntryForm(session, csrfToken)
+			@TripEntryForm(session, categories, csrfToken)
 			if session.UserID==auth.Subject(ctx) {
 				<form method="post" action={ "/trips/" + session.ID + "/name" } class="card mt-8 flex flex-wrap items-end gap-3">
 					<input type="hidden" name="_csrf" value={ csrfToken }/>
@@ -207,7 +207,7 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 	</section>
 }
 
-templ TripEntryForm(session packing.PackingSession, csrfToken string) {
+templ TripEntryForm(session packing.PackingSession, categories []string, csrfToken string) {
 	<section class="card mt-8">
 		<h2>Add to this trip</h2>
 		<form id="trip-entry-form" method="post" action={ "/trips/" + session.ID + "/entries" } class="grid gap-3">
@@ -215,13 +215,11 @@ templ TripEntryForm(session packing.PackingSession, csrfToken string) {
 			<input type="hidden" name="operationId" value={ uuid.NewString() }/>
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="grid gap-1"><label for="entry-name" class="text-sm font-bold">Name</label><input id="entry-name" name="name" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-				<div class="grid gap-1"><label for="entry-category" class="text-sm font-bold">Category</label><input id="entry-category" name="category" list="trip-categories" maxlength="100" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+				<div class="grid gap-1">
+					<label for="entry-category" class="text-sm font-bold">Category</label>
+					@CategoryPicker("entry-category", "trip-categories", "", "Pick or type one", categories)
+				</div>
 			</div>
-			<datalist id="trip-categories">
-				for _, category := range categories(session.List.Items,2000) {
-					<option value={ category }></option>
-				}
-			</datalist>
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="grid gap-1"><label for="entry-kind" class="text-sm font-bold">Type</label><select id="entry-kind" name="kind" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-2 py-2 font-normal"><option value="">Packing item</option><option value="task">Before departure task</option></select></div>
 				<div class="grid gap-1">

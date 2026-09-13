@@ -90,7 +90,7 @@ func TestTripTogglesKeepFocusAndProgressStatusOutsideSwaps(t *testing.T) {
 	session := packing.NewPackingSession(list)
 	var out bytes.Buffer
 	ctx := context.WithValue(context.Background(), auth.USER_ID_KEY, "user")
-	if err := PackingSessionPage("Camping", session, true, "token").Render(ctx, &out); err != nil {
+	if err := PackingSessionPage("Camping", session, true, nil, "token").Render(ctx, &out); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(out.String(), "hx-disabled-elt") {

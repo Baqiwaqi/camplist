@@ -158,8 +158,7 @@ func removesTripCard(attrs templ.Attributes) templ.Attributes {
 
 // preparationSwap builds the htmx attributes shared by every control in the
 // preparation card: post to the preparation endpoint and swap the card. hx-sync
-// drops a repeat press while the card is saving; static/revision.js orders
-// saves from different controls on the page.
+// drops a repeat press while the card is saving.
 func preparationSwap(list packing.PackingList) templ.Attributes {
 	return templ.Attributes{
 		"hx-post":   "/packing-lists/" + list.ID + "/preparation/edit",

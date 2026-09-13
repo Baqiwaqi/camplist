@@ -96,7 +96,6 @@ templ Layout(title string, csrfToken string) {
 				x-on:htmx:before-request.window="reset()"
 				x-on:htmx:response-error.window="failed($event.detail.xhr)"
 				x-on:htmx:send-error.window="lost()"
-				x-on:camplist:save-skipped.window="skipped()"
 				x-on:mouseenter="hold('hovered', true)"
 				x-on:mouseleave="hold('hovered', false)"
 				x-on:focusin="hold('focused', true)"

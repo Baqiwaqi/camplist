@@ -209,7 +209,8 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Open the new, empty list: its empty state offers the ways to fill it.
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 
 func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {

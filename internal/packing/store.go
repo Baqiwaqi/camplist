@@ -336,13 +336,16 @@ func (s *Store) DeletePackingList(ctx context.Context, id, user string) error {
 // revision the save replaced, so a caller showing an older revision knows its
 // view of the list is out of date.
 func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) (saved PackingList, replaced string, err error) {
-	if !validScope(item.Scope, false) {
+	if !validNewItem(item) {
 		return PackingList{}, "", ErrInvalid
 	}
 	for attempt := 0; attempt < 5; attempt++ {
 		list, err := s.GetPackingList(ctx, id, user)
 		if err != nil {
 			return PackingList{}, "", err
+		}
+		if listFull(list, 1) {
+			return PackingList{}, "", ErrListFull
 		}
 		replaced := list.Revision()
 		list.Items = append(list.Items, item)

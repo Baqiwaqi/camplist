@@ -23,6 +23,7 @@ For example, you can keep a “Weekend camping” list and start a new session e
 - Update the checklist and progress in place, with visible feedback if saving fails.
 - View packing progress across sessions.
 - Delete lists and sessions. Lists are soft-deleted; sessions are permanently removed.
+- Archive a trip from its **More** menu to tidy the trips overview, and restore it from the archive page. Fully packed trips also move to the archive after a day.
 
 Lists and sessions are stored in Cosmos DB, with database operations scoped to the signed-in user's ID. Both document types share a container and have a `type` field identifying their kind.
 
@@ -30,7 +31,7 @@ This is an evolving learning project. The functionality above describes the impl
 
 ## Architecture
 
-The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Packing check-off replaces the checklist section with HTML from the server; deletion actions currently refresh the page. Normal packing forms also work without HTMX.
+The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Packing check-off replaces the checklist section with HTML from the server; archiving, restoring or deleting a trip removes its card in place, and other deletions reload or leave the page. Normal packing forms also work without HTMX.
 
 | Location | Purpose |
 | --- | --- |

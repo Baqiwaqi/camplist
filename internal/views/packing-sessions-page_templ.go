@@ -325,7 +325,7 @@ func PackingSessionCards(sessions []packing.PackingSession, csrfToken string) te
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, csrfToken, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays.")).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays.")).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

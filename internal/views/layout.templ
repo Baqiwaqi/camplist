@@ -4,12 +4,23 @@ import "camplist/internal/auth"
 
 // Shell is the document frame shared by every page: head, fonts, scripts, body.
 templ Shell(title string) {
+	@shell(title, nil) {
+		{ children... }
+	}
+}
+
+// shell renders the document frame with attributes on body, so Layout can set
+// request defaults that every htmx element inherits. The htmx-config turns off
+// the history cache: pages are no-store and would otherwise be kept, CSRF token
+// included, in sessionStorage; Back reloads the page from the server instead.
+templ shell(title string, bodyAttrs templ.Attributes) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<meta name="theme-color" content="#2f5d3a"/>
+			<meta name="htmx-config" content='{"historyCacheSize":0,"refreshOnHistoryMiss":true}'/>
 			<title>{ title } – Camplist</title>
 			<link rel="icon" type="image/svg+xml" href="/static/logomark.svg"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -27,7 +38,7 @@ templ Shell(title string) {
 			</noscript>
 			<script type="module" src="/static/offline/account.mjs"></script>
 		</head>
-		<body>
+		<body { bodyAttrs... }>
 			{ children... }
 		</body>
 	</html>
@@ -36,9 +47,10 @@ templ Shell(title string) {
 // Layout adds the app header and the content column around a signed-in page.
 // The nav links render twice: inline for wide screens and inside a disclosure
 // menu on phones. nav-inline and nav-menu are hooks for the noscript style in
-// Shell, which shows the inline copy when Alpine cannot run.
+// Shell, which shows the inline copy when Alpine cannot run. The body carries
+// the CSRF header, so every htmx request (DELETE included) sends the token.
 templ Layout(title string, csrfToken string) {
-	@Shell(title) {
+	@shell(title, csrfHeaders(csrfToken)) {
 		<header class="bg-white border-b border-sand-300 max-sm:relative">
 			<nav class="max-w-[900px] mx-auto p-4 flex flex-wrap items-center gap-4" aria-label="Main">
 				<a class="inline-flex items-center gap-2 font-bold no-underline max-sm:-my-2 max-sm:py-2" href="/">

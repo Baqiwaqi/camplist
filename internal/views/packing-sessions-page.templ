@@ -75,7 +75,7 @@ templ PackingSessionCards(sessions []packing.PackingSession, csrfToken string) {
 								if s.UserID == auth.Subject(ctx) {
 									@MenuLink("/trips/"+s.ID+"/review", "Review this trip")
 									@MenuSeparator()
-									@MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, csrfToken, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
+									@MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
 								}
 							}
 						</div>

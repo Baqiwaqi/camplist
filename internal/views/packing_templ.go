@@ -311,7 +311,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), "Delete this list?", "Delete list", "Trips you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

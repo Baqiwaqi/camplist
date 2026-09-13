@@ -90,3 +90,53 @@ func TestEditItemInlineRoundTrip(t *testing.T) {
 		t.Error("plain edit request did not return the fallback page")
 	}
 }
+
+func TestInvalidEditItemKeepsAddressBarOnFormPage(t *testing.T) {
+	for _, mode := range []string{"boosted", "htmx", "plain"} {
+		t.Run(mode, func(t *testing.T) {
+			list := packing.NewList("user", "Camping", "")
+			list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter")}
+			h := handler{packingStore: &fakePackingStore{list: list}}
+			item := list.Items[0]
+			r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {" "}, "category": {"Shelter"}}), list.ID, item.ID)
+			switch mode {
+			case "boosted":
+				r.Header.Set("HX-Request", "true")
+				r.Header.Set("HX-Boosted", "true")
+			case "htmx":
+				r.Header.Set("HX-Request", "true")
+			}
+			w := httptest.NewRecorder()
+			h.EditItemHandler(w, r)
+			if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "Name is required") {
+				t.Fatalf("invalid edit did not re-render the form: %d", w.Code)
+			}
+			// The POST URL has no GET route; pushing it would make reload and Back fail.
+			want := ""
+			if mode == "boosted" {
+				want = "false"
+			}
+			if got := w.Header().Get("HX-Push-Url"); got != want {
+				t.Errorf("HX-Push-Url = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestValidBoostedEditItemRedirectsSoHtmxPushesTheListURL(t *testing.T) {
+	list := packing.NewList("user", "Camping", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter")}
+	h := handler{packingStore: &fakePackingStore{list: list}}
+	item := list.Items[0]
+	r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Big tent"}, "category": {"Shelter"}}), list.ID, item.ID)
+	r.Header.Set("HX-Request", "true")
+	r.Header.Set("HX-Boosted", "true")
+	w := httptest.NewRecorder()
+	h.EditItemHandler(w, r)
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-lists/"+list.ID {
+		t.Fatalf("boosted save did not redirect to the list: %d %q", w.Code, w.Header().Get("Location"))
+	}
+	if w.Header().Get("HX-Push-Url") != "" {
+		t.Error("successful save suppressed the history entry for the list page")
+	}
+}

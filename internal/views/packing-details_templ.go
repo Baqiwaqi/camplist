@@ -177,7 +177,7 @@ func PackingDetails(name string, list packing.PackingList, form packing.CreateIt
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, "Delete this list?", "Delete list", "Trips you already started keep their own copy.")).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -747,7 +747,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, removeTaskAttrs(list, task, csrfToken))
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, removeTaskAttrs(list, task))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

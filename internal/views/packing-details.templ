@@ -31,7 +31,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 							@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
 							if list.UserID == auth.Subject(ctx) {
 								@MenuSeparator()
-								@MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
+								@MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
 							}
 						}
 					</div>
@@ -152,7 +152,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<div class="grid gap-1 grow basis-56"><label class="sr-only" for={ "task-" + task.ID }>Task name</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
 			<div class="grid gap-1"><label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)</div>
 			<button class="btn btn-primary btn-sm">Save</button>
-			<button type="button" class="btn btn-danger btn-sm" { removeTaskAttrs(list, task, csrfToken)... }>Remove</button>
+			<button type="button" class="btn btn-danger btn-sm" { removeTaskAttrs(list, task)... }>Remove</button>
 		</form>
 	</li>
 }

@@ -8,6 +8,8 @@ import (
 
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+
+	"github.com/a-h/templ"
 )
 
 func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
@@ -32,8 +34,40 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 			t.Errorf("session card menu missing %q", want)
 		}
 	}
-	if !strings.Contains(body, `hx-headers="{&#34;X-CSRF-Token&#34;:&#34;token&#34;}"`) {
-		t.Error("delete action does not send the CSRF header")
+	if !strings.Contains(body, `<body hx-headers="{&#34;X-CSRF-Token&#34;:&#34;token&#34;}">`) {
+		t.Error("layout body does not give htmx requests the CSRF header")
+	}
+	if strings.Count(body, "X-CSRF-Token") != 1 {
+		t.Error("delete action repeats the CSRF header the body already sets")
+	}
+}
+
+func TestShellTurnsOffHtmxHistoryCache(t *testing.T) {
+	for name, page := range map[string]templ.Component{
+		"layout": Layout("Lists", "token"),
+		"public": Shell("Welcome"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			var out bytes.Buffer
+			if err := page.Render(context.Background(), &out); err != nil {
+				t.Fatal(err)
+			}
+			body := out.String()
+			if !strings.Contains(body, `<meta name="htmx-config" content='{"historyCacheSize":0,"refreshOnHistoryMiss":true}'>`) {
+				t.Error("htmx history cache is not disabled")
+			}
+			if name == "public" && strings.Contains(body, "X-CSRF-Token") {
+				t.Error("public shell carries a CSRF header")
+			}
+		})
+	}
+}
+
+func TestRemoveTaskReliesOnLayoutCSRFHeader(t *testing.T) {
+	list := packing.NewList("user", "Camping", "")
+	vals := removeTaskAttrs(list, packing.PreparationTask{ID: "task"})["hx-vals"].(string)
+	if strings.Contains(vals, "_csrf") || !strings.Contains(vals, `"action":"remove"`) {
+		t.Errorf("remove task values = %s", vals)
 	}
 }
 

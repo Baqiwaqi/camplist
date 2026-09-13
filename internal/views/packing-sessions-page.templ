@@ -56,31 +56,31 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 templ PackingSessionCards(sessions []packing.PackingSession, csrfToken string) {
 	for _, s := range sessions {
 		<article class="card" data-saved-trip={ s.ID }>
-					if s.IsShared() {
-						<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
+			if s.IsShared() {
+				<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
+			}
+			<div class="flex flex-wrap justify-between items-start gap-4 mb-4 max-sm:flex-col">
+				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
+					<h2><a class="no-underline" href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
+					<p class="text-muted mb-3">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
+				</div>
+				<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
+					if allPacked(s.List.CountChecked(), len(s.List.Items)) {
+						<a class="btn btn-secondary btn-sm" href={ "/trips/" + s.ID }>Open</a>
+					} else {
+						<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/trips/" + s.ID }>Keep packing</a>
 					}
-					<div class="flex flex-wrap justify-between items-start gap-4 mb-4 max-sm:flex-col">
-						<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-							<h2><a class="no-underline" href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
-							<p class="text-muted mb-3">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
-						</div>
-						<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-							if allPacked(s.List.CountChecked(), len(s.List.Items)) {
-								<a class="btn btn-secondary btn-sm" href={ "/trips/" + s.ID }>Open</a>
-							} else {
-								<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/trips/" + s.ID }>Keep packing</a>
-							}
-							@Menu("More") {
-								@MenuLink("/sharing/packing-session/"+s.ID, "Sharing")
-								if s.UserID == auth.Subject(ctx) {
-									@MenuLink("/trips/"+s.ID+"/review", "Review this trip")
-									@MenuSeparator()
-									@MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, csrfToken, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
-								}
-							}
-						</div>
-					</div>
-					@ProgressBar(s.List.CountChecked(), len(s.List.Items), "")
+					@Menu("More") {
+						@MenuLink("/sharing/packing-session/"+s.ID, "Sharing")
+						if s.UserID == auth.Subject(ctx) {
+							@MenuLink("/trips/"+s.ID+"/review", "Review this trip")
+							@MenuSeparator()
+							@MenuButton("Delete trip", true, confirmDelete("/trips/"+s.ID, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
+						}
+					}
+				</div>
+			</div>
+			@ProgressBar(s.List.CountChecked(), len(s.List.Items), "")
 		</article>
 	}
 }

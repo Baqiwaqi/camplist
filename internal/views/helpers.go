@@ -86,13 +86,19 @@ func progressWidth(checked, total int) string {
 	return fmt.Sprintf("width: %d%%", checked*100/total)
 }
 
-// confirmDelete builds the htmx attributes for a delete action: the CSRF
-// token travels in a header because Go ignores DELETE bodies, and the
-// layout's dialog reads the confirm data attributes.
-func confirmDelete(url, csrfToken, question, action, detail string) templ.Attributes {
+// csrfHeaders sets the CSRF token as an htmx request header on Layout's body.
+// A header rather than a form field, because Go ignores DELETE bodies.
+func csrfHeaders(csrfToken string) templ.Attributes {
+	headers, _ := json.Marshal(map[string]string{"X-CSRF-Token": csrfToken})
+	return templ.Attributes{"hx-headers": string(headers)}
+}
+
+// confirmDelete builds the htmx attributes for a delete action. The CSRF
+// header comes from Layout's body; the layout's dialog reads the confirm data
+// attributes.
+func confirmDelete(url, question, action, detail string) templ.Attributes {
 	return templ.Attributes{
 		"hx-delete":           url,
-		"hx-headers":          `{"X-CSRF-Token":"` + csrfToken + `"}`,
 		"hx-confirm":          question,
 		"data-confirm-action": action,
 		"data-confirm-detail": detail,
@@ -108,8 +114,8 @@ func PackingListCardID(listID string) string {
 // element id once the request succeeds, and sends that id as HX-Target so the
 // handler answers with a fragment instead of a redirect. The card dims while
 // the request runs, and hx-sync drops a repeated delete.
-func confirmDeleteCard(url, cardID, csrfToken, question, action, detail string) templ.Attributes {
-	attrs := confirmDelete(url, csrfToken, question, action, detail)
+func confirmDeleteCard(url, cardID, question, action, detail string) templ.Attributes {
+	attrs := confirmDelete(url, question, action, detail)
 	attrs["hx-target"] = "#" + cardID
 	attrs["hx-swap"] = "delete"
 	attrs["hx-indicator"] = "#" + cardID
@@ -119,8 +125,8 @@ func confirmDeleteCard(url, cardID, csrfToken, question, action, detail string) 
 
 // removeTaskAttrs builds the htmx attributes that remove a preparation task
 // through the existing edit endpoint, with the confirm dialog texts.
-func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask, csrfToken string) templ.Attributes {
-	vals, _ := json.Marshal(map[string]string{"_csrf": csrfToken, "revision": list.Revision(), "taskId": task.ID, "action": "remove"})
+func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask) templ.Attributes {
+	vals, _ := json.Marshal(map[string]string{"revision": list.Revision(), "taskId": task.ID, "action": "remove"})
 	return templ.Attributes{
 		"hx-post":             "/packing-lists/" + list.ID + "/preparation/edit",
 		"hx-vals":             string(vals),

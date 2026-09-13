@@ -80,7 +80,7 @@ templ PackingListCard(list packing.PackingList, csrfToken string) {
 					@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
 					if list.UserID == auth.Subject(ctx) {
 						@MenuSeparator()
-						@MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
+						@MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
 					}
 				}
 			</div>

@@ -24,17 +24,28 @@ invitation had been approved, and are then managed and removed from each trip's
 own sharing page. The list approval commits first and trips are then granted only
 while the account is a list member, so a list at its member limit shares no trips,
 a failed trip grant leaves the list shared (resubmission is idempotent), and a
-removed list member is never re-added or given trips by a stale approval. Later
-trips stay private.
+removed list member is never re-added or given trips by a stale approval.
+
+Starting a trip from a list with members asks the list owner which of them join
+the new trip. **Start trip** opens the prompt in place with htmx
+(`/packing-lists/{id}/start`, a page of its own without scripts); members stay
+unticked by default and **Select all** ticks everyone. Ticked members become trip
+members in the trip's first write, after their discovery references, exactly as
+if a trip invitation had been approved. A subject that is not a current list
+member rejects the start before anything is written. List members who start a
+trip get no prompt, because only the owner sees the list's members; their trips
+start private. A list without members starts a trip with no extra step.
 The MVP allows 20 members and 20 unexpired invitation records per resource.
 
 Trip packers can read the checklist and mark equipment. Template editors can
 rename the list, add/edit/remove equipment and preparation tasks, and create
 private trips. Template membership does not reveal anyone else's trips. Trip
 membership does not grant template access. Only owners delete resources and
-manage invitations. For the unresolved observation-submission choice, this
-release keeps new trip observations owner-only. Applying existing observations
-requires both source-trip access and independent destination-template access.
+manage invitations. Only a trip's owner archives or restores it; the archive is
+stored on the trip, so it moves to the archive for every member. For the
+unresolved observation-submission choice, this release keeps new trip
+observations owner-only. Applying existing observations requires both
+source-trip access and independent destination-template access.
 
 Opening a trip prepares an account-specific local copy automatically. Shared
 trips explain that local changes are invisible to others until synchronized.

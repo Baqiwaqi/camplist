@@ -46,9 +46,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
-  `static/menu.js`, loaded before Alpine. Build destructive items with the
-  `confirmDelete` helper so the confirm dialog stays consistent;
-  `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
+  `static/menu.js`, loaded before Alpine; it also flips the popup to open
+  rightward (`.menu-popup-start`) when it would cross the left edge. Build
+  destructive items with the `confirmDelete` helper so the confirm dialog stays
+  consistent; `confirmDeleteCard` removes a card in place (the handler branches
+  on `HX-Target`).
 - Form dropdown: `views.Select` (Pines UI style listbox, `static/select.js`)
   keeps a hidden native `<select>` as the submitted field and no-JS fallback.
   Inside htmx-swapped content toggle Alpine state with `hidden`, not `x-show`:

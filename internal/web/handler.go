@@ -5,6 +5,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/views"
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,6 +21,8 @@ import (
 // packingStore describes the operations the HTTP layer needs.
 type packingStore interface {
 	RenameTrip(context.Context, string, string, string) (packing.PackingSession, error)
+	ArchiveTrip(context.Context, string, string) (packing.PackingSession, error)
+	RestoreTrip(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
 	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) (packing.PackingList, error)
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
@@ -44,6 +47,7 @@ type packingStore interface {
 	RemoveItem(context.Context, string, string, string, ...string) error
 	UpdateItem(context.Context, string, string, packing.PackingItem) error
 	CreatePackingSession(context.Context, string, string, ...string) (packing.PackingSession, error)
+	StartTripWithMembers(context.Context, string, string, string, []string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
@@ -401,22 +405,21 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
+	members := r.PostForm["member"]
 	if len(name) > 200 {
-		errs := []string{"Trip name must be at most 200 characters"}
-		if isHTMX(r) {
-			render(w, r, views.StartTripForm(listID, name, errs, csrf.Token(r)))
-			return
-		}
-		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
-		if err != nil {
-			log.Printf("get packing list: %v", err)
-			storeError(w, err, "getting the list failed")
-			return
-		}
-		render(w, r, views.StartTripPage(list, name, errs, csrf.Token(r)))
+		h.startTripError(w, r, listID, name, members, []string{"Trip name must be at most 200 characters"}, false)
 		return
 	}
-	ses, err := h.packingStore.CreatePackingSession(ctx, listID, userID, auth.UserName(ctx))
+	var ses packing.PackingSession
+	if len(members) == 0 {
+		ses, err = h.packingStore.CreatePackingSession(ctx, listID, userID, auth.UserName(ctx))
+	} else {
+		ses, err = h.packingStore.StartTripWithMembers(ctx, listID, userID, auth.UserName(ctx), members)
+	}
+	if errors.Is(err, packing.ErrNotListMember) {
+		h.startTripError(w, r, listID, name, members, []string{"Someone you chose is no longer a member of this list. Check who to share the trip with."}, true)
+		return
+	}
 	if err != nil {
 		log.Printf("create packing session: %v", err)
 		storeError(w, err, "Creating packing session failed")
@@ -435,6 +438,54 @@ func (h *handler) CreateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/trips/"+ses.ID, http.StatusSeeOther)
+}
+
+// StartTripPrompt asks which list members join a new trip. htmx swaps the
+// prompt into the list hero (choose=members) or, on Cancel, the collapsed
+// form back; without scripts it is a page posting to CreateSessionHandler.
+func (h *handler) StartTripPrompt(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	list, err := h.packingStore.GetPackingList(ctx, chi.URLParam(r, "id"), auth.Subject(ctx))
+	if err != nil {
+		storeError(w, err, "getting the list failed")
+		return
+	}
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if name == "" {
+		name = list.Name + " – " + time.Now().Format("Jan 2, 2006")
+	}
+	start := views.StartTrip{List: list, Name: name, Members: list.TripMemberChoices(auth.Subject(ctx))}
+	if !isHTMX(r) {
+		start.Prompt, start.Page = len(start.Members) > 0, true
+		render(w, r, views.StartTripPage(start, csrf.Token(r)))
+		return
+	}
+	start.Prompt = r.URL.Query().Get("choose") == "members" && len(start.Members) > 0
+	start.Focus = !start.Prompt
+	render(w, r, views.StartTripForm(start, csrf.Token(r)))
+}
+
+// startTripError shows the start-trip form again with its error, keeping the
+// typed name and the members that are still offered.
+func (h *handler) startTripError(w http.ResponseWriter, r *http.Request, listID, name string, members, errs []string, memberError bool) {
+	ctx := r.Context()
+	list, err := h.packingStore.GetPackingList(ctx, listID, auth.Subject(ctx))
+	if err != nil {
+		log.Printf("get packing list: %v", err)
+		storeError(w, err, "getting the list failed")
+		return
+	}
+	start := views.StartTrip{List: list, Name: name, Errors: errs, MemberError: memberError, Members: list.TripMemberChoices(auth.Subject(ctx)), Chosen: map[string]bool{}}
+	for _, subject := range members {
+		start.Chosen[subject] = true
+	}
+	start.Prompt = len(start.Members) > 0
+	if isHTMX(r) {
+		render(w, r, views.StartTripForm(start, csrf.Token(r)))
+		return
+	}
+	start.Page = true
+	render(w, r, views.StartTripPage(start, csrf.Token(r)))
 }
 
 func (h *handler) SessionDetailsPage(w http.ResponseWriter, r *http.Request) {
@@ -528,6 +579,5 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusOK)
+	h.tripCardRemoved(w, r, userID, r.URL.Query().Get("view") == "archive")
 }

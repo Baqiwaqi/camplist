@@ -65,7 +65,8 @@ func TestItemEditRowFocusesNameAndDropsRepeatSaves(t *testing.T) {
 }
 
 func TestStartTripFormDropsRepeatPresses(t *testing.T) {
-	doc := renderDoc(t, StartTripForm("list", "Weekend", nil, "token"))
+	list := packing.NewList("owner", "Weekend", "")
+	doc := renderDoc(t, StartTripForm(StartTrip{List: list, Name: "Weekend"}, "token"))
 	form := findElement(doc, hasAttr("id", "start-trip"))
 	if form == nil {
 		t.Fatal("missing start trip form")
@@ -119,5 +120,38 @@ func TestTripTogglesKeepFocusAndProgressStatusOutsideSwaps(t *testing.T) {
 	status := findElement(doc, hasAttr("id", "packing-progress-status"))
 	if status == nil || !hasAttr("role", "status")(status) || status.FirstChild == nil || status.FirstChild.Data != "0 of 1 items packed" {
 		t.Error("trip page lacks a persistent progress status")
+	}
+}
+
+func TestStartTripMemberPromptStartsUntickedAndDropsRepeatPresses(t *testing.T) {
+	list := packing.NewList("owner", "Weekend", "")
+	members := []packing.Member{{Subject: "robin", Name: "Robin", Email: "robin@example.com"}, {Subject: "sam", Name: "Sam"}}
+
+	collapsed := renderDoc(t, StartTripForm(StartTrip{List: list, Name: "Weekend", Members: members}, "token"))
+	form := findElement(collapsed, hasAttr("id", "start-trip"))
+	for key, want := range map[string]string{"method": "get", "action": "/packing-lists/" + list.ID + "/start", "hx-get": "/packing-lists/" + list.ID + "/start", "hx-sync": "this:drop"} {
+		if got, _ := attr(form, key); got != want {
+			t.Errorf("collapsed %s = %q, want %q", key, got, want)
+		}
+	}
+	if findElement(collapsed, hasAttr("name", "member")) != nil {
+		t.Error("collapsed form already shows members")
+	}
+
+	doc := renderDoc(t, StartTripForm(StartTrip{List: list, Name: "Weekend", Members: members, Prompt: true}, "token"))
+	form = findElement(doc, hasAttr("id", "start-trip"))
+	for key, want := range map[string]string{"method": "post", "action": "/packing-lists/start-session", "hx-sync": "this:drop"} {
+		if got, _ := attr(form, key); got != want {
+			t.Errorf("prompt %s = %q, want %q", key, got, want)
+		}
+	}
+	for i, subject := range []string{"robin", "sam"} {
+		box := findElement(doc, hasAttr("value", subject))
+		if box == nil || hasAttrKey(box, "checked") {
+			t.Fatalf("member %s is missing or starts ticked", subject)
+		}
+		if hasAttrKey(box, "autofocus") != (i == 0) {
+			t.Errorf("focus should land on the first member only, %s autofocus=%v", subject, hasAttrKey(box, "autofocus"))
+		}
 	}
 }

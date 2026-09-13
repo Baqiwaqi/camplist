@@ -16,3 +16,13 @@ document.addEventListener('list-revision', event => {
     element.setAttribute('hx-headers', JSON.stringify(headers))
   }
 })
+
+// Once a trip starts, Start trip stays disabled and busy while the trip page
+// loads. A list page restored from the back/forward cache keeps that state, so
+// hand the form back.
+window.addEventListener('pageshow', event => {
+  const form = event.persisted && document.getElementById('start-trip')
+  if (!form) return
+  form.classList.remove('htmx-request')
+  for (const button of form.querySelectorAll('button')) button.disabled = false
+})

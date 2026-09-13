@@ -25,8 +25,33 @@ function listPage({ inputs, buttons }) {
       return []
     },
   }
-  vm.runInNewContext(source, { document })
+  vm.runInNewContext(source, { document, window: { addEventListener() {} } })
   return detail => listener({ detail })
+}
+
+function startTripPage(form) {
+  let pageshow
+  const window = {
+    addEventListener(event, handler) {
+      if (event === 'pageshow') pageshow = handler
+    },
+  }
+  const document = {
+    addEventListener() {},
+    getElementById(id) { return id === 'start-trip' ? form : null },
+  }
+  vm.runInNewContext(source, { document, window })
+  return persisted => pageshow({ persisted })
+}
+
+function startedTrip() {
+  const classes = new Set(['flex', 'htmx-request'])
+  const button = { disabled: true }
+  return {
+    button,
+    classList: { remove(name) { classes.delete(name) }, contains(name) { return classes.has(name) } },
+    querySelectorAll(selector) { return selector === 'button' ? [button] : [] },
+  }
 }
 
 test('mark done advances only controls still on the revision it was sent with', () => {
@@ -53,4 +78,22 @@ test('a trigger without both revisions changes nothing', () => {
   const advance = listPage({ inputs: [input], buttons: [] })
   advance({ from: '', to: 'r2' })
   assert.equal(input.value, '')
+})
+
+test('a list page restored from the back/forward cache can start another trip', () => {
+  const form = startedTrip()
+  startTripPage(form)(true)
+  assert.equal(form.button.disabled, false)
+  assert.equal(form.classList.contains('htmx-request'), false)
+})
+
+test('a fresh page load leaves Start trip alone', () => {
+  const form = startedTrip()
+  startTripPage(form)(false)
+  assert.equal(form.button.disabled, true)
+  assert.equal(form.classList.contains('htmx-request'), true)
+})
+
+test('pages without Start trip ignore a restore', () => {
+  assert.doesNotThrow(() => startTripPage(null)(true))
 })

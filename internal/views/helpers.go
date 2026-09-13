@@ -128,17 +128,53 @@ func confirmDeleteCard(url, cardID, question, action, detail string) templ.Attri
 	return attrs
 }
 
-// removeTaskAttrs builds the htmx attributes that remove a preparation task
-// through the existing edit endpoint, with the confirm dialog texts.
-func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask) templ.Attributes {
-	vals, _ := json.Marshal(map[string]string{"revision": list.Revision(), "taskId": task.ID, "action": "remove"})
+// preparationSwap builds the htmx attributes shared by every control in the
+// preparation card: post to the preparation endpoint and swap the card. hx-sync
+// drops a second save while one is running, because it would carry the
+// revision the first save replaces.
+func preparationSwap(list packing.PackingList) templ.Attributes {
 	return templ.Attributes{
-		"hx-post":             "/packing-lists/" + list.ID + "/preparation/edit",
-		"hx-vals":             string(vals),
-		"hx-confirm":          "Remove this preparation task?",
-		"data-confirm-action": "Remove task",
-		"data-confirm-detail": "This removes the task from the reusable list.",
+		"hx-post":   "/packing-lists/" + list.ID + "/preparation/edit",
+		"hx-target": "#list-preparation",
+		"hx-swap":   "outerHTML",
+		"hx-sync":   "#list-preparation:drop",
 	}
+}
+
+// removeTaskAttrs builds the Remove button in a task's rename form. It posts
+// that form with action=remove, names the task whose field takes focus once
+// the card is swapped, and sets the confirm dialog texts.
+func removeTaskAttrs(list packing.PackingList, next string) templ.Attributes {
+	vals, _ := json.Marshal(map[string]string{"action": "remove", "next": next})
+	attrs := preparationSwap(list)
+	attrs["hx-vals"] = string(vals)
+	attrs["hx-confirm"] = "Remove this preparation task?"
+	attrs["data-confirm-action"] = "Remove task"
+	attrs["data-confirm-detail"] = "This removes the task from the reusable list."
+	return attrs
+}
+
+// nextTaskID is the task that takes focus when tasks[i] is removed: the one
+// after it, else the one before it, else none.
+func nextTaskID(tasks []packing.PreparationTask, i int) string {
+	switch {
+	case i+1 < len(tasks):
+		return tasks[i+1].ID
+	case i > 0:
+		return tasks[i-1].ID
+	}
+	return ""
+}
+
+// preparationSummary counts done tasks, e.g. "1 of 3 done".
+func preparationSummary(tasks []packing.PreparationTask) string {
+	done := 0
+	for _, task := range tasks {
+		if task.Done {
+			done++
+		}
+	}
+	return fmt.Sprintf("%d of %d done", done, len(tasks))
 }
 
 func groupByParticipant(items []packing.PackingItem) []itemGroup {

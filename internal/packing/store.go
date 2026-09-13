@@ -269,12 +269,18 @@ func (s *Store) GetPackingList(ctx context.Context, id string, userId string) (P
 	if list.Type != "packing-list" || list.DeletedAt != nil {
 		return PackingList{}, ErrNotFound
 	}
-	list.etag = string(res.ETag)
 	list.actor = userId
-	for i := range list.Items {
-		list.Items[i].SourceRevision = list.etag
-	}
+	list.setRevision(string(res.ETag))
 	return list, nil
+}
+
+// setRevision records the list's ETag on the list and on each item, which
+// carries it into item forms.
+func (l *PackingList) setRevision(etag string) {
+	l.etag = etag
+	for i := range l.Items {
+		l.Items[i].SourceRevision = etag
+	}
 }
 
 func (s *Store) DeletePackingList(ctx context.Context, id, user string) error {
@@ -289,48 +295,54 @@ func (s *Store) DeletePackingList(ctx context.Context, id, user string) error {
 	list.DeletedAt = &now
 	return s.SavePackingList(ctx, list)
 }
-func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) error {
+
+// AddItem appends item and returns the saved list. Adds do not conflict: when
+// another write lands first the item is added on top of it. replaced is the
+// revision the save replaced, so a caller showing an older revision knows its
+// view of the list is out of date.
+func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) (saved PackingList, replaced string, err error) {
 	if !validScope(item.Scope, false) {
-		return ErrInvalid
+		return PackingList{}, "", ErrInvalid
 	}
 	for attempt := 0; attempt < 5; attempt++ {
 		list, err := s.GetPackingList(ctx, id, user)
 		if err != nil {
-			return err
+			return PackingList{}, "", err
 		}
+		replaced := list.Revision()
 		list.Items = append(list.Items, item)
-		err = s.SavePackingList(ctx, list)
+		etag, err := s.saveList(ctx, list)
 		if preconditionFailed(err) || errors.Is(err, ErrConflict) {
 			continue
 		}
-		return err
+		if err != nil {
+			return PackingList{}, "", err
+		}
+		list.setRevision(etag)
+		return list, replaced, nil
 	}
-	return ErrConflict
+	return PackingList{}, "", ErrConflict
 }
 
-func (s *Store) RemoveItem(ctx context.Context, id string, userId string, itemId string, revision ...string) error {
-	// get list
-	list, err := s.GetPackingList(ctx, id, userId)
+// RemoveItem removes an item and returns the saved list. The removal is
+// refused when revision is stale (see StaleRevision).
+func (s *Store) RemoveItem(ctx context.Context, id, userID, itemID, revision string) (PackingList, error) {
+	list, err := s.GetPackingList(ctx, id, userID)
 	if err != nil {
-		return err
+		return PackingList{}, err
 	}
-
-	if list.IsShared() && (len(revision) == 0 || revision[0] != list.Revision()) {
-		return ErrConflict
+	if list.StaleRevision(revision) {
+		return PackingList{}, ErrConflict
 	}
-	// remove item
-	err = removeItemById(&list, itemId)
+	if err := removeItemById(&list, itemID); err != nil {
+		return PackingList{}, err
+	}
+	etag, err := s.saveList(ctx, list)
 	if err != nil {
-		return err
+		return PackingList{}, err
 	}
-
-	// save updated list
-	err = s.SavePackingList(ctx, list)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	list.setRevision(etag)
+	return list, nil
 }
 
 func mapPackingList(ctx context.Context, pager *runtime.Pager[azcosmos.QueryItemsResponse]) ([]PackingList, error) {

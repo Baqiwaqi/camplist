@@ -65,7 +65,7 @@ func TestShellTurnsOffHtmxHistoryCache(t *testing.T) {
 
 func TestRemoveTaskReliesOnLayoutCSRFHeader(t *testing.T) {
 	list := packing.NewList("user", "Camping", "")
-	vals := removeTaskAttrs(list, packing.PreparationTask{ID: "task"})["hx-vals"].(string)
+	vals := removeTaskAttrs(list, "task")["hx-vals"].(string)
 	if strings.Contains(vals, "_csrf") || !strings.Contains(vals, `"action":"remove"`) {
 		t.Errorf("remove task values = %s", vals)
 	}

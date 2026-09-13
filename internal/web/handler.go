@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
@@ -40,9 +41,9 @@ type packingStore interface {
 	GetPackingList(context.Context, string, string) (packing.PackingList, error)
 	SavePackingList(context.Context, packing.PackingList) error
 	DeletePackingList(context.Context, string, string) error
-	AddItem(context.Context, string, string, packing.PackingItem) error
-	RemoveItem(context.Context, string, string, string, ...string) error
-	UpdateItem(context.Context, string, string, packing.PackingItem) error
+	AddItem(context.Context, string, string, packing.PackingItem) (packing.PackingList, string, error)
+	RemoveItem(context.Context, string, string, string, string) (packing.PackingList, error)
+	UpdateItem(context.Context, string, string, packing.PackingItem) (packing.PackingList, error)
 	CreatePackingSession(context.Context, string, string, ...string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
@@ -329,6 +330,10 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
+		if isHTMX(r) {
+			render(w, r, views.AddItemForm(form, csrf.Token(r), true))
+			return
+		}
 
 		list, err := h.packingStore.GetPackingList(ctx, listID, userID)
 		if err != nil {
@@ -343,16 +348,33 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 	item := packing.NewItem(form.Name, form.Category)
 	item.Scope = form.Scope
 
-	err = h.packingStore.AddItem(ctx, listID, userID, item)
+	list, replaced, err := h.packingStore.AddItem(ctx, listID, userID, item)
 	if err != nil {
 		log.Printf("add item to packing list: %v", err)
 		storeError(w, err, "Storing item on packing list failed")
 		return
 	}
 
-	http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
+	if !isHTMX(r) {
+		http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
+		return
+	}
+	// Another write landed after the page's revision, so the page is out of
+	// date around the new item: reload it rather than advance its revision.
+	if replaced != form.Revision {
+		w.Header().Set("HX-Refresh", "true")
+		return
+	}
+	added, _ := list.FindItem(item.ID)
+	render(w, r, templ.Join(
+		views.AddItemForm(packing.NewCreateItemForm(listID), csrf.Token(r), true),
+		views.ItemsAppended(listID, []packing.PackingItem{added}),
+		listItemsChanged(list),
+	))
 }
 
+// RemoveItemHandler deletes an item. htmx removes the row itself; the response
+// updates the parts of the page that depend on the items.
 func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 	listID := chi.URLParam(r, "id")
 	itemID := chi.URLParam(r, "itemId")
@@ -363,15 +385,26 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.packingStore.RemoveItem(ctx, listID, userID, itemID, r.Header.Get("X-Camplist-Revision"))
+	list, err := h.packingStore.RemoveItem(ctx, listID, userID, itemID, r.Header.Get("X-Camplist-Revision"))
 	if err != nil {
 		log.Printf("remove item from packing list: %v", err)
 		storeError(w, err, "Removing item off packing list failed")
 		return
 	}
 
-	w.Header().Set("HX-Refresh", "true")
-	w.WriteHeader(http.StatusOK)
+	render(w, r, listItemsChanged(list))
+}
+
+// listItemsChanged is the out-of-band update after an item write on the list
+// page: the item count, empty text, category suggestions and the revision the
+// write made.
+func listItemsChanged(list packing.PackingList) templ.Component {
+	return templ.Join(
+		views.ListSummary(list.Items, true),
+		views.ListEmpty(list.Items, true),
+		views.ListCategories(list.Items, true),
+		views.ListRevision(list, true),
+	)
 }
 
 // Packing Session

@@ -27,11 +27,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `static/offline/` modules. Deletes and access removals keep `hx-confirm`; the layout dialog
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
   on the triggering element supply the label and explanation. Packing updates and the
-  list page's preparation Mark done return fragments; other mutations may
-  redirect or refresh. List-page controls embed the whole list's ETag, so a
-  fragment save there must send `HX-Trigger: list-revision` with the
-  submitted and saved revisions (`static/revision.js`, see
-  `EditPreparationTask`) instead of re-rendering or re-reading. Failed htmx
+  list page's item and preparation controls return fragments; other mutations
+  may redirect or refresh. The list page holds its ETag once in
+  `#list-revision`: `static/revision.js` sends it as the `revision` field or
+  `X-Camplist-Revision` header of every htmx request there, so a fragment save
+  must swap `views.ListRevision(list, true)` out of band with the revision
+  its own write made (see `EditPreparationTask`, `listItemsChanged`). Failed htmx
   requests answer with a user-facing plain-text reason (`http.Error`); the
   layout's error toast (`static/request-error.js`) shows it for statuses under
   500 and offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`).

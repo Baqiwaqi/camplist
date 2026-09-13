@@ -14,14 +14,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (s *fakePackingStore) UpdateItem(_ context.Context, _ string, _ string, item packing.PackingItem) error {
+func (s *fakePackingStore) UpdateItem(_ context.Context, _ string, _ string, item packing.PackingItem) (packing.PackingList, error) {
 	for i := range s.list.Items {
 		if s.list.Items[i].ID == item.ID {
 			s.list.Items[i].Name = item.Name
 			s.list.Items[i].Category = item.Category
 		}
 	}
-	return nil
+	return s.list, nil
 }
 
 func withItemRoute(r *http.Request, listID, itemID string) *http.Request {

@@ -71,6 +71,13 @@ type PackingItem struct {
 // Revision identifies the template version shown to the camper.
 func (l PackingList) Revision() string { return l.etag }
 
+// StaleRevision reports whether a write made from revision must be refused. A
+// shared list only accepts writes from its current revision; a private list
+// checks the revision when one is given.
+func (l PackingList) StaleRevision(revision string) bool {
+	return (l.IsShared() || revision != "") && revision != l.etag
+}
+
 func (s PackingSession) TemplateID() string {
 	if s.ReviewTargetID != "" {
 		return s.ReviewTargetID

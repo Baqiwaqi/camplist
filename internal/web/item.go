@@ -9,6 +9,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/views"
 
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
@@ -57,7 +58,7 @@ func (h *handler) ItemRowHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isHTMX(r) {
-		render(w, r, views.FocusedItemRow(list.ID, item, csrf.Token(r)))
+		render(w, r, views.FocusedItemRow(list.ID, item))
 		return
 	}
 	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
@@ -90,8 +91,8 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if list.IsShared() && form.Revision != list.Revision() {
-		form.Error = []string{"This list changed. Cancel and reopen the item to review the current version."}
+	if list.StaleRevision(form.Revision) {
+		form.Error = []string{"This list changed. Reload the list to review the current version."}
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
@@ -99,7 +100,8 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 	item.Name = form.Name
 	item.Category = form.Category
 	item.Scope = form.Scope
-	if err := h.packingStore.UpdateItem(r.Context(), list.ID, userID, item); err != nil {
+	saved, err := h.packingStore.UpdateItem(r.Context(), list.ID, userID, item)
+	if err != nil {
 		log.Printf("update item: %v", err)
 		_, message := storeErrorDetails(err, "Saving the item failed")
 		form.Error = []string{message}
@@ -107,8 +109,8 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isHTMX(r) {
-		// Read the committed row so subsequent actions use its current ETag.
-		h.ItemRowHandler(w, r)
+		item, _ = saved.FindItem(item.ID)
+		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved)))
 		return
 	}
 	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
@@ -116,7 +118,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) renderItemForm(w http.ResponseWriter, r *http.Request, list packing.PackingList, item packing.PackingItem, form packing.CreateItemForm) {
 	if isHTMX(r) {
-		render(w, r, views.ItemEditRow(list.ID, item.ID, form, csrf.Token(r)))
+		render(w, r, views.ItemEditRow(list.ID, item.ID, form))
 		return
 	}
 	render(w, r, views.EditItemPage(list, form, csrf.Token(r)))

@@ -2,6 +2,7 @@ package packing
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"camplist/internal/testsupport"
@@ -17,7 +18,7 @@ func TestUpdateItemChangesNameAndCategory(t *testing.T) {
 	}
 
 	edited := PackingItem{ID: list.Items[1].ID, Name: "Gas stove", Category: "Cooking"}
-	if err := store.UpdateItem(ctx, list.ID, "user", edited); err != nil {
+	if _, err := store.UpdateItem(ctx, list.ID, "user", edited); err != nil {
 		t.Fatal(err)
 	}
 
@@ -32,7 +33,46 @@ func TestUpdateItemChangesNameAndCategory(t *testing.T) {
 	if first, _ := saved.FindItem(list.Items[0].ID); first.Name != "Tent" || first.Category != "Shelter" {
 		t.Fatalf("untouched item changed: %+v", first)
 	}
-	if err := store.UpdateItem(ctx, list.ID, "user", PackingItem{ID: "missing", Name: "Nothing"}); err == nil {
+	if _, err := store.UpdateItem(ctx, list.ID, "user", PackingItem{ID: "missing", Name: "Nothing"}); err == nil {
 		t.Fatal("expected an error for an unknown item")
+	}
+}
+
+// Item writes return the saved list. A revision given for a private list is
+// checked like a shared list's; adds never conflict but report the revision
+// they replaced.
+func TestItemWritesReturnTheSavedRevision(t *testing.T) {
+	ctx := context.Background()
+	store := NewStore(testsupport.NewDocuments())
+	list := NewList("user", "Weekend", "")
+	list.Items = []PackingItem{NewItem("Tent", ""), NewItem("Stove", "")}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	opened, _ := store.GetPackingList(ctx, list.ID, "user")
+
+	added, replaced, err := store.AddItem(ctx, list.ID, "user", NewItem("Socks", ""))
+	if err != nil || replaced != opened.Revision() || len(added.Items) != 3 || added.Revision() == opened.Revision() || added.Items[0].SourceRevision != added.Revision() {
+		t.Fatalf("add: %v replaced=%q items=%d", err, replaced, len(added.Items))
+	}
+	if current, _ := store.GetPackingList(ctx, list.ID, "user"); current.Revision() != added.Revision() {
+		t.Fatalf("add returned revision %q, stored %q", added.Revision(), current.Revision())
+	}
+
+	if _, err := store.RemoveItem(ctx, list.ID, "user", list.Items[0].ID, opened.Revision()); !errors.Is(err, ErrConflict) {
+		t.Fatalf("remove from a stale revision: %v", err)
+	}
+	removed, err := store.RemoveItem(ctx, list.ID, "user", list.Items[0].ID, added.Revision())
+	if err != nil || len(removed.Items) != 2 {
+		t.Fatalf("remove: %v %+v", err, removed.Items)
+	}
+
+	stale := removed.Items[0]
+	stale.SourceRevision = added.Revision()
+	if _, err := store.UpdateItem(ctx, list.ID, "user", stale); !errors.Is(err, ErrConflict) {
+		t.Fatalf("update from a stale revision: %v", err)
+	}
+	if _, err := store.RemoveItem(ctx, list.ID, "user", list.Items[1].ID, ""); err != nil {
+		t.Fatalf("remove without a revision: %v", err)
 	}
 }

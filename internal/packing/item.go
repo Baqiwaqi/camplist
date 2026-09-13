@@ -15,25 +15,32 @@ func (l PackingList) FindItem(id string) (PackingItem, bool) {
 	return PackingItem{}, false
 }
 
-// UpdateItem renames an item and changes its category. Other fields stay as stored.
-func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, item PackingItem) error {
+// UpdateItem renames an item and changes its category and returns the saved
+// list. Other fields stay as stored. The update is refused when the item's
+// SourceRevision is stale (see StaleRevision).
+func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, item PackingItem) (PackingList, error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
-		return err
+		return PackingList{}, err
 	}
-	if list.IsShared() && item.SourceRevision != list.Revision() {
-		return ErrConflict
+	if list.StaleRevision(item.SourceRevision) {
+		return PackingList{}, ErrConflict
 	}
 	index, err := getItemIndexById(list, item.ID)
 	if err != nil {
-		return err
+		return PackingList{}, err
 	}
 	if !validScope(item.Scope, false) {
-		return ErrInvalid
+		return PackingList{}, ErrInvalid
 	}
 	list.Items[index].Scope = item.Scope
 	list.Items[index].Name = item.Name
 	list.Items[index].Category = item.Category
 	list.Items[index].UpdatedAt = time.Now().UTC()
-	return s.SavePackingList(ctx, list)
+	etag, err := s.saveList(ctx, list)
+	if err != nil {
+		return PackingList{}, err
+	}
+	list.setRevision(etag)
+	return list, nil
 }

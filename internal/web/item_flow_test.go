@@ -129,6 +129,10 @@ func TestEditItemThroughRouter(t *testing.T) {
 	for name, value := range headers {
 		req.Header.Set(name, value)
 	}
+	// The CSRF header comes from Layout's body, and static/revision.js sends
+	// the list revision the save swapped into the page.
+	req.Header.Set("X-CSRF-Token", html.UnescapeString(token[1]))
+	req.Header.Set("X-Camplist-Revision", listRevision(t, row))
 	req.Header.Set("Origin", srv.URL)
 	req.Header.Set("Referer", srv.URL+"/")
 	req.Header.Set("HX-Request", "true")

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"camplist/internal/packing"
 
@@ -46,8 +45,7 @@ type itemGroup struct {
 }
 
 // groupByCategory groups items by category in order of first use. Items without
-// a category join an "Other" category when there is one, and otherwise come
-// last, labelled "Other" only when other groups exist.
+// a category come last and are labelled "Other" only when other groups exist.
 func groupByCategory(items []packing.PackingItem) []itemGroup {
 	index := map[string]int{}
 	var groups []itemGroup
@@ -66,12 +64,6 @@ func groupByCategory(items []packing.PackingItem) []itemGroup {
 		groups[i].Items = append(groups[i].Items, item)
 	}
 	if len(other) > 0 {
-		for i := range groups {
-			if strings.EqualFold(strings.TrimSpace(groups[i].Name), "Other") {
-				groups[i].Items = append(groups[i].Items, other...)
-				return groups
-			}
-		}
 		name := ""
 		if len(groups) > 0 {
 			name = "Other"

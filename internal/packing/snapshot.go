@@ -24,7 +24,7 @@ type ChecklistSnapshot struct {
 func (s PackingSession) Snapshot(actor string) SessionSnapshot {
 	items := append([]PackingItem{}, s.List.Items...)
 	for _, task := range s.List.Tasks {
-		items = append(items, PackingItem{ID: task.ID, Kind: "task", Name: task.Name, Checked: task.Done, Revision: task.Revision, Scope: task.Scope, Assignee: task.Assignee, AssigneeName: task.AssigneeName, ChangedBy: task.ChangedBy})
+		items = append(items, PackingItem{ID: task.ID, Kind: "task", Name: task.Name, Checked: task.Done, Revision: task.Revision, Scope: task.Scope, Assignee: task.Assignee, AssigneeName: task.AssigneeName, ChangedBy: task.ChangedBy, ChangedByID: task.ChangedByID})
 	}
 	return SessionSnapshot{Name: s.DisplayName(), ID: s.ID, UserID: s.UserID, AccountID: actor, Shared: s.IsShared(), CreatedAt: s.CreatedAt, List: ChecklistSnapshot{ID: s.List.ID, Name: s.List.Name, Items: items}, Categories: DefaultCategories}
 }

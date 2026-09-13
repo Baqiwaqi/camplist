@@ -59,3 +59,23 @@ func TestTripsOverviewLinksToSeparateArchive(t *testing.T) {
 		}
 	}
 }
+
+func TestTripCardShowsStartDateOnlyWhenTheNameLacksIt(t *testing.T) {
+	named := packing.NewPackingSession(packing.NewList("user", "Camping", ""))
+	date := named.CreatedAt.Format("Jan 2, 2006")
+	named.Name = "Camping – " + date
+	renamed := packing.NewPackingSession(packing.NewList("user", "Camping", ""))
+	renamed.Name = "Lake weekend"
+	for _, tc := range []struct {
+		session packing.PackingSession
+		started bool
+	}{{named, false}, {renamed, true}} {
+		var out bytes.Buffer
+		if err := PackingSessionCards([]packing.PackingSession{tc.session}, false, "token").Render(context.Background(), &out); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Contains(out.String(), "Started <time"); got != tc.started {
+			t.Errorf("%q: shows Started = %v, want %v", tc.session.Name, got, tc.started)
+		}
+	}
+}

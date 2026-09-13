@@ -44,7 +44,7 @@ templ SharingPage(view packing.SharingView, link string, token string, trips []p
 				<section class="card mt-8">
 					<h2>Invitations and requests</h2>
 					for _, invitation:= range view.Sharing.Invitations {
-						@InvitationRow(view, invitation, trips, invitation.Hash==approving && invitation.Status=="pending" && len(trips)>0, token)
+						@InvitationRow(view, invitation, trips, invitation.Hash == approving && invitation.Status == "pending" && len(trips) > 0, token)
 					}
 				</section>
 				<section class="card mt-8">

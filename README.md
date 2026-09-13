@@ -162,7 +162,9 @@ GitHub Actions workflow, Azure resources, costs, secrets, and rollback commands.
 
 Open **Sharing and access** on a list or session to create a copyable invitation.
 The recipient signs in with Google and requests access; the owner approves their
-account. Share reusable templates and individual trips separately. Template
+account. Share reusable templates and individual trips separately; approving a
+list request also offers to share that list's current trips with the same
+account. Template
 editors can change equipment/preparation and create their own private trips.
 Trip packers can check equipment without gaining access to its template.
 

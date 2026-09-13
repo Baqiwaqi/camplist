@@ -433,6 +433,14 @@
     @apply font-bold text-pine-700;
   }
 
+  /* ---------- trip cards (static/trip-cards.js) ---------- */
+
+  /* An archive, restore or delete for this card is in flight; its button
+     sits in the closed menu, so the card carries the feedback. */
+  [data-saved-trip]:has(.htmx-request) {
+    @apply opacity-60 transition-opacity;
+  }
+
   /* ---------- error banner and toast ---------- */
 
   /* The only semantic colour: a solid red block with a display heading.

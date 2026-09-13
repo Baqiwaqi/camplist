@@ -20,13 +20,42 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 					@TripArchiveLink(archivedCount, false)
 				</div>
 			</div>
-			if len(sessions) == 0 {
-				<div class="card">
-					<p class="text-muted">No trips in progress. <a href="/packing-lists">Choose a list</a> to start packing.</p>
-				</div>
-			}
+			@TripsEmptyState(false, len(sessions) == 0, false)
 			@PackingSessionCards(sessions, false, csrfToken)
 		</section>
+	}
+}
+
+// TripsEmptyState stands in for the trip cards. It stays in the page, hidden
+// while cards exist, so removing the last card can reveal it out of band and
+// move focus to it.
+templ TripsEmptyState(archive bool, show bool, oob bool) {
+	<div
+		id="trips-empty"
+		class="card"
+		tabindex="-1"
+		if !show {
+			hidden
+		}
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		if archive {
+			<p class="text-muted">No archived trips yet.</p>
+		} else {
+			<p class="text-muted">No trips in progress. <a href="/packing-lists">Choose a list</a> to start packing.</p>
+		}
+	</div>
+}
+
+// TripCardRemoved answers an archive, restore or delete whose swap removed
+// the trip's card: the page's empty state and, on the overview, the archive
+// count follow out of band. remaining counts the cards left on that page.
+templ TripCardRemoved(archive bool, remaining int, archivedCount int) {
+	@TripsEmptyState(archive, remaining == 0, true)
+	if !archive {
+		@TripArchiveLink(archivedCount, true)
 	}
 }
 
@@ -56,11 +85,7 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 					<a class="btn btn-secondary max-sm:flex-auto" href="/trips">Current trips</a>
 				</div>
 			</div>
-			if len(sessions) == 0 {
-				<div class="card">
-					<p class="text-muted">No archived trips yet.</p>
-				</div>
-			}
+			@TripsEmptyState(true, len(sessions) == 0, false)
 			@PackingSessionCards(sessions, true, csrfToken)
 		</section>
 	}
@@ -95,7 +120,7 @@ templ PackingSessionCards(sessions []packing.PackingSession, archived bool, csrf
 								@MenuButton("Restore trip", false, tripCardAction("/trips/"+s.ID+"/restore"))
 							}
 							@MenuSeparator()
-							@MenuButton("Delete trip", true, deleteTripAttrs(s.ID))
+							@MenuButton("Delete trip", true, deleteTripAttrs(s.ID, archived))
 						}
 					}
 				</div>

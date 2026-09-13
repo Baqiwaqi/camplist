@@ -524,6 +524,5 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The trip card's delete swap removes just that card.
-	w.WriteHeader(http.StatusOK)
+	h.tripCardRemoved(w, r, userID, r.URL.Query().Get("view") == "archive")
 }

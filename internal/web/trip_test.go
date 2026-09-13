@@ -87,6 +87,9 @@ func sharedTrip(t *testing.T) (*packing.Store, packing.PackingSession) {
 	return store, trip
 }
 
+// visibleEmptyState is the out-of-band empty state without its hidden attribute.
+const visibleEmptyState = `<div id="trips-empty" class="card" tabindex="-1" hx-swap-oob="true">`
+
 // tripRequest sends method to path as userID with the trip id route param.
 func tripRequest(method, path, userID, tripID string) *http.Request {
 	r := httptest.NewRequest(method, path, nil)
@@ -100,7 +103,7 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	h := handler{packingStore: store}
 	deleteAs := func(userID, tripID string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
-		h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+tripID, userID, tripID))
+		h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+tripID+"?view=archive", userID, tripID))
 		return w
 	}
 
@@ -115,8 +118,11 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	}
 
 	w := deleteAs("owner", trip.ID)
-	if w.Code != http.StatusOK || w.Header().Get("HX-Refresh") != "" || w.Body.Len() != 0 {
-		t.Fatalf("owner delete got %d refresh=%q body=%q, want an empty 200 for the card swap", w.Code, w.Header().Get("HX-Refresh"), w.Body.String())
+	if w.Code != http.StatusOK || w.Header().Get("HX-Refresh") != "" {
+		t.Fatalf("owner delete got %d refresh=%q, want 200 without a page refresh", w.Code, w.Header().Get("HX-Refresh"))
+	}
+	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") || strings.Contains(body, "trip-archive-link") {
+		t.Fatalf("deleting the last archive card does not reveal the archive's empty state: %s", body)
 	}
 	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err == nil {
 		t.Fatal("owner delete left the trip in storage")
@@ -151,8 +157,8 @@ func TestArchiveAndRestoreTripAreOwnerOnlyAndHideItForMembers(t *testing.T) {
 		t.Fatalf("owner archive got %d: %s", w.Code, w.Body.String())
 	}
 	body := w.Body.String()
-	if !strings.Contains(body, `id="trip-archive-link"`) || !strings.Contains(body, `hx-swap-oob="true"`) || !strings.Contains(body, "Archive (1)") {
-		t.Fatalf("archive response does not update the archive count: %s", body)
+	if !strings.Contains(body, `id="trip-archive-link"`) || !strings.Contains(body, "Archive (1)") || !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No trips in progress.") {
+		t.Fatalf("archiving the last trip does not update the archive count and empty state: %s", body)
 	}
 	if !archivedFor("owner") || !archivedFor("member") {
 		t.Fatal("archived trip is still active for the owner or the member")
@@ -168,6 +174,9 @@ func TestArchiveAndRestoreTripAreOwnerOnlyAndHideItForMembers(t *testing.T) {
 	h.RestoreTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/restore", "owner", trip.ID))
 	if w.Code != http.StatusOK || archivedFor("owner") || archivedFor("member") {
 		t.Fatalf("owner restore got %d; want the trip active again for everyone", w.Code)
+	}
+	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") {
+		t.Fatalf("restoring the last archived trip does not reveal the archive's empty state: %s", body)
 	}
 
 	w = httptest.NewRecorder()

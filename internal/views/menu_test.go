@@ -33,6 +33,8 @@ func TestSessionCardMenuHoldsLinksAndActions(t *testing.T) {
 		`hx-post="/trips/` + session.ID + `/archive"`,
 		`hx-target="closest [data-saved-trip]"`,
 		`hx-swap="delete"`,
+		`hx-sync="closest [data-saved-trip]:drop"`,
+		`<div id="trips-empty" class="card" tabindex="-1" hidden>`,
 		`class="menu-item menu-item-danger"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -129,6 +131,9 @@ func TestArchivePageOffersRestoreOnlyForManuallyArchivedTrips(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := out.String()
+	if !strings.Contains(body, `hx-delete="/trips/`+manual.ID+`?view=archive"`) {
+		t.Error("archive page delete does not ask for the archive's empty state")
+	}
 	if !strings.Contains(body, `hx-post="/trips/`+manual.ID+`/restore"`) {
 		t.Error("manually archived trip has no Restore")
 	}

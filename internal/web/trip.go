@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/csrf"
+	"log"
 	"net/http"
 	"time"
 )
@@ -24,8 +25,7 @@ func (h *handler) RenameTrip(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/trips/"+id, http.StatusSeeOther)
 }
 
-// ArchiveTrip archives a trip from its card. The card's swap removes it from
-// the trips overview; the out-of-band link keeps the archive count current.
+// ArchiveTrip archives a trip from its card on the trips overview.
 func (h *handler) ArchiveTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
@@ -37,17 +37,10 @@ func (h *handler) ArchiveTrip(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not archive trip")
 		return
 	}
-	sessions, err := h.packingStore.ListPackingSession(ctx, userID)
-	if err != nil {
-		storeError(w, err, "Could not count archived trips")
-		return
-	}
-	_, archived := packing.PartitionSessions(sessions, time.Now().UTC())
-	render(w, r, views.TripArchiveLink(len(archived), true))
+	h.tripCardRemoved(w, r, userID, false)
 }
 
-// RestoreTrip undoes a manual archive; the card's swap removes it from the
-// archive page.
+// RestoreTrip undoes a manual archive from its card on the archive page.
 func (h *handler) RestoreTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
@@ -59,7 +52,26 @@ func (h *handler) RestoreTrip(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Could not restore trip")
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	h.tripCardRemoved(w, r, userID, true)
+}
+
+// tripCardRemoved answers a trip card action after the change is saved. The
+// card's own swap removes it; this sends the page's empty state and archive
+// count out of band. If the recount fails the change still stands, so the
+// card goes and only those extras stay stale.
+func (h *handler) tripCardRemoved(w http.ResponseWriter, r *http.Request, userID string, archivePage bool) {
+	sessions, err := h.packingStore.ListPackingSession(r.Context(), userID)
+	if err != nil {
+		log.Printf("recount trips after card action: %v", err)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	active, archived := packing.PartitionSessions(sessions, time.Now().UTC())
+	remaining := len(active)
+	if archivePage {
+		remaining = len(archived)
+	}
+	render(w, r, views.TripCardRemoved(archivePage, remaining, len(archived)))
 }
 
 func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {

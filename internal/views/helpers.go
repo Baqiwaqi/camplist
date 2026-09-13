@@ -131,19 +131,28 @@ func confirmDeleteCard(url, cardID, question, action, detail string) templ.Attri
 // tripCardAction posts an action from a trip card and removes the card, for
 // actions that move the trip between the overview and the archive.
 func tripCardAction(url string) templ.Attributes {
-	return templ.Attributes{
-		"hx-post":   url,
-		"hx-target": "closest [data-saved-trip]",
-		"hx-swap":   "delete",
-	}
+	return removesTripCard(templ.Attributes{
+		"hx-post": url,
+	})
 }
 
-// deleteTripAttrs deletes a trip from its card and removes only that card,
-// so the rest of the trips page keeps its state.
-func deleteTripAttrs(tripID string) templ.Attributes {
-	attrs := confirmDelete("/trips/"+tripID, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays.")
+// deleteTripAttrs deletes a trip from its card. On the archive page the
+// request says so, so the response reveals that page's empty state.
+func deleteTripAttrs(tripID string, archived bool) templ.Attributes {
+	url := "/trips/" + tripID
+	if archived {
+		url += "?view=archive"
+	}
+	return removesTripCard(confirmDelete(url, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
+}
+
+// removesTripCard swaps away only the action's own card, so the rest of the
+// page keeps its state, and drops a second action on that card while one is
+// in flight. static/trip-cards.js moves focus off the removed card.
+func removesTripCard(attrs templ.Attributes) templ.Attributes {
 	attrs["hx-target"] = "closest [data-saved-trip]"
 	attrs["hx-swap"] = "delete"
+	attrs["hx-sync"] = "closest [data-saved-trip]:drop"
 	return attrs
 }
 

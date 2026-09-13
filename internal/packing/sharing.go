@@ -417,3 +417,115 @@ func (s *Store) references(ctx context.Context, actor, kind string) ([]sharedRef
 	}
 	return refs, nil
 }
+
+// ListTrips returns the owner's current (unarchived) trips started from a list,
+// newest first. These are the trips offered when approving a list request.
+func (s *Store) ListTrips(ctx context.Context, listID, actor string) ([]PackingSession, error) {
+	trips, err := s.ownedListTrips(ctx, listID, actor)
+	if err != nil {
+		return nil, err
+	}
+	active, _ := PartitionSessions(trips, s.clock())
+	return active, nil
+}
+
+func (s *Store) ownedListTrips(ctx context.Context, listID, actor string) ([]PackingSession, error) {
+	_, head, err := s.resource(ctx, "packing-list", listID, actor)
+	if err != nil {
+		return nil, err
+	}
+	if head.UserID != actor {
+		return nil, ErrForbidden
+	}
+	query := "SELECT * FROM sessions s WHERE s.userId = @userID AND s.type = 'packing-session' AND (NOT IS_DEFINED(s.deletedAt) OR IS_NULL(s.deletedAt))"
+	pager := s.container.NewQueryItemsPager(query, azcosmos.NewPartitionKeyString(actor), &azcosmos.QueryOptions{QueryParameters: []azcosmos.QueryParameter{{Name: "@userID", Value: actor}}})
+	sessions, err := mapPackingSessions(ctx, pager)
+	if err != nil {
+		return nil, err
+	}
+	trips := []PackingSession{}
+	for _, trip := range sessions {
+		if trip.UserID == actor && trip.TemplateID() == listID {
+			trips = append(trips, trip)
+		}
+	}
+	return trips, nil
+}
+
+// ApproveInvitationWithTrips approves a list request and also adds the same
+// approved account to the chosen trips started from that list. The owner's
+// approval is the grant, so no separate trip invitation link is needed.
+// The list approval commits first and trips are granted only to an account that
+// is then a list member: a failed trip grant leaves the list shared, and
+// resubmitting is idempotent. A removed member gets no trips from a stale approval.
+func (s *Store) ApproveInvitationWithTrips(ctx context.Context, listID, actor, hash string, tripIDs []string) error {
+	if len(tripIDs) == 0 {
+		return s.DecideInvitation(ctx, "packing-list", listID, actor, hash, true)
+	}
+	trips, err := s.ownedListTrips(ctx, listID, actor)
+	if err != nil {
+		return err
+	}
+	owned := map[string]bool{}
+	for _, trip := range trips {
+		owned[trip.ID] = true
+	}
+	chosen := map[string]bool{}
+	for _, id := range tripIDs {
+		if !owned[id] {
+			return ErrNotFound
+		}
+		chosen[id] = true
+	}
+	if err = s.DecideInvitation(ctx, "packing-list", listID, actor, hash, true); err != nil {
+		return err
+	}
+	_, head, err := s.canonical(ctx, "packing-list", listID, actor)
+	if err != nil {
+		return err
+	}
+	var applicant *Member
+	for _, inv := range head.Sharing.Invitations {
+		if inv.Hash == hash && inv.Status == "approved" && inv.Applicant != nil {
+			applicant = inv.Applicant
+		}
+	}
+	if applicant == nil {
+		return ErrInvalid
+	}
+	if _, ok := head.Sharing.Members[applicant.Subject]; !ok {
+		return ErrInvalid
+	}
+	for id := range chosen {
+		if err = s.addTripMember(ctx, id, actor, *applicant); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// addTripMember mirrors RequestAccess and DecideInvitation for an owner-approved
+// account: the discovery reference first, then membership in one conditional write.
+func (s *Store) addTripMember(ctx context.Context, tripID, owner string, member Member) error {
+	ref := sharedReference{ID: referenceID("packing-session", tripID), UserID: member.Subject, Type: "shared-reference", Kind: "packing-session", ResourceID: tripID, Owner: owner}
+	data, _ := json.Marshal(ref)
+	if _, err := s.container.CreateItem(ctx, azcosmos.NewPartitionKeyString(member.Subject), data, nil); err != nil {
+		var response *azcore.ResponseError
+		if !errors.As(err, &response) || response.StatusCode != 409 {
+			return err
+		}
+	}
+	return s.updateSharing(ctx, "packing-session", tripID, owner, func(sharing *Sharing) error {
+		if _, ok := sharing.Members[member.Subject]; ok {
+			return nil
+		}
+		if len(sharing.Members) >= 20 {
+			return fmt.Errorf("%w: sharing limit reached", ErrInvalid)
+		}
+		if sharing.Members == nil {
+			sharing.Members = map[string]Member{}
+		}
+		sharing.Members[member.Subject] = member
+		return nil
+	})
+}

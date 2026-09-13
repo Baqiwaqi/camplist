@@ -6,7 +6,9 @@ import (
 	"net/url"
 )
 
-templ SharingPage(view packing.SharingView, link string, token string) {
+// SharingPage lists invitations and members. trips are the owner's current trips
+// from a shared list; approving names the invitation whose trip prompt is open.
+templ SharingPage(view packing.SharingView, link string, token string, trips []packing.PackingSession, approving string) {
 	@Layout("Sharing", token) {
 		<section class="max-w-[560px]">
 			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Sharing</p>
@@ -42,24 +44,7 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 				<section class="card mt-8">
 					<h2>Invitations and requests</h2>
 					for _, invitation:= range view.Sharing.Invitations {
-						<div class="item-row">
-							<div>
-								<p class="mb-3">{ invitation.Status } · Expires { invitation.Expires.Format("Jan 2, 2006") }</p>
-								if invitation.Applicant!=nil {
-									<p class="mb-3">{ invitation.Applicant.Name } · { invitation.Applicant.Email }</p>
-									<p class="text-muted mb-3">Google account: { invitation.Applicant.Subject }</p>
-								}
-							</div>
-							if invitation.Status=="pending"||invitation.Status=="open" {
-								<form method="post" action={ "/sharing/" + view.Kind + "/" + view.ID + "/invitations/" + invitation.Hash }>
-									<input type="hidden" name="_csrf" value={ token }/>
-									if invitation.Status=="pending" {
-										<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
-									}
-									<button class="btn btn-secondary" name="decision" value="revoke">Revoke invitation</button>
-								</form>
-							}
-						</div>
+						@InvitationRow(view, invitation, trips, invitation.Hash == approving && invitation.Status == "pending" && len(trips) > 0, token)
 					}
 				</section>
 				<section class="card mt-8">
@@ -81,6 +66,69 @@ templ SharingPage(view packing.SharingView, link string, token string) {
 			}
 		</section>
 	}
+}
+
+// InvitationRow is one invitation. For a list with current trips, approving first
+// swaps in InvitationRow with the trip prompt open, so the owner can also share
+// trips with the same account. Trips stay unshared unless they are ticked.
+templ InvitationRow(view packing.SharingView, invitation packing.Invitation, trips []packing.PackingSession, approving bool, token string) {
+	<div class="item-row" id={ "invitation-" + invitation.Hash }>
+		<div>
+			<p class="mb-3">{ invitation.Status } · Expires { invitation.Expires.Format("Jan 2, 2006") }</p>
+			if invitation.Applicant!=nil {
+				<p class="mb-3">{ invitation.Applicant.Name } · { invitation.Applicant.Email }</p>
+				<p class="text-muted mb-3">Google account: { invitation.Applicant.Subject }</p>
+			}
+		</div>
+		if invitation.Status=="pending"||invitation.Status=="open" {
+			<form class={ templ.KV("basis-full", approving) } method="post" action={ invitationPath(view, invitation) }>
+				<input type="hidden" name="_csrf" value={ token }/>
+				if approving {
+					<fieldset class="grid gap-2 mb-3">
+						<legend class="font-bold mb-2">Also share trips with { applicantName(invitation) }?</legend>
+						<p class="text-muted text-sm">Trips started from this list are shared separately. Leave them unticked to share only the list.</p>
+						for _, trip := range trips {
+							<label class="flex items-center gap-2 min-h-11"><input type="checkbox" name="trip" value={ trip.ID } class="min-h-8 align-middle shrink-0"/><span class="min-w-0 wrap-anywhere">{ trip.DisplayName() }</span></label>
+						}
+					</fieldset>
+					<div class="flex flex-wrap gap-2 max-sm:*:flex-auto">
+						<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
+						<a
+							class="btn btn-secondary"
+							href={ templ.SafeURL("/sharing/" + view.Kind + "/" + view.ID) }
+							hx-get={ string(invitationPath(view, invitation)) }
+							hx-target={ "#invitation-" + invitation.Hash }
+							hx-swap="outerHTML"
+						>Cancel</a>
+					</div>
+				} else {
+					if invitation.Status=="pending" && view.Kind=="packing-list" && len(trips)>0 {
+						<a
+							class="btn btn-primary"
+							href={ invitationPath(view, invitation) + "/approve" }
+							hx-get={ string(invitationPath(view, invitation)) + "/approve" }
+							hx-target={ "#invitation-" + invitation.Hash }
+							hx-swap="outerHTML"
+						>Approve account</a>
+					} else if invitation.Status=="pending" {
+						<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
+					}
+					<button class="btn btn-secondary" name="decision" value="revoke">Revoke invitation</button>
+				}
+			</form>
+		}
+	</div>
+}
+
+func invitationPath(view packing.SharingView, invitation packing.Invitation) templ.SafeURL {
+	return templ.SafeURL("/sharing/" + view.Kind + "/" + view.ID + "/invitations/" + invitation.Hash)
+}
+
+func applicantName(invitation packing.Invitation) string {
+	if invitation.Applicant != nil && invitation.Applicant.Name != "" {
+		return invitation.Applicant.Name
+	}
+	return "this account"
 }
 
 // Invitation pages intentionally load no third-party fonts or scripts.

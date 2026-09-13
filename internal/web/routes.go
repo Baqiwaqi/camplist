@@ -58,6 +58,8 @@ func Routes(cfg Config) *chi.Mux {
 		r.Post("/join/{owner}/{kind}/{id}/{token}", h.RequestAccess)
 		r.Get("/sharing/{kind}/{id}", h.SharingPage)
 		r.Post("/sharing/{kind}/{id}/invitations", h.CreateInvitation)
+		r.Get("/sharing/{kind}/{id}/invitations/{hash}", h.InvitationRow)
+		r.Get("/sharing/{kind}/{id}/invitations/{hash}/approve", h.ApproveInvitationPage)
 		r.Post("/sharing/{kind}/{id}/invitations/{hash}", h.DecideInvitation)
 		r.Post("/sharing/{kind}/{id}/members/{subject}/remove", h.RemoveMember)
 		r.Get("/packing-lists", h.MainPage)

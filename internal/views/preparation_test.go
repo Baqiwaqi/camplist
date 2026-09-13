@@ -32,6 +32,10 @@ func TestPreparationRowsToggleRenameAndRemove(t *testing.T) {
 		`hx-post="/packing-lists/` + list.ID + `/preparation/edit"`,
 		`data-confirm-action="Remove task"`,
 		`id="task-fuel" name="name" value="Buy fuel"`,
+		`<ul id="preparation-tasks">`,
+		`method="post" action="/packing-lists/` + list.ID + `/preparation/edit" hx-post="/packing-lists/` + list.ID + `/preparation/edit" hx-target="#preparation-tasks" hx-swap="outerHTML" hx-sync="#preparation-tasks:drop"`,
+		`id="task-done-fuel"`,
+		`<script src="/static/revision.js" defer></script>`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("preparation card missing %q", want)

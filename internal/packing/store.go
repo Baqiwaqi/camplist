@@ -209,6 +209,12 @@ func (s *Store) GetPackingLists(ctx context.Context, userID string) ([]PackingLi
 }
 
 func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {
+	_, err := s.saveList(ctx, list)
+	return err
+}
+
+// saveList writes the list and returns the ETag of that write.
+func (s *Store) saveList(ctx context.Context, list PackingList) (string, error) {
 	if list.etag != "" {
 		actor := list.actor
 		if actor == "" {
@@ -216,13 +222,13 @@ func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {
 		}
 		current, err := s.GetPackingList(ctx, list.ID, actor)
 		if err != nil {
-			return err
+			return "", err
 		}
 		if current.UserID != list.UserID {
-			return ErrForbidden
+			return "", ErrForbidden
 		}
 		if current.etag != list.etag {
-			return ErrConflict
+			return "", ErrConflict
 		}
 		list.Sharing = current.Sharing
 	}
@@ -232,20 +238,21 @@ func (s *Store) SavePackingList(ctx context.Context, list PackingList) error {
 
 	bytes, err := json.Marshal(list)
 	if err != nil {
-		return err
+		return "", err
 	}
 
+	var res azcosmos.ItemResponse
 	if list.etag == "" {
-		_, err = s.container.CreateItem(ctx, pk, bytes, nil)
+		res, err = s.container.CreateItem(ctx, pk, bytes, nil)
 	} else {
 		etag := azcore.ETag(list.etag)
-		_, err = s.container.ReplaceItem(ctx, pk, list.ID, bytes, &azcosmos.ItemOptions{IfMatchEtag: &etag})
+		res, err = s.container.ReplaceItem(ctx, pk, list.ID, bytes, &azcosmos.ItemOptions{IfMatchEtag: &etag})
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return string(res.ETag), nil
 }
 
 func (s *Store) GetPackingList(ctx context.Context, id string, userId string) (PackingList, error) {

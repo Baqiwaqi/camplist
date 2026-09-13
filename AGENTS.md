@@ -26,8 +26,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   element that needs it (menu, error toast, confirm dialog); packing persistence/sync lives in the explicit
   `static/offline/` modules. Deletes keep `hx-confirm`; the dialog in the layout
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
-  on the button supply the label and explanation. Packing updates return
-  a checklist fragment; other mutations may redirect or refresh.
+  on the button supply the label and explanation. Packing updates and the
+  list page's preparation Mark done return fragments; other mutations may
+  redirect or refresh. List-page controls embed the whole list's ETag, so a
+  fragment save there must send `HX-Trigger: list-revision` with the
+  submitted and saved revisions (`static/revision.js`, see
+  `EditPreparationTask`) instead of re-rendering or re-reading.
 - Reusable dropdown: `views.Menu(label)` (compact, for card rows) and
   `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with

@@ -21,7 +21,7 @@ import (
 type packingStore interface {
 	RenameTrip(context.Context, string, string, string) (packing.PackingSession, error)
 	SetSessionPreparationTask(context.Context, string, string, string, bool, int64) (packing.PackingSession, error)
-	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) error
+	EditPreparationTask(context.Context, string, string, packing.PreparationTask, bool, string) (packing.PackingList, error)
 	GetSharing(context.Context, string, string, string) (packing.SharingView, error)
 	CreateInvitation(context.Context, string, string, string) (packing.InvitationLink, error)
 	InvitationStatus(context.Context, packing.InvitationLink, string) (string, error)

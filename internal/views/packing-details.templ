@@ -75,11 +75,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				if len(list.Tasks) == 0 {
 					<p class="text-muted mb-3">No tasks yet.</p>
 				} else {
-					<ul>
-						for _, task := range list.Tasks {
-							@PreparationTaskRow(list, task, csrfToken)
-						}
-					</ul>
+					@PreparationTasks(list, csrfToken)
 				}
 				<form class="flex flex-wrap items-end gap-3 my-3" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
 					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
@@ -101,13 +97,33 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 	}
 }
 
+// PreparationTasks is the task list on the reusable list page. Mark done swaps
+// only this list, because every row carries the list revision the toggle
+// just changed; static/revision.js advances the other controls on the page.
+templ PreparationTasks(list packing.PackingList, csrfToken string) {
+	<ul id="preparation-tasks">
+		for _, task := range list.Tasks {
+			@PreparationTaskRow(list, task, csrfToken)
+		}
+	</ul>
+}
+
 // PreparationTaskRow is one task on the reusable list. Normally it is a
 // checklist row that toggles done like a packing row; while the card is in
 // edit mode it becomes a rename field with Save and Remove. Everything posts
 // to the existing preparation endpoint.
 templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string) {
 	<li class="item-row py-0">
-		<form class="pack-form w-full" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" } x-show="!editing">
+		<form
+			class="pack-form w-full"
+			method="post"
+			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			hx-post={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			hx-target="#preparation-tasks"
+			hx-swap="outerHTML"
+			hx-sync="#preparation-tasks:drop"
+			x-show="!editing"
+		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			<input type="hidden" name="taskId" value={ task.ID }/>
@@ -115,7 +131,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="scope" value={ task.Scope }/>
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
-			<button type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
+			<button id={ "task-done-" + task.ID } type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
 				<span class="tick" aria-hidden="true"></span>
 				<span class="pack-name">{ task.Name }</span>
 				<span class="pack-action">

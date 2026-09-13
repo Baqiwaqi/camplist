@@ -116,9 +116,16 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if isHTMX(r) {
 		// Swap in a fresh form and the updated cards instead of reloading.
-		session, list, available, _, ok := h.loadReview(w, r)
+		session, list, available, recoverable, ok := h.loadReview(w, r)
 		if !ok {
 			return
+		}
+		if !available && message == "" && entry.Action != packing.ReviewObserve {
+			// The page has no apply controls without the list, so do not ask for them.
+			saved = "Saved “" + name + "”. The list this trip came from is unavailable, so this change can't be applied right now."
+			if recoverable {
+				saved += " Recover the list below to apply it."
+			}
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, saved, message, apply, csrf.Token(r)))

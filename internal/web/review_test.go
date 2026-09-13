@@ -362,6 +362,25 @@ func TestReviewPageShowsNoApplyStatusWhenTheListIsUnavailable(t *testing.T) {
 	}
 }
 
+func TestSaveWhileTheListIsUnavailableSaysTheChangeCannotBeApplied(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	if err := store.DeletePackingList(context.Background(), list.ID, "user"); err != nil {
+		t.Fatal(err)
+	}
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"compass"}, "name": {"Compass"}, "forgotten": {"true"}, "action": {"add"}}), session.ID, "")
+	r.Header.Set("HX-Request", "true")
+	w := httptest.NewRecorder()
+	h.AddReviewHandler(w, r)
+	body := w.Body.String()
+	want := "Saved “Compass”. The list this trip came from is unavailable, so this change can&#39;t be applied right now. Recover the list below to apply it."
+	if w.Code != http.StatusOK || !strings.Contains(body, want) {
+		t.Fatalf("missing unavailable confirmation %q: %d %s", want, w.Code, body)
+	}
+	if strings.Contains(body, "Not applied yet") {
+		t.Error("unavailable list still tells the user to select and apply the change")
+	}
+}
+
 func TestSaveAndApplyNowKeepsConflictHandling(t *testing.T) {
 	for _, htmx := range []bool{true, false} {
 		t.Run(fmt.Sprint(htmx), func(t *testing.T) {

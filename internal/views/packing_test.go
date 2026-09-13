@@ -18,6 +18,12 @@ func TestListDeleteURL(t *testing.T) {
 	if !strings.Contains(out.String(), `hx-delete="/packing-lists/`+list.ID+`"`) {
 		t.Fatal("delete URL does not match route")
 	}
+	card := `id="` + PackingListCardID(list.ID) + `"`
+	for _, want := range []string{card, `hx-target="#` + PackingListCardID(list.ID) + `"`, `hx-swap="delete"`, `hx-sync="this:drop"`, `id="packing-lists-empty"`} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("lists page missing %q for in-place delete", want)
+		}
+	}
 }
 
 func TestSessionsCanBeReopened(t *testing.T) {

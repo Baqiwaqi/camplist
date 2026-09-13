@@ -1,5 +1,7 @@
 package views
 
+import "camplist/internal/packing"
+
 // CategoryPicker is the category field on item forms: a combobox shaped like
 // the Pines UI one that offers options (the default categories, the ones on
 // this list and the camper's remembered ones), filters them while typing and
@@ -45,7 +47,7 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 		/>
 		<datalist id={ optionsID }>
 			for _, option := range options {
-				<option value={ option }></option>
+				<option value={ option } data-default?={ packing.IsDefaultCategory(option) }></option>
 			}
 		</datalist>
 		<ul

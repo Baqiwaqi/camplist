@@ -329,7 +329,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 
 	form.Initial = false
 	form.Name = strings.TrimSpace(form.Name)
-	form.Category = packing.MatchCategory(form.Category, h.categorySuggestions(ctx, userID, nil))
+	form.Category = packing.MatchCategory(form.Category)
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs

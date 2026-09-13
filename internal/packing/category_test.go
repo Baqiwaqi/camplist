@@ -17,10 +17,9 @@ func TestCategorySuggestionsStartWithDefaultsAndDropDuplicates(t *testing.T) {
 	}
 }
 
-func TestMatchCategoryAdoptsSuggestionSpelling(t *testing.T) {
-	suggestions := packing.CategorySuggestions([]string{"Tarps"})
-	for typed, want := range map[string]string{" kitchen AND cooking ": "Kitchen and cooking", "tarps": "Tarps", " Fishing ": "Fishing", "": ""} {
-		if got := packing.MatchCategory(typed, suggestions); got != want {
+func TestMatchCategoryAdoptsDefaultSpellingOnly(t *testing.T) {
+	for typed, want := range map[string]string{" kitchen AND cooking ": "Kitchen and cooking", " tarps": "tarps", " FISHING ": "FISHING", "": ""} {
+		if got := packing.MatchCategory(typed); got != want {
 			t.Errorf("MatchCategory(%q) = %q, want %q", typed, got, want)
 		}
 	}
@@ -51,7 +50,7 @@ func TestRememberedCategoriesSeedFromOwnListsUntilOneIsSaved(t *testing.T) {
 		t.Fatalf("seeded categories = %q, %v", got, err)
 	}
 
-	for _, category := range []string{" Tarps ", "tarps", "Kitchen and cooking", "", "fishing"} {
+	for _, category := range []string{" Tarps ", "Tarps", "Kitchen and cooking", "", "FISHING"} {
 		if err := store.RememberCategory(ctx, "camper", category); err != nil {
 			t.Fatalf("remember %q: %v", category, err)
 		}
@@ -61,11 +60,25 @@ func TestRememberedCategoriesSeedFromOwnListsUntilOneIsSaved(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err = store.RememberedCategories(ctx, "camper")
-	if err != nil || !slices.Equal(got, []string{"Fishing", "Tarps"}) {
+	if err != nil || !slices.Equal(got, []string{"FISHING", "Tarps"}) {
 		t.Errorf("remembered categories = %q, %v", got, err)
 	}
 	if got, err := store.RememberedCategories(ctx, "someone"); err != nil || !slices.Equal(got, []string{"Paddling"}) {
 		t.Errorf("another camper sees %q, %v", got, err)
+	}
+	// The seed is read once: a list deleted after the first read no longer
+	// changes what is offered.
+	if err := store.DeletePackingList(ctx, other.ID, "someone"); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := store.RememberedCategories(ctx, "someone"); err != nil || !slices.Equal(got, []string{"Paddling"}) {
+		t.Errorf("after deleting the seeded list another camper sees %q, %v", got, err)
+	}
+	if got, err := store.RememberedCategories(ctx, "newcomer"); err != nil || len(got) != 0 {
+		t.Errorf("newcomer remembers %q, %v", got, err)
+	}
+	if got, err := store.RememberedCategories(ctx, "newcomer"); err != nil || len(got) != 0 {
+		t.Errorf("newcomer remembers %q on a second read, %v", got, err)
 	}
 	lists, err := store.GetPackingLists(ctx, "camper")
 	if err != nil || len(lists) != 0 {

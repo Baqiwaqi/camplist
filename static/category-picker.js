@@ -94,13 +94,15 @@ document.addEventListener('alpine:init', () => {
       event.stopPropagation()
       this.close()
     },
-    // Focus left the picker: close it, and adopt an option's spelling when the
-    // typed name matches one apart from case and spaces.
+    // Focus left the picker: close it, and adopt a default category's spelling
+    // when the typed name matches one apart from case and spaces. A custom
+    // category keeps the typed spelling, so a camper can recase it.
     leave(event) {
       if (this.$root.contains(event.relatedTarget)) return
       this.close()
       const input = this.$refs.input
-      const same = this.options().find(option => key(option) === key(input.value))
+      const defaults = Array.from(this.$root.querySelectorAll('datalist option[data-default]'), option => option.value)
+      const same = defaults.find(option => key(option) === key(input.value))
       if (same !== undefined) input.value = same
       this.query = input.value
     },

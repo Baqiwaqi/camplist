@@ -23,7 +23,7 @@ func categoryOptions(t *testing.T, body string) []string {
 		t.Fatal("page has no category picker for new items")
 	}
 	var values []string
-	for _, match := range regexp.MustCompile(`<option value="([^"]*)">`).FindAllStringSubmatch(datalist[1], -1) {
+	for _, match := range regexp.MustCompile(`<option value="([^"]*)"`).FindAllStringSubmatch(datalist[1], -1) {
 		values = append(values, match[1])
 	}
 	return values
@@ -81,8 +81,14 @@ func TestSavedCategoriesAreOfferedOnEveryList(t *testing.T) {
 	}
 
 	add(first.ID, "Tarp", " Tarps ")
-	add(first.ID, "Spare tarp", "TARPS")
 	add(first.ID, "Stove", " kitchen and cooking")
+
+	want := append(slices.Clone(packing.DefaultCategories), "Tarps")
+	if got := page(second.ID); !slices.Equal(got, want) {
+		t.Errorf("another list offers %q, want %q", got, want)
+	}
+
+	add(first.ID, "Spare tarp", "TARPS")
 
 	saved, err := store.GetPackingList(ctx, first.ID, "user")
 	if err != nil {
@@ -92,36 +98,65 @@ func TestSavedCategoriesAreOfferedOnEveryList(t *testing.T) {
 	for _, item := range saved.Items {
 		categories = append(categories, item.Category)
 	}
-	if !slices.Equal(categories, []string{"Tarps", "Tarps", "Kitchen and cooking"}) {
+	if !slices.Equal(categories, []string{"Tarps", "Kitchen and cooking", "TARPS"}) {
 		t.Errorf("saved categories = %q", categories)
 	}
 
-	want := append(slices.Clone(packing.DefaultCategories), "Tarps")
+	want = append(slices.Clone(packing.DefaultCategories), "TARPS")
 	if got := page(second.ID); !slices.Equal(got, want) {
-		t.Errorf("another list offers %q, want %q", got, want)
+		t.Errorf("after recasing another list offers %q, want %q", got, want)
 	}
-	want = append(slices.Clone(packing.DefaultCategories), "Paddling", "Tarps")
+	want = append(slices.Clone(packing.DefaultCategories), "Paddling", "TARPS")
 	if got := page(shared.ID); !slices.Equal(got, want) {
 		t.Errorf("shared list offers %q, want %q", got, want)
 	}
 }
 
-func TestEditingAnItemRemembersItsNewCategory(t *testing.T) {
-	list := packing.NewList("user", "Camping", "")
-	list.Items = []packing.PackingItem{packing.NewItem("Rod", "")}
-	store := &fakePackingStore{list: list, remembered: []string{"Fishing"}}
+func TestEditingAnItemRecasesItsCustomCategory(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
 	h := handler{packingStore: store}
-	item := list.Items[0]
+	list := packing.NewList("user", "Camping", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Rod", "fishing"), packing.NewItem("Net", "fishing")}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RememberCategory(ctx, "user", "fishing"); err != nil {
+		t.Fatal(err)
+	}
+	rod := list.Items[0]
 
-	r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Rod"}, "category": {" FISHING "}}), list.ID, item.ID)
-	h.EditItemHandler(httptest.NewRecorder(), r)
-	if got := store.list.Items[0].Category; got != "Fishing" {
-		t.Errorf("saved category %q, want the remembered spelling", got)
+	edit := func(category string) {
+		t.Helper()
+		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+rod.ID, url.Values{"name": {"Rod"}, "category": {category}}), list.ID, rod.ID)
+		w := httptest.NewRecorder()
+		h.EditItemHandler(w, r)
+		if w.Code != 303 {
+			t.Fatalf("edit %q: status %d %s", category, w.Code, w.Body.String())
+		}
+	}
+	categories := func() []string {
+		t.Helper()
+		saved, err := store.GetPackingList(ctx, list.ID, "user")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return []string{saved.Items[0].Category, saved.Items[1].Category}
 	}
 
-	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+item.ID, url.Values{"name": {"Rod"}, "category": {"Bait"}}), list.ID, item.ID)
-	h.EditItemHandler(httptest.NewRecorder(), r)
-	if got := store.list.Items[0].Category; got != "Bait" || !slices.Contains(store.remembered, "Bait") {
-		t.Errorf("saved %q, remembered %q", got, store.remembered)
+	edit(" Fishing ")
+	if got := categories(); !slices.Equal(got, []string{"Fishing", "fishing"}) {
+		t.Errorf("saved categories %q, want the recased item only", got)
+	}
+	if got, err := store.RememberedCategories(ctx, "user"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
+		t.Errorf("remembered %q, %v", got, err)
+	}
+
+	edit(" shelter")
+	if got := categories(); got[0] != "Shelter" {
+		t.Errorf("saved default category %q, want its canonical spelling", got[0])
+	}
+	if got, err := store.RememberedCategories(ctx, "user"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
+		t.Errorf("a default changed the remembered categories: %q, %v", got, err)
 	}
 }

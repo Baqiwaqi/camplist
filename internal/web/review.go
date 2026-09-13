@@ -93,7 +93,7 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if entry.ItemID == "" {
-		entry.Category = packing.MatchCategory(entry.Category, h.categorySuggestions(r.Context(), user, nil))
+		entry.Category = packing.MatchCategory(entry.Category)
 	}
 	_, err = h.packingStore.AddReviewEntry(r.Context(), chi.URLParam(r, "id"), user, entry)
 	if err != nil {

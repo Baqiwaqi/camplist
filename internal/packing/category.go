@@ -66,13 +66,13 @@ func uniqueCategories(groups ...[]string) []string {
 }
 
 // MatchCategory trims a submitted category and adopts the spelling of the
-// suggestion it matches, so typing "cooking" next to "Cooking" adds no second
-// category.
-func MatchCategory(category string, suggestions []string) string {
+// default it matches, so typing "shelter" files under "Shelter". A custom
+// category keeps the spelling the camper submitted.
+func MatchCategory(category string) string {
 	category = strings.TrimSpace(category)
-	for _, suggestion := range suggestions {
-		if categoryKey(suggestion) == categoryKey(category) {
-			return suggestion
+	for _, def := range DefaultCategories {
+		if categoryKey(def) == categoryKey(category) {
+			return def
 		}
 	}
 	return category
@@ -87,7 +87,9 @@ func ItemCategories(items []PackingItem) []string {
 	return uniqueCategories(used)
 }
 
-func isDefaultCategory(category string) bool {
+// IsDefaultCategory reports whether category is one of the defaults in any
+// capitalisation.
+func IsDefaultCategory(category string) bool {
 	return slices.ContainsFunc(DefaultCategories, func(d string) bool { return categoryKey(d) == categoryKey(category) })
 }
 
@@ -117,58 +119,66 @@ func (s *Store) readCategories(ctx context.Context, userID string) (rememberedCa
 }
 
 // seedCategories collects the custom categories already on the lists the user
-// owns. It stands in for the document until the first new category is saved.
+// owns, to fill the document when it is first created.
 func (s *Store) seedCategories(ctx context.Context, userID string) ([]string, error) {
-	lists, err := s.GetPackingLists(ctx, userID)
+	lists, err := s.ownPackingLists(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	var used []PackingItem
 	for _, list := range lists {
-		if list.UserID == userID {
-			used = append(used, list.Items...)
-		}
+		used = append(used, list.Items...)
 	}
-	return slices.DeleteFunc(ItemCategories(used), isDefaultCategory), nil
+	return slices.DeleteFunc(ItemCategories(used), IsDefaultCategory), nil
+}
+
+// loadCategories reads userID's document, creating it from their own lists the
+// first time so later reads are a single point read.
+func (s *Store) loadCategories(ctx context.Context, userID string) (rememberedCategories, string, error) {
+	doc, etag, err := s.readCategories(ctx, userID)
+	if !isMissing(err) {
+		return doc, etag, err
+	}
+	seeded, err := s.seedCategories(ctx, userID)
+	if err != nil {
+		return rememberedCategories{}, "", err
+	}
+	body, err := json.Marshal(rememberedCategories{ID: categoriesID, UserID: userID, Type: categoriesType, Categories: seeded, UpdatedAt: s.clock().UTC()})
+	if err != nil {
+		return rememberedCategories{}, "", err
+	}
+	if _, err := s.container.CreateItem(ctx, azcosmos.NewPartitionKeyString(userID), body, nil); err != nil && !conflicted(err) {
+		return rememberedCategories{}, "", err
+	}
+	return s.readCategories(ctx, userID)
 }
 
 // RememberedCategories returns the custom categories userID has used.
 func (s *Store) RememberedCategories(ctx context.Context, userID string) ([]string, error) {
-	doc, _, err := s.readCategories(ctx, userID)
-	if isMissing(err) {
-		return s.seedCategories(ctx, userID)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return doc.Categories, nil
+	doc, _, err := s.loadCategories(ctx, userID)
+	return doc.Categories, err
 }
 
-// RememberCategory records a custom category for userID. Defaults, blanks and
-// categories already remembered in any capitalisation change nothing.
+// RememberCategory records a custom category for userID. Defaults and blanks
+// change nothing; a category already remembered in another capitalisation
+// takes the spelling just submitted.
 func (s *Store) RememberCategory(ctx context.Context, userID, category string) error {
 	category = strings.TrimSpace(category)
-	if userID == "" || category == "" || len(category) > maxCategoryLength || isDefaultCategory(category) {
+	if userID == "" || category == "" || len(category) > maxCategoryLength || IsDefaultCategory(category) {
 		return nil
 	}
 	for attempt := 0; attempt < 5; attempt++ {
-		doc, etag, err := s.readCategories(ctx, userID)
-		if isMissing(err) {
-			seeded, seedErr := s.seedCategories(ctx, userID)
-			if seedErr != nil {
-				return seedErr
-			}
-			doc = rememberedCategories{ID: categoriesID, UserID: userID, Type: categoriesType, Categories: seeded}
-			etag = ""
-		} else if err != nil {
+		doc, etag, err := s.loadCategories(ctx, userID)
+		if err != nil {
 			return err
 		}
-		if slices.ContainsFunc(doc.Categories, func(c string) bool { return categoryKey(c) == categoryKey(category) }) {
-			if etag != "" {
-				return nil
-			}
-		} else {
+		switch i := slices.IndexFunc(doc.Categories, func(c string) bool { return categoryKey(c) == categoryKey(category) }); {
+		case i < 0:
 			doc.Categories = append(doc.Categories, category)
+		case doc.Categories[i] == category:
+			return nil
+		default:
+			doc.Categories[i] = category
 		}
 		if extra := len(doc.Categories) - maxRemembered; extra > 0 {
 			doc.Categories = doc.Categories[extra:]
@@ -178,14 +188,9 @@ func (s *Store) RememberCategory(ctx context.Context, userID, category string) e
 		if err != nil {
 			return err
 		}
-		pk := azcosmos.NewPartitionKeyString(userID)
-		if etag == "" {
-			_, err = s.container.CreateItem(ctx, pk, body, nil)
-		} else {
-			match := azcore.ETag(etag)
-			_, err = s.container.ReplaceItem(ctx, pk, categoriesID, body, &azcosmos.ItemOptions{IfMatchEtag: &match})
-		}
-		if preconditionFailed(err) || conflicted(err) {
+		match := azcore.ETag(etag)
+		_, err = s.container.ReplaceItem(ctx, azcosmos.NewPartitionKeyString(userID), categoriesID, body, &azcosmos.ItemOptions{IfMatchEtag: &match})
+		if preconditionFailed(err) {
 			continue
 		}
 		return err

@@ -8,6 +8,8 @@ package views
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "camplist/internal/packing"
+
 // CategoryPicker is the category field on item forms: a combobox shaped like
 // the Pines UI one that offers options (the default categories, the ones on
 // this list and the camper's remembered ones), filters them while typing and
@@ -47,7 +49,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 23, Col: 10}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 25, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -60,7 +62,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 25, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 27, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -73,7 +75,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(optionsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 27, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 29, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -86,7 +88,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(placeholder)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 28, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 30, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -99,7 +101,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(optionsID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 46, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 48, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -117,18 +119,28 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(option)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 48, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/category-picker.templ`, Line: 50, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></option>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if packing.IsDefaultCategory(option) {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " data-default")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "></option>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</datalist><ul x-bind:id=\"listboxID()\" role=\"listbox\" aria-label=\"Categories\" x-show=\"matches().length > 0\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" class=\"absolute inset-x-0 top-[calc(100%+6px)] z-5 max-h-64 overflow-y-auto p-1 bg-white border border-sand-300 rounded-card\"><template x-for=\"(item, index) in matches()\" x-bind:key=\"item.label\"><li role=\"option\" x-bind:id=\"optionID(index)\" x-bind:aria-selected=\"index === active\" x-bind:class=\"[index === active ? 'bg-sand-100' : '', item.create ? 'text-pine-700' : 'text-ink-900']\" x-on:mousedown.prevent x-on:mousemove=\"active = index\" x-on:click=\"pick(item)\" x-text=\"item.label\" class=\"py-2 px-3 rounded-lg font-bold cursor-pointer wrap-anywhere\"></li></template></ul></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</datalist><ul x-bind:id=\"listboxID()\" role=\"listbox\" aria-label=\"Categories\" x-show=\"matches().length > 0\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" class=\"absolute inset-x-0 top-[calc(100%+6px)] z-5 max-h-64 overflow-y-auto p-1 bg-white border border-sand-300 rounded-card\"><template x-for=\"(item, index) in matches()\" x-bind:key=\"item.label\"><li role=\"option\" x-bind:id=\"optionID(index)\" x-bind:aria-selected=\"index === active\" x-bind:class=\"[index === active ? 'bg-sand-100' : '', item.create ? 'text-pine-700' : 'text-ink-900']\" x-on:mousedown.prevent x-on:mousemove=\"active = index\" x-on:click=\"pick(item)\" x-text=\"item.label\" class=\"py-2 px-3 rounded-lg font-bold cursor-pointer wrap-anywhere\"></li></template></ul></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

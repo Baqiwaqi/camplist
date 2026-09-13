@@ -58,7 +58,6 @@ templ menu(label string, trigger string) {
 			x-on:keydown.arrow-up.prevent="move(-1)"
 			x-on:keydown.home.prevent="focus(0)"
 			x-on:keydown.end.prevent="focus(-1)"
-			x-on:keydown="find($event)"
 			x-on:click="if ($event.target.closest('[role=menuitem]')) close(false)"
 		>
 			{ children... }

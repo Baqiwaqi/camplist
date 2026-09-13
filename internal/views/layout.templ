@@ -69,8 +69,8 @@ templ Layout(title string, csrfToken string) {
 					@NavLinks(false)
 					@AccountMenu(csrfToken)
 				</div>
-				<div class="nav-menu hidden max-sm:block max-sm:ml-auto" x-data="{ open: false }" x-on:click.outside="open = false" x-on:keydown.escape.window="if (open) { open = false; $refs.navTrigger.focus() }">
-					<button type="button" x-ref="navTrigger" class="cursor-pointer font-bold py-2 px-4 -my-2 border border-sand-300 rounded-full bg-white" aria-controls="nav-panel" x-bind:aria-expanded="open" x-on:click="open = !open" x-text="open ? 'Close' : 'Menu'">Menu</button>
+				<div class="nav-menu hidden max-sm:block max-sm:ml-auto" x-data="{ open: false }" x-on:click.outside="open = false" x-on:keydown.escape.window="open = false">
+					<button type="button" class="cursor-pointer font-bold py-2 px-4 -my-2 border border-sand-300 rounded-full bg-white" aria-controls="nav-panel" x-bind:aria-expanded="open" x-on:click="open = !open" x-text="open ? 'Close' : 'Menu'">Menu</button>
 					<div
 						id="nav-panel"
 						class="absolute inset-x-0 top-full z-5 bg-white border-b border-sand-300 px-4 pb-2"

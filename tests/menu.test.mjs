@@ -72,10 +72,10 @@ function menuWithItems({ trigger = { left: 280, right: 350, top: 100, bottom: 14
     },
   }
   const microtasks = []
-  vm.runInNewContext(source, { document, Alpine, Date, queueMicrotask: callback => microtasks.push(callback) })
+  vm.runInNewContext(source, { document, Alpine, queueMicrotask: callback => microtasks.push(callback) })
   init()
   const menu = factory()
-  const items = labels.map(label => ({ textContent: label, disabled: false, focusedUp: null, focus() { this.focusedUp = menu.up; document.activeElement = this } }))
+  const items = labels.map(label => ({ disabled: false, focusedUp: null, focus() { this.focusedUp = menu.up; document.activeElement = this } }))
   menu.$refs = {
     trigger: { getBoundingClientRect: () => trigger, focus() { document.activeElement = this } },
     popup: { offsetWidth: 176, offsetHeight: height, querySelectorAll: () => items },
@@ -83,10 +83,6 @@ function menuWithItems({ trigger = { left: 280, right: 350, top: 100, bottom: 14
   menu.$nextTick = callback => callback()
   const flush = () => { while (microtasks.length) microtasks.shift()() }
   return { menu, items, document, flush }
-}
-
-function key(value) {
-  return { key: value, prevented: false, preventDefault() { this.prevented = true } }
 }
 
 test('a menu near the bottom of the screen opens upward', () => {
@@ -109,26 +105,4 @@ test('a keyboard-opened menu near the bottom focuses its item only after placing
   flush()
   assert.equal(document.activeElement, items[0])
   assert.equal(items[0].focusedUp, true)
-})
-
-test('typing a letter moves to the next item starting with it', () => {
-  const { menu, items, document, flush } = menuWithItems({ labels: ['Edit list', 'Sharing', 'Delete list'] })
-  menu.show(0)
-  flush()
-  assert.equal(document.activeElement, items[0])
-  const event = key('d')
-  menu.find(event)
-  assert.equal(document.activeElement, items[2])
-  assert.equal(event.prevented, true)
-})
-
-test('space and modified keys are left to the item', () => {
-  const { menu, items, document, flush } = menuWithItems({ labels: ['Sharing', 'Sign out'] })
-  menu.show(0)
-  flush()
-  for (const event of [key(' '), { ...key('s'), ctrlKey: true }]) {
-    menu.find(event)
-    assert.equal(event.prevented, false)
-  }
-  assert.equal(document.activeElement, items[0])
 })

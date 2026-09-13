@@ -568,6 +568,25 @@
     @apply basis-full m-0;
   }
 
+  /* Meta text and tags the offline scripts create: "Updated by ..." under a
+     packing row (checklist.mjs) and "Available offline" on a trip card
+     (account.mjs). Same look as the text-muted and tag utilities in views. */
+  .muted {
+    @apply text-sm text-muted;
+  }
+
+  .item-row > .muted {
+    @apply basis-full -mt-3 pl-[34px];
+  }
+
+  .tag {
+    @apply w-fit whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full;
+  }
+
+  .card > .tag {
+    @apply mt-3 mb-0;
+  }
+
   /* Offline shell (static/offline/offline.html): saved trips and item rows. */
   .saved-sessions p {
     @apply m-0 py-3 border-b border-sand-100 last:border-b-0;

@@ -806,7 +806,7 @@ func PackingItemToggle(sessionID string, item packing.PackingItem, csrfToken str
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if item.ChangedBy != "" {
+		if item.ChangedBy != "" && item.ChangedByID != auth.Subject(ctx) {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<span class=\"text-muted text-sm\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

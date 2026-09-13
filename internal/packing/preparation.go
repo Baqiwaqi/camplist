@@ -73,5 +73,6 @@ func (task *PreparationTask) setCompletion(actor, name string, done bool, revisi
 	task.Done = done
 	task.Revision++
 	task.ChangedBy = name
+	task.ChangedByID = actor
 	return true, nil
 }

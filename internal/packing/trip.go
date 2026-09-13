@@ -46,6 +46,7 @@ func (s *PackingSession) expandPersonalEntries() {
 			copy.Checked = false
 			copy.Revision = 0
 			copy.ChangedBy = ""
+			copy.ChangedByID = ""
 			s.List.Items = append(s.List.Items, copy)
 		}
 	}
@@ -80,6 +81,7 @@ func (s *PackingSession) expandPersonalEntries() {
 			copy.Done = false
 			copy.Revision = 0
 			copy.ChangedBy = ""
+			copy.ChangedByID = ""
 			s.List.Tasks = append(s.List.Tasks, copy)
 		}
 	}

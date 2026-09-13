@@ -4,6 +4,7 @@ import (
 	"camplist/internal/auth"
 	"camplist/internal/packing"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -91,6 +92,15 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 	}
 }
 
+// startDateLayout matches the date the store appends to a new trip's name.
+const startDateLayout = "Jan 2, 2006"
+
+// nameEndsWithStartDate reports whether the trip name already shows its start
+// date, as default names do, so the card need not repeat it.
+func nameEndsWithStartDate(s packing.PackingSession) bool {
+	return strings.HasSuffix(s.DisplayName(), s.CreatedAt.Format(startDateLayout))
+}
+
 // PackingSessionCards lists trips on the overview or, with archived, on the
 // archive page, where the owner's Archive item becomes Restore.
 templ PackingSessionCards(sessions []packing.PackingSession, archived bool, csrfToken string) {
@@ -102,7 +112,9 @@ templ PackingSessionCards(sessions []packing.PackingSession, archived bool, csrf
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-4 max-sm:flex-col">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
 					<h2><a class="no-underline" href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
-					<p class="text-muted mb-3">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format("Jan 2, 2006") }</time></p>
+					if !nameEndsWithStartDate(s) {
+						<p class="text-muted mb-3">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format(startDateLayout) }</time></p>
+					}
 				</div>
 				<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
 					if allPacked(s.List.CountChecked(), len(s.List.Items)) {

@@ -14,7 +14,7 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
 					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trip</p>
-					<h1>{ session.DisplayName() }</h1>
+					@TripTitle(session, false)
 					<p class="text-muted max-w-[60ch]">
 						Started <time datetime={ session.CreatedAt.Format(time.RFC3339) }>{ session.CreatedAt.Format("Jan 2, 2006") }</time>.
 						Your reusable list stays unchanged.
@@ -41,25 +41,14 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 			@PackingChecklist(session, csrfToken)
 			@TripEntryForm(session, categories, csrfToken)
 			if session.UserID==auth.Subject(ctx) {
-				<form method="post" action={ "/trips/" + session.ID + "/name" } class="card mt-8 flex flex-wrap items-end gap-3">
-					<input type="hidden" name="_csrf" value={ csrfToken }/>
-					<div class="grid gap-1 grow basis-56"><label for="rename-trip" class="text-sm font-bold">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-					<button class="btn btn-secondary">Rename trip</button>
-				</form>
+				@TripRenameForm(session, csrfToken)
 			}
 		</section>
 	}
 }
 
-// PackingChecklistUpdate is the htmx answer to a packing toggle: the checklist
-// plus the new count for the progress status, which lives outside the swap.
-templ PackingChecklistUpdate(session packing.PackingSession, csrfToken string) {
-	@PackingChecklist(session, csrfToken)
-	@PackingProgressStatus(session, true)
-}
-
 // PackingProgressStatus announces the packed count to screen readers. It stays
-// outside #packing-checklist so the live region survives the checklist swap;
+// outside #packing-checklist so the live region survives checklist swaps;
 // updates replace only its text (out of band here, directly in session.mjs).
 templ PackingProgressStatus(session packing.PackingSession, oob bool) {
 	if oob {
@@ -69,18 +58,39 @@ templ PackingProgressStatus(session packing.PackingSession, oob bool) {
 	}
 }
 
+// TripTitle is the page heading; a rename swaps it out of band.
+templ TripTitle(session packing.PackingSession, oob bool) {
+	<h1 id="trip-title" { oobSwap(oob)... }>{ session.DisplayName() }</h1>
+}
+
+// TripRenameForm saves the name in place: the form and its focused field stay,
+// and the response swaps the heading and title. Without JavaScript the form
+// posts and redirects.
+templ TripRenameForm(session packing.PackingSession, csrfToken string) {
+	<form
+		id="trip-rename"
+		method="post"
+		action={ "/trips/" + session.ID + "/name" }
+		hx-post={ "/trips/" + session.ID + "/name" }
+		hx-swap="none"
+		hx-sync="this:drop"
+		class="card mt-8 flex flex-wrap items-end gap-3"
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<div class="grid gap-1 grow basis-56"><label for="rename-trip" class="text-sm font-bold">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+		<button class="btn btn-secondary">Rename trip</button>
+	</form>
+}
+
+// TripRenamed answers an htmx rename with the heading and the document title.
+templ TripRenamed(session packing.PackingSession) {
+	@DocumentTitle(session.DisplayName())
+	@TripTitle(session, true)
+}
+
 templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 	<section id="packing-checklist" aria-label="Packing checklist">
-		if allPacked(session.List.CountChecked(), len(session.List.Items)) {
-			<div class="card card-brand progress-card">
-				<p class="display mb-3">All packed. Go!</p>
-				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "")
-			</div>
-		} else {
-			<div class="card progress-card">
-				@ProgressBar(session.List.CountChecked(), len(session.List.Items), "Keep packing")
-			</div>
-		}
+		@PackingProgress(session, false)
 		<div class="card">
 			if len(session.List.Items) == 0 {
 				<p class="text-muted">This trip has no items. Add gear to your reusable list and start a new trip.</p>
@@ -104,11 +114,27 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 	</section>
 }
 
-// PackingSessionItem is one server-rendered toggle, used until the offline
-// module takes over. Its hx-sync and hx-indicator (shared with the task toggles
-// in SessionPreparation) drop repeat presses and dim the section while one
-// saves. Unlike hx-disabled-elt they keep the pressed button enabled, so htmx
-// puts focus back on it by id after the swap.
+// PackingProgress is the sticky progress card. A packed row swaps it out of
+// band so a toggle does not resend the whole checklist.
+templ PackingProgress(session packing.PackingSession, oob bool) {
+	if allPacked(session.List.CountChecked(), len(session.List.Items)) {
+		<div id="packing-progress" class="card card-brand progress-card" { oobSwap(oob)... }>
+			<p class="display mb-3">All packed. Go!</p>
+			@ProgressBar(session.List.CountChecked(), len(session.List.Items), "")
+		</div>
+	} else {
+		<div id="packing-progress" class="card progress-card" { oobSwap(oob)... }>
+			@ProgressBar(session.List.CountChecked(), len(session.List.Items), "Keep packing")
+		</div>
+	}
+}
+
+// PackingSessionItem swaps only its form's contents, so the form stays in the
+// page. Its hx-sync and hx-indicator (shared with the task toggles in
+// SessionPreparation) drop repeat presses and dim the section while one saves.
+// Unlike hx-disabled-elt they keep the pressed button enabled, so htmx puts
+// focus back on it by id after the swap. The offline module replaces these
+// forms once it mounts.
 templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken string) {
 	<li class="item-row py-0">
 		<form
@@ -116,39 +142,51 @@ templ PackingSessionItem(sessionID string, item packing.PackingItem, csrfToken s
 			action="/trips/set-item"
 			class="pack-form w-full"
 			hx-post="/trips/set-item"
-			hx-target="#packing-checklist"
-			hx-swap="outerHTML"
+			hx-target="this"
+			hx-swap="innerHTML"
 			hx-sync="closest section:drop"
 			hx-indicator="closest section"
 		>
-			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			<input type="hidden" name="sessionId" value={ sessionID }/>
-			<input type="hidden" name="itemId" value={ item.ID }/>
-			<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(item.Revision, 10) }/>
-			<input type="hidden" name="checked" value={ strconv.FormatBool(!item.Checked) }/>
-			<button
-				id={ "pack-" + item.ID }
-				type="submit"
-				class={ "pack-row", templ.KV("packed", item.Checked) }
-				aria-pressed={ strconv.FormatBool(item.Checked) }
-				aria-label={ "Toggle packed status for " + item.Name }
-				disabled?={ item.Assignee!="" && item.Assignee!=auth.Subject(ctx) }
-			>
-				<span class="tick" aria-hidden="true"></span>
-				<span class="pack-name">{ item.Name }</span>
-				if item.ChangedBy!="" {
-					<span class="text-muted text-sm">{ item.ChangedBy }</span>
-				}
-				<span class="pack-action">
-					if item.Checked {
-						Unpack
-					} else {
-						Pack
-					}
-				</span>
-			</button>
+			@PackingItemToggle(sessionID, item, csrfToken)
 		</form>
 	</li>
+}
+
+templ PackingItemToggle(sessionID string, item packing.PackingItem, csrfToken string) {
+	<input type="hidden" name="_csrf" value={ csrfToken }/>
+	<input type="hidden" name="sessionId" value={ sessionID }/>
+	<input type="hidden" name="itemId" value={ item.ID }/>
+	<input type="hidden" name="expectedRevision" value={ strconv.FormatInt(item.Revision, 10) }/>
+	<input type="hidden" name="checked" value={ strconv.FormatBool(!item.Checked) }/>
+	<button
+		id={ "pack-" + item.ID }
+		type="submit"
+		class={ "pack-row", templ.KV("packed", item.Checked) }
+		aria-pressed={ strconv.FormatBool(item.Checked) }
+		aria-label={ "Toggle packed status for " + item.Name }
+		disabled?={ item.Assignee!="" && item.Assignee!=auth.Subject(ctx) }
+	>
+		<span class="tick" aria-hidden="true"></span>
+		<span class="pack-name">{ item.Name }</span>
+		if item.ChangedBy!="" {
+			<span class="text-muted text-sm">{ item.ChangedBy }</span>
+		}
+		<span class="pack-action">
+			if item.Checked {
+				Unpack
+			} else {
+				Pack
+			}
+		</span>
+	</button>
+}
+
+// PackingItemSaved answers an htmx toggle: the row's controls plus the progress
+// card and status.
+templ PackingItemSaved(session packing.PackingSession, item packing.PackingItem, csrfToken string) {
+	@PackingItemToggle(session.ID, item, csrfToken)
+	@PackingProgress(session, true)
+	@PackingProgressStatus(session, true)
 }
 
 // SessionPreparation sits above the checklist; the extra bottom margin keeps
@@ -207,12 +245,28 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 	</section>
 }
 
+// TripEntryForm adds in place. The form and its focused field stay; the
+// response swaps the checklist or preparation section that gained the entry,
+// the next operation ID, the category suggestions and the future-save notice.
+// When a swap removes the focused notice button, focus returns to the name.
 templ TripEntryForm(session packing.PackingSession, categories []string, csrfToken string) {
-	<section class="card mt-8">
+	<section
+		id="trip-entry"
+		class="card mt-8"
+		x-data
+		x-on:htmx:oob-before-swap="if ($event.target.id === 'trip-future-save' && $event.target.contains(document.activeElement)) queueMicrotask(() => document.getElementById('entry-name').focus({ preventScroll: true }))"
+	>
 		<h2>Add to this trip</h2>
-		<form id="trip-entry-form" method="post" action={ "/trips/" + session.ID + "/entries" } class="grid gap-3">
+		<form
+			id="trip-entry-form"
+			method="post"
+			action={ "/trips/" + session.ID + "/entries" }
+			{ tripEntryRequest(session.ID)... }
+			hx-on::after-request="if (event.detail.successful) this.reset()"
+			class="grid gap-3"
+		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			<input type="hidden" name="operationId" value={ uuid.NewString() }/>
+			@TripEntryOperation(false)
 			<div class="grid gap-3 sm:grid-cols-2">
 				<div class="grid gap-1"><label for="entry-name" class="text-sm font-bold">Name</label><input id="entry-name" name="name" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
 				<div class="grid gap-1">
@@ -230,18 +284,95 @@ templ TripEntryForm(session packing.PackingSession, categories []string, csrfTok
 			<label class="flex items-center gap-2"><input type="checkbox" name="saveForFuture" value="true"/>Also save for future trips (requires packing list edit access)</label>
 			<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto"><button class="btn btn-primary">Add</button></div>
 		</form>
+		@FutureSaveSlot(session, nil, csrfToken, false)
 	</section>
 }
 
+// TripEntryOperation carries a fresh ID so a retried add is not saved twice.
+templ TripEntryOperation(oob bool) {
+	<input type="hidden" id="trip-entry-operation" name="operationId" value={ uuid.NewString() } { oobSwap(oob)... }/>
+}
+
+// TripCategories refreshes the entry form's category picker options after an add.
+templ TripCategories(categories []string) {
+	<datalist id="trip-categories" hx-swap-oob="true">
+		for _, option := range categories {
+			<option value={ option } data-default?={ packing.IsDefaultCategory(option) }></option>
+		}
+	</datalist>
+}
+
+// FutureSaveSlot is a live region below the entry form that shows failed, when
+// set, as a notice. Its contents swap so screen readers announce the change, and
+// the form above does not move.
+templ FutureSaveSlot(session packing.PackingSession, failed *packing.PackingOperation, csrfToken string, oob bool) {
+	<div
+		id="trip-future-save"
+		role="status"
+		if oob {
+			hx-swap-oob="innerHTML"
+		}
+	>
+		if failed != nil {
+			<div class="border border-sand-300 rounded-card p-4 mt-4">
+				<h3>Saved to this trip</h3>
+				@FutureSaveRetry(session, *failed, csrfToken, true)
+			</div>
+		}
+	</div>
+}
+
+// TripEntrySaved answers an htmx add. The checklist and preparation sections
+// are picked out by the form's hx-select-oob; the rest swap by id.
+templ TripEntrySaved(session packing.PackingSession, op packing.PackingOperation, categories []string, failed bool, csrfToken string) {
+	if op.Kind == "task" {
+		@SessionPreparation(session, csrfToken)
+	} else {
+		@PackingChecklist(session, csrfToken)
+		@PackingProgressStatus(session, true)
+	}
+	@TripEntryOperation(true)
+	@TripCategories(categories)
+	if failed {
+		@FutureSaveSlot(session, &op, csrfToken, true)
+	} else {
+		@FutureSaveSlot(session, nil, csrfToken, true)
+	}
+}
+
+// FutureSaveResult is the no-JavaScript page for an entry that reached the trip
+// but not the reusable list.
 templ FutureSaveResult(session packing.PackingSession, op packing.PackingOperation, csrfToken string) {
 	@Layout("Trip entry saved", csrfToken) {
 		<section class="card">
 			<h1>Saved to this trip</h1>
-			<p>{ op.Name } was added. Saving it to the reusable packing list failed. You may need its owner's permission.</p>
-			<form method="post" action={ "/trips/" + session.ID + "/entries" }>
-				<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="operationId" value={ op.ID }/><input type="hidden" name="name" value={ op.Name }/><input type="hidden" name="category" value={ op.Category }/><input type="hidden" name="scope" value={ op.Scope }/><input type="hidden" name="kind" value={ op.Kind }/><input type="hidden" name="saveForFuture" value="true"/>
-				<div class="flex flex-wrap items-center gap-2 mt-4"><a class="btn btn-secondary" href={ "/trips/" + session.ID }>Keep only in this trip</a><button class="btn btn-primary">Retry saving for future trips</button></div>
-			</form>
+			@FutureSaveRetry(session, op, csrfToken, false)
 		</section>
 	}
+}
+
+// FutureSaveRetry explains a failed reusable-list save and retries it with the
+// same operation ID. Inline, "Keep only in this trip" dismisses the notice and
+// returns focus to the name field.
+templ FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation, csrfToken string, inline bool) {
+	<p>{ op.Name } was added. Saving it to the reusable packing list failed. You may need its owner's permission.</p>
+	<form
+		method="post"
+		action={ "/trips/" + session.ID + "/entries" }
+		if inline {
+			{ tripEntryRequest(session.ID)... }
+		}
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="operationId" value={ op.ID }/><input type="hidden" name="name" value={ op.Name }/><input type="hidden" name="category" value={ op.Category }/><input type="hidden" name="scope" value={ op.Scope }/><input type="hidden" name="kind" value={ op.Kind }/><input type="hidden" name="saveForFuture" value="true"/>
+		<div class="flex flex-wrap items-center gap-2 mt-4">
+			<a
+				class="btn btn-secondary"
+				href={ "/trips/" + session.ID }
+				if inline {
+					x-on:click.prevent="document.getElementById('entry-name').focus(); $el.closest('#trip-future-save').replaceChildren()"
+				}
+			>Keep only in this trip</a>
+			<button class="btn btn-primary">Retry saving for future trips</button>
+		</div>
+	</form>
 }

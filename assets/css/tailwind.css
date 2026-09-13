@@ -285,6 +285,13 @@
     @apply cursor-wait opacity-60;
   }
 
+  /* Saving trip forms keep focus; hx-sync holds or drops repeat submits. */
+  .pack-form.htmx-request .pack-row,
+  #trip-rename.htmx-request .btn,
+  #trip-entry .htmx-request .btn {
+    @apply cursor-wait opacity-60;
+  }
+
   .pack-name {
     @apply flex-auto min-w-0 font-bold wrap-anywhere;
   }

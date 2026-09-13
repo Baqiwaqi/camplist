@@ -553,14 +553,8 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if isHTMX(r) {
-		if item, ok := session.List.FindItem(itemID); ok {
-			render(w, r, views.PackingItemSaved(session, item, csrf.Token(r)))
-			return
-		}
-		// The row is gone, so refresh the whole checklist instead.
-		w.Header().Set("HX-Retarget", "#packing-checklist")
-		w.Header().Set("HX-Reswap", "outerHTML")
-		render(w, r, views.PackingChecklist(session, csrf.Token(r)))
+		item, _ := session.List.FindItem(itemID)
+		render(w, r, views.PackingItemSaved(session, item, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+sessionID, http.StatusSeeOther)

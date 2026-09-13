@@ -4,7 +4,9 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 	"context"
+	"fmt"
 	"github.com/go-chi/chi/v5"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
@@ -133,4 +135,86 @@ func TestBeforeTripTasksHaveCompletionControls(t *testing.T) {
 		t.Fatalf("missing revision: %d", response.Code)
 	}
 
+}
+
+func TestAddReviewReturnsFragmentsForHTMXAndRedirectsNormalForms(t *testing.T) {
+	for _, htmx := range []bool{true, false} {
+		t.Run(fmt.Sprint(htmx), func(t *testing.T) {
+			store := packing.NewStore(testsupport.NewDocuments())
+			ctx := context.Background()
+			list := packing.NewList("user", "Weekend", "")
+			if err := store.SavePackingList(ctx, list); err != nil {
+				t.Fatal(err)
+			}
+			session, err := store.CreatePackingSession(ctx, list.ID, "user")
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := handler{packingStore: store}
+			r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}}), session.ID, "")
+			if htmx {
+				r.Header.Set("HX-Request", "true")
+			}
+			w := httptest.NewRecorder()
+			h.AddReviewHandler(w, r)
+			saved, _ := store.GetPackingSession(ctx, session.ID, "user")
+			if len(saved.Review) != 1 || saved.Review[0].Name != "Matches" {
+				t.Fatal("observation not persisted")
+			}
+			body := w.Body.String()
+			if !htmx {
+				if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/trips/"+session.ID+"/review" {
+					t.Fatalf("normal form missing redirect: %d %q", w.Code, w.Header().Get("Location"))
+				}
+				return
+			}
+			if w.Code != http.StatusOK || strings.Contains(body, "<html") || w.Header().Get("Location") != "" {
+				t.Fatalf("returned navigation instead of fragments: %d %s", w.Code, body)
+			}
+			for _, want := range []string{`id="review-form"`, `hx-sync="this:drop"`, `id="review-submit"`, `id="review-save-status" hx-swap-oob="innerHTML"`, "Saved “Matches”.", `id="trip-observations"`, `hx-swap-oob="outerHTML"`, "<h3 class=\"mt-0\">Matches</h3>", "Apply selected changes"} {
+				if !strings.Contains(body, want) {
+					t.Errorf("missing %q", want)
+				}
+			}
+			if strings.Contains(body, `name="entryId" value="matches"`) || strings.Contains(body, `value="Matches"`) {
+				t.Error("form was not reset with a fresh entry")
+			}
+		})
+	}
+}
+
+func TestAddReviewErrorKeepsSubmittedValues(t *testing.T) {
+	for _, htmx := range []bool{true, false} {
+		t.Run(fmt.Sprint(htmx), func(t *testing.T) {
+			store := packing.NewStore(testsupport.NewDocuments())
+			ctx := context.Background()
+			list := packing.NewList("user", "Weekend", "")
+			if err := store.SavePackingList(ctx, list); err != nil {
+				t.Fatal(err)
+			}
+			session, err := store.CreatePackingSession(ctx, list.ID, "user")
+			if err != nil {
+				t.Fatal(err)
+			}
+			h := handler{packingStore: store}
+			// No observation ticked, so the store rejects the entry.
+			r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"stove"}, "name": {"Stove"}, "action": {"none"}}), session.ID, "")
+			if htmx {
+				r.Header.Set("HX-Request", "true")
+			}
+			w := httptest.NewRecorder()
+			h.AddReviewHandler(w, r)
+			body := w.Body.String()
+			if !strings.Contains(body, "Please check the submitted values.") || !strings.Contains(body, `value="Stove"`) || !strings.Contains(body, `name="entryId" value="stove"`) {
+				t.Fatalf("error lost the message or submitted values: %s", body)
+			}
+			if htmx {
+				if w.Code != http.StatusOK || strings.Contains(body, "<html") || strings.Contains(body, `id="trip-observations"`) || !strings.Contains(body, `id="review-save-status" hx-swap-oob="innerHTML"></div>`) {
+					t.Fatalf("htmx error should swap only the form: %d %s", w.Code, body)
+				}
+			} else if w.Code != http.StatusBadRequest || !strings.Contains(body, "<html") {
+				t.Fatalf("normal form error should re-render the page: %d", w.Code)
+			}
+		})
+	}
 }

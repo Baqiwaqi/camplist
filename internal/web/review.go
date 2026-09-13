@@ -9,25 +9,37 @@ import (
 	"github.com/gorilla/csrf"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (h *handler) ReviewPage(w http.ResponseWriter, r *http.Request) {
 	h.renderReview(w, r, packing.ReviewEntry{ID: uuid.NewString(), Action: "none"}, "", http.StatusOK)
 }
 func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string, status int) {
+	session, list, available, recoverable, ok := h.loadReview(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	render(w, r, views.ReviewPage(session, list, available, recoverable, entry, message, csrf.Token(r)))
+}
+
+// loadReview reads the trip and, when the reader still has it, its reusable
+// list. It writes the error response itself and reports ok=false.
+func (h *handler) loadReview(w http.ResponseWriter, r *http.Request) (session packing.PackingSession, list packing.PackingList, available, recoverable, ok bool) {
 	user, err := auth.UserID(r.Context())
 	if err != nil {
 		sessionExpired(w)
 		return
 	}
-	session, err := h.packingStore.GetPackingSession(r.Context(), chi.URLParam(r, "id"), user)
+	session, err = h.packingStore.GetPackingSession(r.Context(), chi.URLParam(r, "id"), user)
 	if err != nil {
 		storeError(w, err, "Could not read trip")
 		return
 	}
-	list, err := h.packingStore.GetPackingList(r.Context(), session.TemplateID(), user)
-	available := err == nil
-	recoverable := false
+	list, err = h.packingStore.GetPackingList(r.Context(), session.TemplateID(), user)
+	available = err == nil
 	if err != nil {
 		code, _ := storeErrorDetails(err, "")
 		recoverable = code == 404
@@ -40,9 +52,7 @@ func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry pac
 		storeError(w, packing.ErrForbidden, "")
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(status)
-	render(w, r, views.ReviewPage(session, list, available, recoverable, entry, message, csrf.Token(r)))
+	return session, list, available, recoverable, true
 }
 func parsePackingForm(w http.ResponseWriter, r *http.Request) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
@@ -78,10 +88,35 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = h.packingStore.AddReviewEntry(r.Context(), chi.URLParam(r, "id"), user, entry)
 	if err != nil {
 		status, message := storeErrorDetails(err, "Could not save review")
+		if isHTMX(r) {
+			h.renderReviewFormError(w, r, entry, message)
+			return
+		}
 		h.renderReview(w, r, entry, message, status)
 		return
 	}
+	if isHTMX(r) {
+		// Swap in a fresh form and the updated observations instead of reloading.
+		session, list, available, _, ok := h.loadReview(w, r)
+		if !ok {
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, "Saved “"+strings.TrimSpace(entry.Name)+"”.", csrf.Token(r)))
+		return
+	}
 	http.Redirect(w, r, "/trips/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
+}
+
+// renderReviewFormError returns the form with the submitted values and the
+// message. It answers 200 so htmx swaps it; the plain form keeps the real status.
+func (h *handler) renderReviewFormError(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string) {
+	session, _, _, _, ok := h.loadReview(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	render(w, r, views.ReviewFormError(session, entry, message, csrf.Token(r)))
 }
 func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {

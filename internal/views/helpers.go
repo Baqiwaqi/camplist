@@ -99,6 +99,24 @@ func confirmDelete(url, csrfToken, question, action, detail string) templ.Attrib
 	}
 }
 
+// PackingListCardID is the element id of a list's card on the lists page.
+func PackingListCardID(listID string) string {
+	return "list-" + listID
+}
+
+// confirmDeleteCard deletes in place: htmx removes the card with the given
+// element id once the request succeeds, and sends that id as HX-Target so the
+// handler answers with a fragment instead of a redirect. The card dims while
+// the request runs, and hx-sync drops a repeated delete.
+func confirmDeleteCard(url, cardID, csrfToken, question, action, detail string) templ.Attributes {
+	attrs := confirmDelete(url, csrfToken, question, action, detail)
+	attrs["hx-target"] = "#" + cardID
+	attrs["hx-swap"] = "delete"
+	attrs["hx-indicator"] = "#" + cardID
+	attrs["hx-sync"] = "this:drop"
+	return attrs
+}
+
 // removeTaskAttrs builds the htmx attributes that remove a preparation task
 // through the existing edit endpoint, with the confirm dialog texts.
 func removeTaskAttrs(list packing.PackingList, task packing.PreparationTask, csrfToken string) templ.Attributes {

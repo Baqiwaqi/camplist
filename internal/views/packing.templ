@@ -3,9 +3,21 @@ package views
 import "camplist/internal/packing"
 import "camplist/internal/auth"
 
+// PackingListPage lists the member's packing lists. Deleting a card removes it
+// in place; the card takes its focused menu with it, so the section moves focus
+// to the neighbouring card, or to Create list once no cards are left.
 templ PackingListPage(name string, lists []packing.PackingList, csrfToken string) {
 	@Layout(name, csrfToken) {
-		<section>
+		<section
+			x-data
+			x-on:htmx:before-swap="
+				const card = $event.detail.target;
+				if (!$event.detail.shouldSwap || !card.matches('article[id^=list-]')) return;
+				const sibling = [card.nextElementSibling, card.previousElementSibling].find(el => el && el.matches('article'));
+				const next = sibling ? sibling.querySelector('h2 a') : $refs.create;
+				setTimeout(() => next.focus());
+			"
+		>
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
 					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Your lists</p>
@@ -13,46 +25,65 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 					<p class="text-muted max-w-[60ch]">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p>
 				</div>
 				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
-					<a class="btn btn-primary max-sm:flex-auto" href="/packing-lists/new">Create list</a>
+					<a class="btn btn-primary max-sm:flex-auto" href="/packing-lists/new" x-ref="create">Create list</a>
 				</div>
 			</div>
-			if len(lists) == 0 {
-				<div class="card">
-					<p class="text-muted">No packing lists yet. Create one with the gear you regularly take.</p>
-				</div>
-			}
+			@PackingListsEmpty(len(lists) == 0, false)
 			for _, list := range lists {
-				<article class="card">
-					if list.IsShared() {
-						<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
-					}
-					<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
-						<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-							<h2><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
-							if list.Description != "" {
-								<p class="text-muted mb-3">{ list.Description }</p>
-							}
-							<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ itemSummary(list.Items) }</span>
-								for _, category := range categories(list.Items, 4) {
-									<span>{ category }</span>
-								}
-							</div>
-						</div>
-						<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-							<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/packing-lists/" + list.ID }>Open</a>
-							@Menu("More") {
-								@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
-								@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
-								if list.UserID == auth.Subject(ctx) {
-									@MenuSeparator()
-									@MenuButton("Delete list", true, confirmDelete("/packing-lists/"+list.ID, csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
-								}
-							}
-						</div>
-					</div>
-				</article>
+				@PackingListCard(list, csrfToken)
 			}
 		</section>
 	}
+}
+
+// PackingListsEmpty holds the "no lists" message. The wrapper always renders
+// so that deleting the last card in place can swap the message in out of band.
+templ PackingListsEmpty(show bool, oob bool) {
+	<div
+		id="packing-lists-empty"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		if show {
+			<div class="card">
+				<p class="text-muted">No packing lists yet. Create one with the gear you regularly take.</p>
+			</div>
+		}
+	</div>
+}
+
+// PackingListCard is one list on the lists page. Its id lets the delete
+// request target the card and tells the handler to delete it in place.
+templ PackingListCard(list packing.PackingList, csrfToken string) {
+	<article id={ PackingListCardID(list.ID) } class="card [&.htmx-request]:opacity-60">
+		if list.IsShared() {
+			<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
+		}
+		<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
+			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
+				<h2><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
+				if list.Description != "" {
+					<p class="text-muted mb-3">{ list.Description }</p>
+				}
+				<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
+					<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ itemSummary(list.Items) }</span>
+					for _, category := range categories(list.Items, 4) {
+						<span>{ category }</span>
+					}
+				</div>
+			</div>
+			<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
+				<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/packing-lists/" + list.ID }>Open</a>
+				@Menu("More") {
+					@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
+					@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
+					if list.UserID == auth.Subject(ctx) {
+						@MenuSeparator()
+						@MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), csrfToken, "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
+					}
+				}
+			</div>
+		</div>
+	</article>
 }

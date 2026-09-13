@@ -37,7 +37,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
   `static/menu.js`, loaded before Alpine. Build destructive items with the
-  `confirmDelete` helper so the CSRF header and confirm dialog stay consistent.
+  `confirmDelete` helper so the CSRF header and confirm dialog stay consistent;
+  `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and

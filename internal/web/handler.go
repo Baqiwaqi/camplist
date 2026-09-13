@@ -280,10 +280,23 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect rather than refresh: the list's own details page can also
-	// delete it, and refreshing a deleted list would show an error.
-	w.Header().Set("HX-Redirect", "/")
-	w.WriteHeader(http.StatusOK)
+	// The lists page targets the card, which htmx removes on this empty 200.
+	// Anywhere else, such as the list's own details page, redirect rather
+	// than refresh: refreshing a deleted list would show an error.
+	if r.Header.Get("HX-Target") != views.PackingListCardID(id) {
+		w.Header().Set("HX-Redirect", "/")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	lists, err := h.packingStore.GetPackingLists(ctx, userID)
+	if err != nil {
+		// The list is gone; only the empty state could be stale.
+		log.Printf("list packing lists after delete: %v", err)
+		return
+	}
+	if len(lists) == 0 {
+		render(w, r, views.PackingListsEmpty(true, true))
+	}
 }
 
 // Packing List Items

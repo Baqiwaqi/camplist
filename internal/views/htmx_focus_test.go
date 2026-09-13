@@ -75,6 +75,12 @@ func TestStartTripFormDropsRepeatPresses(t *testing.T) {
 			t.Errorf("%s = %q, want %q", key, got, want)
 		}
 	}
+	if !hasAttrKey(form, "hx-on::after-request") {
+		t.Error("start trip form stays submittable by keyboard after the redirect arrives")
+	}
+	if button := findElement(form, func(n *html.Node) bool { return n.Data == "button" }); button == nil || hasAttrKey(button, "disabled") {
+		t.Error("start trip button is missing or starts disabled")
+	}
 	if name := findElement(doc, hasAttr("id", "trip-name")); hasAttrKey(name, "autofocus") || hasAttrKey(name, "aria-invalid") {
 		t.Error("a fresh start trip form grabs focus or reads as invalid")
 	}

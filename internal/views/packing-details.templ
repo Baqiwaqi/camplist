@@ -106,8 +106,9 @@ templ PreparationTasks(list packing.PackingList, csrfToken string) {
 
 // StartTripForm sits in the pine hero. A started trip is a new page, so the
 // server redirects; a rejected name swaps the form back in place with the
-// error. hx-sync drops repeat presses while a start is in flight, and htmx
-// keeps the busy style through the redirect, so one press makes one trip.
+// error. hx-sync drops repeat presses while a start is in flight; once the
+// redirect arrives the button is disabled, so neither a click nor Enter can
+// start a second trip while the trip page loads.
 templ StartTripForm(listID string, name string, errs []string, csrfToken string) {
 	<form
 		id="start-trip"
@@ -117,6 +118,7 @@ templ StartTripForm(listID string, name string, errs []string, csrfToken string)
 		hx-target="this"
 		hx-swap="outerHTML"
 		hx-sync="this:drop"
+		hx-on::after-request="if (event.detail.xhr.getResponseHeader('HX-Redirect')) this.querySelector('button').disabled = true"
 		class="flex flex-wrap items-end gap-2 max-sm:w-full"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="listId" value={ listID }/>

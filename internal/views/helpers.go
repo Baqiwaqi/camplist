@@ -130,8 +130,8 @@ func confirmDeleteCard(url, cardID, question, action, detail string) templ.Attri
 
 // preparationSwap builds the htmx attributes shared by every control in the
 // preparation card: post to the preparation endpoint and swap the card. hx-sync
-// drops a second save while one is running, because it would carry the
-// revision the first save replaces.
+// drops a repeat press while the card is saving; static/revision.js orders
+// saves from different controls on the page.
 func preparationSwap(list packing.PackingList) templ.Attributes {
 	return templ.Attributes{
 		"hx-post":   "/packing-lists/" + list.ID + "/preparation/edit",

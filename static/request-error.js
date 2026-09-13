@@ -20,8 +20,7 @@ document.addEventListener('alpine:init', () => {
     leaveTimer: null,
     reset() {
       this.stop()
-      this.$root.hidden = true
-      this.leaving = false
+      this.hide()
       this.reload = false
     },
     failed(xhr) {
@@ -63,12 +62,13 @@ document.addEventListener('alpine:init', () => {
     dismiss() {
       this.stop()
       this.leaving = true
-      this.leaveTimer = setTimeout(() => {
-        this.$root.hidden = true
-        this.leaving = false
-        this.hovered = false
-        this.focused = false
-      }, leaveMs)
+      this.leaveTimer = setTimeout(() => this.hide(), leaveMs)
+    },
+    hide() {
+      this.$root.hidden = true
+      this.leaving = false
+      this.hovered = false
+      this.focused = false
     },
   }))
 })

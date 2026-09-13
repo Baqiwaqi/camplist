@@ -98,6 +98,17 @@ test('hovering or focusing the toast pauses the timer', () => {
   assert.equal(component.$root.hidden, true)
 })
 
+test('a new request hiding a held toast does not keep the next toast open', () => {
+  const { component, advance } = toast()
+  component.failed(response(403, 'Only the owner can do that.'))
+  component.hold('hovered', true)
+  component.hold('focused', true)
+  component.reset()
+  component.failed(response(400, 'Trip name must be at most 200 characters'))
+  advance(6160)
+  assert.equal(component.$root.hidden, true)
+})
+
 test('a new error resets the timer and replaces the message', () => {
   const { component, advance } = toast()
   component.failed(response(403, 'Only the owner can do that.'))

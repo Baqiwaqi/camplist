@@ -19,7 +19,7 @@ function openMenu({ trigger, popupWidth, viewport }) {
       if (name === 'menu') factory = build
     },
   }
-  vm.runInNewContext(source, { document, Alpine })
+  vm.runInNewContext(source, { document, Alpine, queueMicrotask: callback => callback() })
   init()
   const menu = factory()
   menu.$refs = {
@@ -71,16 +71,18 @@ function menuWithItems({ trigger = { left: 280, right: 350, top: 100, bottom: 14
       if (name === 'menu') factory = build
     },
   }
-  vm.runInNewContext(source, { document, Alpine, Date })
+  const microtasks = []
+  vm.runInNewContext(source, { document, Alpine, Date, queueMicrotask: callback => microtasks.push(callback) })
   init()
   const menu = factory()
-  const items = labels.map(label => ({ textContent: label, disabled: false, focus() { document.activeElement = this } }))
+  const items = labels.map(label => ({ textContent: label, disabled: false, focusedUp: null, focus() { this.focusedUp = menu.up; document.activeElement = this } }))
   menu.$refs = {
     trigger: { getBoundingClientRect: () => trigger, focus() { document.activeElement = this } },
     popup: { offsetWidth: 176, offsetHeight: height, querySelectorAll: () => items },
   }
   menu.$nextTick = callback => callback()
-  return { menu, items, document }
+  const flush = () => { while (microtasks.length) microtasks.shift()() }
+  return { menu, items, document, flush }
 }
 
 function key(value) {
@@ -99,9 +101,20 @@ test('a menu with room below opens downward', () => {
   assert.equal(menu.up, false)
 })
 
-test('typing a letter moves to the next item starting with it', () => {
-  const { menu, items, document } = menuWithItems({ labels: ['Edit list', 'Sharing', 'Delete list'] })
+test('a keyboard-opened menu near the bottom focuses its item only after placing the popup up', () => {
+  const { menu, items, document, flush } = menuWithItems({ trigger: { left: 280, right: 350, top: 760, bottom: 800 }, labels: ['Edit list', 'Delete list'] })
   menu.show(0)
+  assert.equal(menu.up, true)
+  assert.equal(document.activeElement, null, 'focus waits until Alpine has applied the placement')
+  flush()
+  assert.equal(document.activeElement, items[0])
+  assert.equal(items[0].focusedUp, true)
+})
+
+test('typing a letter moves to the next item starting with it', () => {
+  const { menu, items, document, flush } = menuWithItems({ labels: ['Edit list', 'Sharing', 'Delete list'] })
+  menu.show(0)
+  flush()
   assert.equal(document.activeElement, items[0])
   const event = key('d')
   menu.find(event)
@@ -110,8 +123,9 @@ test('typing a letter moves to the next item starting with it', () => {
 })
 
 test('space and modified keys are left to the item', () => {
-  const { menu, items, document } = menuWithItems({ labels: ['Sharing', 'Sign out'] })
+  const { menu, items, document, flush } = menuWithItems({ labels: ['Sharing', 'Sign out'] })
   menu.show(0)
+  flush()
   for (const event of [key(' '), { ...key('s'), ctrlKey: true }]) {
     menu.find(event)
     assert.equal(event.prevented, false)

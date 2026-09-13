@@ -414,7 +414,7 @@
     @apply top-auto bottom-full mt-0 mb-1.5;
   }
 
-  /* ---------- popup (menu, select and combobox) ---------- */
+  /* ---------- popup (menu and select) ---------- */
 
   /* One popup for every dropdown, after the Pines UI dropdown and select: a
      white sheet on a sand border that scrolls past 288px. Each trigger's own
@@ -455,11 +455,6 @@
 
   .option-danger {
     @apply text-red-700;
-  }
-
-  /* An option that creates something, such as a new category. */
-  .option-new {
-    @apply text-pine-700;
   }
 
   .popup-separator {

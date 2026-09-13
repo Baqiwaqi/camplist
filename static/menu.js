@@ -20,7 +20,7 @@ document.addEventListener('alpine:init', () => {
       this.open = true
       this.$nextTick(() => {
         this.place()
-        if (index !== undefined) this.focus(index)
+        if (index !== undefined) queueMicrotask(() => this.focus(index))
       })
     },
     place() {

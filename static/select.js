@@ -59,7 +59,7 @@ document.addEventListener('alpine:init', () => {
     move(index) {
       const count = this.options().length
       this.active = Math.min(Math.max(index, 0), count - 1)
-      this.$nextTick(() => this.options()[this.active]?.scrollIntoView({ block: 'nearest' }))
+      this.$nextTick(() => queueMicrotask(() => this.options()[this.active]?.scrollIntoView({ block: 'nearest' })))
     },
     choose(index) {
       const native = this.$refs.native

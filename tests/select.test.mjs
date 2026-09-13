@@ -25,7 +25,8 @@ function select({ labels, selectedIndex = 0, trigger = { top: 300, bottom: 344 }
   class Event {
     constructor(type) { this.type = type }
   }
-  vm.runInNewContext(source, { document, Alpine, Event, Date, setTimeout: callback => timers.push(callback) })
+  const microtasks = []
+  vm.runInNewContext(source, { document, Alpine, Event, Date, setTimeout: callback => timers.push(callback), queueMicrotask: callback => microtasks.push(callback) })
   init()
   const component = factory()
   const listeners = {}
@@ -41,18 +42,19 @@ function select({ labels, selectedIndex = 0, trigger = { top: 300, bottom: 344 }
     dispatchEvent(event) { if (event.type === 'change') this.changes++ },
   }
   const focused = []
+  const scrolled = []
   component.$refs = {
     native,
     trigger: { getBoundingClientRect: () => trigger, focus() { focused.push('trigger') } },
     listbox: {
       offsetHeight: listHeight,
-      querySelectorAll: () => labels.map(textContent => ({ textContent, scrollIntoView() {} })),
+      querySelectorAll: () => labels.map(textContent => ({ textContent, scrollIntoView() { scrolled.push({ option: textContent, up: component.up }) } })),
     },
   }
   component.$root = { contains: node => node === 'inside' }
   component.$nextTick = callback => callback()
   component.init()
-  return { component, native, form: { reset: () => { native.selectedIndex = 0; listeners.reset?.(); timers.splice(0).forEach(run => run()) }, listeners }, focused }
+  return { component, native, form: { reset: () => { native.selectedIndex = 0; listeners.reset?.(); timers.splice(0).forEach(run => run()) }, listeners }, focused, scrolled, flush: () => { while (microtasks.length) microtasks.shift()() } }
 }
 
 function press(component, value, extra = {}) {
@@ -140,4 +142,13 @@ test('the list opens upward only when it does not fit below and there is more ro
   const shortListNearBottom = select({ labels: ['Shared', 'For each person'], trigger: { top: 690, bottom: 734 }, listHeight: 96 })
   shortListNearBottom.component.show()
   assert.equal(shortListNearBottom.component.up, false)
+})
+
+test('opening near the bottom scrolls to the chosen option only after placing the list up', () => {
+  const low = select({ labels: ['Shared', 'For each person'], selectedIndex: 1, trigger: { top: 760, bottom: 804 }, listHeight: 96 })
+  low.component.show()
+  assert.equal(low.component.up, true)
+  assert.deepEqual(low.scrolled, [], 'scrolling waits until Alpine has applied the placement')
+  low.flush()
+  assert.deepEqual(low.scrolled, [{ option: 'For each person', up: true }])
 })

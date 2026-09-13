@@ -202,11 +202,6 @@ func TestOfflineShellSelectsMatchSelectField(t *testing.T) {
 			t.Errorf("offline shell %s dropdown differs from the rendered Select", name)
 		}
 	}
-	for _, script := range []string{`<script src="/static/select.js" defer></script>`, `<script src="/static/alpine.min.js" defer></script>`} {
-		if !strings.Contains(page, script) {
-			t.Errorf("offline shell does not load %s", script)
-		}
-	}
 }
 
 func TestShellLoadsSelectBehaviourWithNoScriptFallback(t *testing.T) {

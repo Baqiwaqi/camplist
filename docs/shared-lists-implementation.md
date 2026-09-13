@@ -74,7 +74,7 @@ carry the version the editor saw and expose a conflict instead of retrying stale
 form content. The former add-item and delete-list patch paths now use conditional
 resource replacements. New sync receipts are scoped to the authenticated actor;
 legacy owner receipts remain readable. The device snapshot contains only packing
-fields, actor/owner IDs, and a shared flag, not membership, invitation, receipt,
+fields, the default item categories, actor/owner IDs, and a shared flag, not membership, invitation, receipt,
 or review metadata.
 
 Identity continues to use Google's verified subject. Verified sign-in claims

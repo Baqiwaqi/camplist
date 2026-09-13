@@ -27,6 +27,8 @@ type packingStore interface {
 	InvitationStatus(context.Context, packing.InvitationLink, string) (string, error)
 	RequestAccess(context.Context, packing.InvitationLink, packing.Member) error
 	DecideInvitation(context.Context, string, string, string, string, bool) error
+	ListTrips(context.Context, string, string) ([]packing.PackingSession, error)
+	ApproveInvitationWithTrips(context.Context, string, string, string, []string) error
 	RemoveMember(context.Context, string, string, string, string) error
 	AddReviewEntry(context.Context, string, string, packing.ReviewEntry) (packing.PackingSession, error)
 	ApplyReview(context.Context, string, string, string, []string) (packing.PackingList, error)

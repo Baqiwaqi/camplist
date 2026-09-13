@@ -14,6 +14,16 @@ for each person, copies it to their existing conversation, and approves the
 Google account that requests access. Camplist does not send email. A link alone
 never grants checklist access. Links expire after seven days and bind to one
 requester. Owners can revoke unused requests or remove members; members can leave.
+
+Approving a list request asks whether to also share the owner's current
+(unarchived) trips started from that list with the same account. Trips stay
+unticked by default and the question is skipped when there are none. The prompt
+opens in place with htmx (`/sharing/packing-list/{id}/invitations/{hash}/approve`).
+Ticked trips gain the approved account as a trip member, exactly as if a trip
+invitation had been approved, and are then managed and removed from each trip's
+own sharing page. Trips are granted before the list approval commits, so a failure
+leaves the request pending and resubmission is idempotent; a removed list member
+is never re-added or given trips by a stale approval. Later trips stay private.
 The MVP allows 20 members and 20 unexpired invitation records per resource.
 
 Trip packers can read the checklist and mark equipment. Template editors can

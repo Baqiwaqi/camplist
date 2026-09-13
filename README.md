@@ -118,8 +118,11 @@ For collaboration on this project, see [CLAUDE.md](CLAUDE.md). Requested changes
 ## Improve your next trip
 
 Open a packing session and choose **Review this trip**. Record forgotten or unused
-gear and repairs or replacements. Select additions, removals, and preparation
-tasks to apply to the reusable list. Old sessions keep their original checklist.
+gear and repairs or replacements. **Save observation** only records it with the
+trip; a proposed addition, removal, or preparation task changes the reusable list
+for future trips once you select it under Trip observations and apply it, or
+choose **Save and apply now**. Each observation shows whether its change is
+waiting or applied. Old sessions keep their original checklist.
 Preparation tasks are completed separately from packing items. If the original
 list was deleted, the review offers to create a new list from that trip.
 

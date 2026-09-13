@@ -24,9 +24,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - Frontend: `htmx` plus `Alpine.js` (both vendored in `static/`, loaded in
   `internal/views/layout.templ`). Client-side state lives in `x-data` on the
   element that needs it (menu, error toast, confirm dialog); packing persistence/sync lives in the explicit
-  `static/offline/` modules. Deletes keep `hx-confirm`; the dialog in the layout
+  `static/offline/` modules. Deletes and access removals keep `hx-confirm`; the layout dialog
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
-  on the button supply the label and explanation. Packing updates and the
+  on the triggering element supply the label and explanation. Packing updates and the
   list page's preparation Mark done return fragments; other mutations may
   redirect or refresh. List-page controls embed the whole list's ETag, so a
   fragment save there must send `HX-Trigger: list-revision` with the

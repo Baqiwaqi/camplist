@@ -83,7 +83,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	form.Initial = false
 	form.Name = strings.TrimSpace(form.Name)
-	form.Category = strings.TrimSpace(form.Category)
+	form.Category = packing.MatchCategory(form.Category)
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
 		h.renderItemForm(w, r, list, item, form)
@@ -95,6 +95,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
+	categoryChanged := item.Category != form.Category
 	item.SourceRevision = form.Revision
 	item.Name = form.Name
 	item.Category = form.Category
@@ -106,6 +107,9 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
+	if categoryChanged {
+		h.rememberCategory(r.Context(), userID, item.Category)
+	}
 	if isHTMX(r) {
 		// Read the committed row so subsequent actions use its current ETag.
 		h.ItemRowHandler(w, r)
@@ -115,6 +119,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) renderItemForm(w http.ResponseWriter, r *http.Request, list packing.PackingList, item packing.PackingItem, form packing.CreateItemForm) {
+	form.Categories = h.categorySuggestions(r.Context(), auth.Subject(r.Context()), list.Items)
 	if isHTMX(r) {
 		render(w, r, views.ItemEditRow(list.ID, item.ID, form, csrf.Token(r)))
 		return

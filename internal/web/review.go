@@ -22,7 +22,14 @@ func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry pac
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
-	render(w, r, views.ReviewPage(session, list, available, recoverable, entry, message, csrf.Token(r)))
+	render(w, r, views.ReviewPage(session, list, available, recoverable, entry, h.reviewCategories(r, session, list), message, csrf.Token(r)))
+}
+
+// reviewCategories offers the trip's and the reusable list's categories with
+// the defaults and the reader's remembered ones.
+func (h *handler) reviewCategories(r *http.Request, session packing.PackingSession, list packing.PackingList) []string {
+	user, _ := auth.UserID(r.Context())
+	return h.categorySuggestions(r.Context(), user, append(append([]packing.PackingItem{}, session.List.Items...), list.Items...))
 }
 
 // loadReview reads the trip and, when the reader still has it, its reusable
@@ -85,6 +92,9 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	if entry.ItemID == "" {
+		entry.Category = packing.MatchCategory(entry.Category)
+	}
 	_, err = h.packingStore.AddReviewEntry(r.Context(), chi.URLParam(r, "id"), user, entry)
 	if err != nil {
 		status, message := storeErrorDetails(err, "Could not save review")
@@ -94,6 +104,9 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		h.renderReview(w, r, entry, message, status)
 		return
+	}
+	if entry.ItemID == "" && entry.Action == packing.ReviewAdd {
+		h.rememberCategory(r.Context(), user, entry.Category)
 	}
 	name := strings.TrimSpace(entry.Name)
 	saved := "Saved “" + name + "”. Not applied yet: select it under Trip observations and apply it to change future trips."
@@ -128,7 +141,7 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, saved, message, apply, csrf.Token(r)))
+		render(w, r, views.ReviewSaved(session, list, available, packing.ReviewEntry{ID: uuid.NewString(), Action: packing.ReviewObserve}, h.reviewCategories(r, session, list), saved, message, apply, csrf.Token(r)))
 		return
 	}
 	if message != "" {
@@ -142,12 +155,12 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 // renderReviewFormError returns the form with the submitted values, including
 // the list revision the page was showing, and the message. It answers 200 so htmx swaps it; the plain form keeps the real status.
 func (h *handler) renderReviewFormError(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string) {
-	session, _, available, _, ok := h.loadReview(w, r)
+	session, list, available, _, ok := h.loadReview(w, r)
 	if !ok {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	render(w, r, views.ReviewFormError(session, r.PostForm.Get("revision"), available, entry, message, csrf.Token(r)))
+	render(w, r, views.ReviewFormError(session, r.PostForm.Get("revision"), available, entry, h.reviewCategories(r, session, list), message, csrf.Token(r)))
 }
 func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {

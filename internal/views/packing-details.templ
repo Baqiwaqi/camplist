@@ -36,11 +36,6 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 			<p class="text-muted max-w-[60ch]">Starting a trip copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
 		<section class="mt-8">
-			<datalist id="list-categories">
-				for _, category := range categories(list.Items,2000) {
-					<option value={ category }></option>
-				}
-			</datalist>
 			@ListItemForm(form, csrfToken)
 		</section>
 		<section class="mt-8">
@@ -338,16 +333,17 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 	</li>
 }
 
-// ListItemForm is the compact add form on the details page: the name with the
-// add button beside it, and category and scope folded behind a toggle that
-// opens by itself when the form comes back with either one filled in.
+// ListItemForm is the compact add form on the details page: name, category
+// and the add button, with the name on its own row on phones. Who the item is
+// for stays folded behind a toggle that opens by itself when the form comes
+// back with a scope other than shared.
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<h2 class="mb-3">Add an item</h2>
 	<div class="card">
 		<form action={ form.Action } method="POST" hx-boost="true">
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ form.Revision }/>
-			<div class="flex items-center gap-2">
+			<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_auto]">
 				<label for="item-name-new" class="sr-only">Item name</label>
 				<input
 					type="text"
@@ -355,11 +351,13 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 					name="name"
 					placeholder="Like a headlamp"
 					value={ form.Name }
-					class="min-w-0 flex-1 min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+					class="col-span-2 sm:col-span-1 min-w-0 min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
 					if form.NameHasError() {
 						aria-invalid="true"
 					}
 				/>
+				<label for="item-category-new" class="sr-only">Category</label>
+				@CategoryPicker("item-category-new", "item-category-new-options", form.Category, "Category", form.Categories)
 				<button type="submit" class="btn btn-primary min-h-11 shrink-0">{ form.SubmitButtonText }</button>
 			</div>
 			if len(form.Error) > 0 {
@@ -367,17 +365,11 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 					@ErrorBanner(form.Error)
 				</div>
 			}
-			<details class="mt-1" open?={ form.Category != "" || (form.Scope != "" && form.Scope != "shared") }>
-				<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Category and who it's for</summary>
-				<div class="grid gap-3 pb-1 sm:grid-cols-2">
-					<div class="grid gap-1">
-						<label for="item-category-new" class="text-sm font-bold">Category</label>
-						<input type="text" id="item-category-new" name="category" list="list-categories" placeholder="Light" value={ form.Category } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
-					</div>
-					<div class="grid gap-1">
-						<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
-						@ScopeSelect("scope", "item-scope-new", form.Scope, false)
-					</div>
+			<details class="mt-1" open?={ form.Scope != "" && form.Scope != "shared" }>
+				<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Who it's for</summary>
+				<div class="grid gap-1 pb-1 sm:max-w-80">
+					<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
+					@ScopeSelect("scope", "item-scope-new", form.Scope, false)
 				</div>
 			</details>
 		</form>
@@ -407,7 +399,7 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 		</div>
 		<div class="grid gap-1">
 			<label for={ "item-category-" + suffix } class="text-sm font-bold">Category</label>
-			<input type="text" id={ "item-category-" + suffix } name="category" list="list-categories" placeholder="Light" value={ form.Category } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+			@CategoryPicker("item-category-"+suffix, "item-category-"+suffix+"-options", form.Category, "Pick or type one", form.Categories)
 		</div>
 		<div class="grid gap-1">
 			<label for={ "item-scope-" + suffix } class="text-sm font-bold">Who is this for?</label>
@@ -491,11 +483,6 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 // EditItemPage is the fallback for editing an item without scripts.
 templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout("Edit item", csrfToken) {
-		<datalist id="list-categories">
-			for _, category := range categories(list.Items,2000) {
-				<option value={ category }></option>
-			}
-		</datalist>
 		<section class="max-w-[560px]">
 			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">{ list.Name }</p>
 			<h1>Edit item</h1>

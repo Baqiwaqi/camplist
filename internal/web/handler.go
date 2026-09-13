@@ -278,10 +278,6 @@ func (h *handler) DeleteListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Header.Get("HX-Request") != "true" {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
 	// The lists page targets the card, which htmx removes on this empty 200.
 	// Anywhere else, such as the list's own details page, redirect rather
 	// than refresh: refreshing a deleted list would show an error.

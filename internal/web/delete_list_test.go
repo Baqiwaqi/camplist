@@ -35,16 +35,14 @@ func (s *deleteListStore) GetPackingLists(context.Context, string) ([]packing.Pa
 func TestDeleteListRemovesCardInPlaceOrRedirects(t *testing.T) {
 	for _, test := range []struct {
 		name         string
-		htmx         bool
 		target       bool
 		remaining    int
 		wantRedirect string
 		wantEmpty    bool
 	}{
-		{name: "lists page keeps other cards", htmx: true, target: true, remaining: 1},
-		{name: "lists page last card shows empty state", htmx: true, target: true, wantEmpty: true},
-		{name: "details page redirects", htmx: true, remaining: 1, wantRedirect: "/"},
-		{name: "plain request redirects", remaining: 1},
+		{name: "lists page keeps other cards", target: true, remaining: 1},
+		{name: "lists page last card shows empty state", target: true, wantEmpty: true},
+		{name: "details page redirects", remaining: 1, wantRedirect: "/"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			list := packing.NewList("user", "Camping", "")
@@ -57,9 +55,7 @@ func TestDeleteListRemovesCardInPlaceOrRedirects(t *testing.T) {
 			route.URLParams.Add("id", list.ID)
 			ctx := context.WithValue(r.Context(), auth.USER_ID_KEY, "user")
 			r = r.WithContext(context.WithValue(ctx, chi.RouteCtxKey, route))
-			if test.htmx {
-				r.Header.Set("HX-Request", "true")
-			}
+			r.Header.Set("HX-Request", "true")
 			if test.target {
 				r.Header.Set("HX-Target", "list-"+list.ID)
 			}
@@ -71,10 +67,6 @@ func TestDeleteListRemovesCardInPlaceOrRedirects(t *testing.T) {
 			}
 			body := w.Body.String()
 			switch {
-			case !test.htmx:
-				if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/" {
-					t.Errorf("plain request: status %d location %q", w.Code, w.Header().Get("Location"))
-				}
 			case test.wantRedirect != "":
 				if w.Code != http.StatusOK || w.Header().Get("HX-Redirect") != test.wantRedirect || body != "" {
 					t.Errorf("details page: status %d redirect %q body %q", w.Code, w.Header().Get("HX-Redirect"), body)

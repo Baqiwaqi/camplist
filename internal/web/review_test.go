@@ -281,8 +281,84 @@ func TestSaveOnlyLeavesTheListAndSaysSo(t *testing.T) {
 		t.Fatal("save only changed the reusable list")
 	}
 	body := w.Body.String()
-	if !strings.Contains(body, "Not applied yet") || !strings.Contains(body, ">Waiting to be applied</span>") || strings.Contains(body, `id="current-review-list"`) {
+	if !strings.Contains(body, "Not applied yet") || !strings.Contains(body, ">Waiting to be applied</span>") {
 		t.Fatalf("save only response unclear: %s", body)
+	}
+}
+
+func TestSaveOnlyRefreshesTheListCardWithTheRevisionTheFormsCarry(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	shown := list.Revision()
+	list.Items = append(list.Items, packing.NewItem("Stove", "Kitchen"))
+	if err := store.SavePackingList(context.Background(), list); err != nil {
+		t.Fatal(err)
+	}
+	current, _ := store.GetPackingList(context.Background(), list.ID, "user")
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"matches"}, "name": {"Matches"}, "forgotten": {"true"}, "action": {"add"}, "revision": {shown}}), session.ID, "")
+	r.Header.Set("HX-Request", "true")
+	w := httptest.NewRecorder()
+	h.AddReviewHandler(w, r)
+	body := w.Body.String()
+	for _, want := range []string{`id="current-review-list" class="card mt-8" hx-swap-oob="outerHTML"`, "<li>Stove — Kitchen</li>", `name="revision" value="` + current.Revision() + `"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	if strings.Contains(body, `value="`+shown+`"`) {
+		t.Error("a form still carries the revision the old list card showed")
+	}
+}
+
+func TestReviewErrorKeepsTheRevisionThePageWasShowing(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	shown := list.Revision()
+	list.Description = "Changed elsewhere"
+	if err := store.SavePackingList(context.Background(), list); err != nil {
+		t.Fatal(err)
+	}
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", url.Values{"entryId": {"stove"}, "name": {"Stove"}, "action": {"add"}, "revision": {shown}}), session.ID, "")
+	r.Header.Set("HX-Request", "true")
+	w := httptest.NewRecorder()
+	h.AddReviewHandler(w, r)
+	body := w.Body.String()
+	if !strings.Contains(body, "Please check the submitted values.") || !strings.Contains(body, `name="revision" value="`+shown+`"`) || strings.Contains(body, `id="current-review-list"`) {
+		t.Fatalf("error form should keep the displayed revision and leave the list card: %s", body)
+	}
+}
+
+func TestReviewPageShowsNoApplyStatusWhenTheListIsUnavailable(t *testing.T) {
+	store, list, session, h := reviewFixture(t)
+	ctx := context.Background()
+	for _, entry := range []packing.ReviewEntry{
+		{ID: "pending", Name: "Stove", Forgotten: true, Action: packing.ReviewAdd},
+		{ID: "applied", Name: "Matches", Forgotten: true, Action: packing.ReviewAdd},
+	} {
+		if _, err := store.AddReviewEntry(ctx, session.ID, "user", entry); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := store.ApplyReview(ctx, session.ID, "user", list.Revision(), []string{"applied"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeletePackingList(ctx, list.ID, "user"); err != nil {
+		t.Fatal(err)
+	}
+	r := withItemRoute(packingRequest("/trips/"+session.ID+"/review", nil), session.ID, "")
+	w := httptest.NewRecorder()
+	h.ReviewPage(w, r)
+	body := w.Body.String()
+	if w.Code != http.StatusOK || !strings.Contains(body, "The reusable list is unavailable") {
+		t.Fatalf("list should be unavailable: %d %s", w.Code, body)
+	}
+	for _, want := range []string{`<h3 class="mt-0">Stove</h3></div>`, `<h3 class="mt-0">Matches</h3></div>`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	for _, label := range []string{"Applied</span>", "Waiting to be applied", "Not applied"} {
+		if strings.Contains(body, label) {
+			t.Errorf("unavailable list still labelled %q", label)
+		}
 	}
 }
 

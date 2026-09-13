@@ -132,15 +132,15 @@ func (h *handler) AddReviewHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/trips/"+chi.URLParam(r, "id")+"/review", http.StatusSeeOther)
 }
 
-// renderReviewFormError returns the form with the submitted values and the
-// message. It answers 200 so htmx swaps it; the plain form keeps the real status.
+// renderReviewFormError returns the form with the submitted values, including
+// the list revision the page was showing, and the message. It answers 200 so htmx swaps it; the plain form keeps the real status.
 func (h *handler) renderReviewFormError(w http.ResponseWriter, r *http.Request, entry packing.ReviewEntry, message string) {
-	session, list, available, _, ok := h.loadReview(w, r)
+	session, _, available, _, ok := h.loadReview(w, r)
 	if !ok {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	render(w, r, views.ReviewFormError(session, list, available, entry, message, csrf.Token(r)))
+	render(w, r, views.ReviewFormError(session, r.PostForm.Get("revision"), available, entry, message, csrf.Token(r)))
 }
 func (h *handler) ApplyReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if !parsePackingForm(w, r) {

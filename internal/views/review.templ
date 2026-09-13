@@ -25,7 +25,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 		if session.UserID==auth.Subject(ctx) {
 			<section class="card">
 				<h2>What did you notice?</h2>
-				@ReviewForm(session, list, available, entry, "", false, csrfToken)
+				@ReviewForm(session, list.Revision(), available, entry, "", false, csrfToken)
 				@reviewSaveStatus("")
 			</section>
 		}
@@ -56,7 +56,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 // "Save and apply now" also applies the proposed change, so it is offered only
 // while the reusable list is available and a change is proposed. focusSave
 // moves focus to Save observation after that button disappears in a swap.
-templ ReviewForm(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, focusSave bool, csrfToken string) {
+templ ReviewForm(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, message string, focusSave bool, csrfToken string) {
 	<form
 		id="review-form"
 		method="post"
@@ -72,7 +72,7 @@ templ ReviewForm(session packing.PackingSession, list packing.PackingList, avail
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="entryId" value={ entry.ID }/>
 		if available {
-			<input type="hidden" name="revision" value={ list.Revision() }/>
+			<input type="hidden" name="revision" value={ revision }/>
 		}
 		@Select("review-item", "itemId", "Existing gear (optional)", reviewItemOptions(session), entry.ItemID)
 		<label class="block my-3 text-sm font-bold">Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white font-normal"/></label>
@@ -144,7 +144,8 @@ func reviewChange(observation packing.ReviewEntry) string {
 
 // TripObservations lists this trip's observations with the apply form. spaced
 // adds the gap it needs when another card sits above it. Each proposed change
-// is labelled applied or waiting, from the list's applied reviews.
+// is labelled applied or waiting, from the list's applied reviews, while the
+// list is available.
 templ TripObservations(session packing.PackingSession, list packing.PackingList, available bool, spaced bool, csrfToken string, attrs templ.Attributes) {
 	<section id="trip-observations" class={ "card", templ.KV("mt-8", spaced) } { attrs... }>
 		<h2>Trip observations</h2>
@@ -158,13 +159,11 @@ templ TripObservations(session packing.PackingSession, list packing.PackingList,
 				<article class="py-3 border-b border-sand-100 last-of-type:border-b-0">
 					<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
 						<h3 class="mt-0">{ observation.Name }</h3>
-						if observation.Action != packing.ReviewObserve {
+						if available && observation.Action != packing.ReviewObserve {
 							if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
 								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">Applied</span>
-							} else if available {
-								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Waiting to be applied</span>
 							} else {
-								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Not applied</span>
+								<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Waiting to be applied</span>
 							}
 						}
 					</div>
@@ -219,20 +218,21 @@ templ CurrentReviewList(list packing.PackingList, attrs templ.Attributes) {
 
 // ReviewSaved answers an htmx save: a fresh form, the confirmation, and the
 // observations card with the new entry. message reports a change that was
-// saved but could not be applied; listChanged also refreshes the list card
-// after an apply attempt.
+// saved but could not be applied; listChanged moves focus to Save observation
+// after an apply attempt. The list card is refreshed too, so it shows the
+// revision the new forms carry.
 templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, saved string, message string, listChanged bool, csrfToken string) {
-	@ReviewForm(session, list, available, entry, message, listChanged, csrfToken)
+	@ReviewForm(session, list.Revision(), available, entry, message, listChanged, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML">{ saved }</div>
 	@TripObservations(session, list, available, true, csrfToken, templ.Attributes{"hx-swap-oob": "outerHTML"})
-	if listChanged && available {
+	if available {
 		@CurrentReviewList(list, templ.Attributes{"hx-swap-oob": "outerHTML"})
 	}
 }
 
 // ReviewFormError answers a failed htmx save with the form, the submitted
-// values and the message, and clears an earlier confirmation.
-templ ReviewFormError(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
-	@ReviewForm(session, list, available, entry, message, false, csrfToken)
+// values and revision, and the message, and clears an earlier confirmation.
+templ ReviewFormError(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, message string, csrfToken string) {
+	@ReviewForm(session, revision, available, entry, message, false, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML"></div>
 }

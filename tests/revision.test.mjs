@@ -31,6 +31,7 @@ function listPage({ inputs, buttons }) {
 
 function startTripPage(form) {
   let pageshow
+  const reloads = []
   const window = {
     addEventListener(event, handler) {
       if (event === 'pageshow') pageshow = handler
@@ -40,17 +41,11 @@ function startTripPage(form) {
     addEventListener() {},
     getElementById(id) { return id === 'start-trip' ? form : null },
   }
-  vm.runInNewContext(source, { document, window })
-  return persisted => pageshow({ persisted })
-}
-
-function startedTrip() {
-  const classes = new Set(['flex', 'htmx-request'])
-  const button = { disabled: true }
-  return {
-    button,
-    classList: { remove(name) { classes.delete(name) }, contains(name) { return classes.has(name) } },
-    querySelectorAll(selector) { return selector === 'button' ? [button] : [] },
+  const location = { reload() { reloads.push(true) } }
+  vm.runInNewContext(source, { document, window, location })
+  return persisted => {
+    pageshow({ persisted })
+    return reloads.length
   }
 }
 
@@ -80,20 +75,14 @@ test('a trigger without both revisions changes nothing', () => {
   assert.equal(input.value, '')
 })
 
-test('a list page restored from the back/forward cache can start another trip', () => {
-  const form = startedTrip()
-  startTripPage(form)(true)
-  assert.equal(form.button.disabled, false)
-  assert.equal(form.classList.contains('htmx-request'), false)
+test('a list page restored from the back/forward cache reloads so Start trip works again', () => {
+  assert.equal(startTripPage({})(true), 1)
 })
 
-test('a fresh page load leaves Start trip alone', () => {
-  const form = startedTrip()
-  startTripPage(form)(false)
-  assert.equal(form.button.disabled, true)
-  assert.equal(form.classList.contains('htmx-request'), true)
+test('a fresh page load does not reload', () => {
+  assert.equal(startTripPage({})(false), 0)
 })
 
 test('pages without Start trip ignore a restore', () => {
-  assert.doesNotThrow(() => startTripPage(null)(true))
+  assert.equal(startTripPage(null)(true), 0)
 })

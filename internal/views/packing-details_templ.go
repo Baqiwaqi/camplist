@@ -369,8 +369,8 @@ func PreparationTasks(list packing.PackingList, csrfToken string) templ.Componen
 // server redirects; a rejected name swaps the form back in place with the
 // error. hx-sync drops repeat presses while a start is in flight; once the
 // redirect arrives the button is disabled, so neither a click nor Enter can
-// start a second trip while the trip page loads (static/revision.js gives the
-// form back when the page returns from the back/forward cache).
+// start a second trip while the trip page loads (static/revision.js reloads
+// the page when it returns from the back/forward cache).
 func StartTripForm(listID string, name string, errs []string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

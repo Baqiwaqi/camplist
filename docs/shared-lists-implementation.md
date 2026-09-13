@@ -21,9 +21,11 @@ unticked by default and the question is skipped when there are none. The prompt
 opens in place with htmx (`/sharing/packing-list/{id}/invitations/{hash}/approve`).
 Ticked trips gain the approved account as a trip member, exactly as if a trip
 invitation had been approved, and are then managed and removed from each trip's
-own sharing page. Trips are granted before the list approval commits, so a failure
-leaves the request pending and resubmission is idempotent; a removed list member
-is never re-added or given trips by a stale approval. Later trips stay private.
+own sharing page. The list approval commits first and trips are then granted only
+while the account is a list member, so a list at its member limit shares no trips,
+a failed trip grant leaves the list shared (resubmission is idempotent), and a
+removed list member is never re-added or given trips by a stale approval. Later
+trips stay private.
 The MVP allows 20 members and 20 unexpired invitation records per resource.
 
 Trip packers can read the checklist and mark equipment. Template editors can

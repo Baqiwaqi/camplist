@@ -5,6 +5,7 @@ import (
 	"camplist/internal/testsupport"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -139,6 +140,89 @@ func TestApprovingListRequestSharesChosenTripsWithTheSameAccount(t *testing.T) {
 	}
 	if _, err := f.store.GetPackingList(ctx, f.list.ID, "guest"); err != nil {
 		t.Fatalf("trip removal changed list access: %v", err)
+	}
+}
+
+func addMembers(t *testing.T, store *packing.Store, kind, id string, subjects ...string) {
+	t.Helper()
+	ctx := context.Background()
+	for _, subject := range subjects {
+		link, err := store.CreateInvitation(ctx, kind, id, "owner")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = store.RequestAccess(ctx, link, packing.Member{Subject: subject}); err != nil {
+			t.Fatal(err)
+		}
+		if err = store.DecideInvitation(ctx, kind, id, "owner", link.Hash(), true); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func subjects(prefix string, n int) []string {
+	names := make([]string, n)
+	for i := range names {
+		names[i] = fmt.Sprintf("%s-%d", prefix, i)
+	}
+	return names
+}
+
+func TestApprovingAtTheListMemberLimitSharesNoTrips(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+	store := packing.NewStore(testsupport.NewDocuments(), packing.WithClock(func() time.Time { return now }))
+	list := packing.NewList("owner", "Weekend", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	addMembers(t, store, "packing-list", list.ID, subjects("early", 19)...)
+	// Approved links expire, which frees invitation slots while members stay.
+	now = now.Add(8 * 24 * time.Hour)
+	link, err := store.CreateInvitation(ctx, "packing-list", list.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.RequestAccess(ctx, link, packing.Member{Subject: "guest"}); err != nil {
+		t.Fatal(err)
+	}
+	addMembers(t, store, "packing-list", list.ID, "last")
+	trip, err := store.CreatePackingSession(ctx, list.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.ApproveInvitationWithTrips(ctx, list.ID, "owner", link.Hash(), []string{trip.ID}); !errors.Is(err, packing.ErrInvalid) {
+		t.Fatalf("approval over the member limit: %v", err)
+	}
+	if _, err = store.GetPackingSession(ctx, trip.ID, "guest"); err == nil {
+		t.Fatal("trip shared although the list approval failed")
+	}
+	if _, err = store.GetPackingList(ctx, list.ID, "guest"); err == nil {
+		t.Fatal("list shared over the member limit")
+	}
+}
+
+func TestFailedTripGrantAfterListApprovalCanBeRetried(t *testing.T) {
+	ctx := context.Background()
+	f := newListTripFixture(t)
+	addMembers(t, f.store, "packing-session", f.first.ID, subjects("packer", 20)...)
+	if err := f.store.ApproveInvitationWithTrips(ctx, f.list.ID, "owner", f.link.Hash(), []string{f.first.ID}); !errors.Is(err, packing.ErrInvalid) {
+		t.Fatalf("grant to a full trip: %v", err)
+	}
+	if _, err := f.store.GetPackingList(ctx, f.list.ID, "guest"); err != nil {
+		t.Fatalf("list approval did not commit before the trip grant: %v", err)
+	}
+	if _, err := f.store.GetPackingSession(ctx, f.first.ID, "guest"); err == nil {
+		t.Fatal("full trip gained a member")
+	}
+	if err := f.store.RemoveMember(ctx, "packing-session", f.first.ID, "owner", "packer-0"); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.store.ApproveInvitationWithTrips(ctx, f.list.ID, "owner", f.link.Hash(), []string{f.first.ID}); err != nil {
+		t.Fatalf("retry: %v", err)
+	}
+	if _, err := f.store.GetPackingSession(ctx, f.first.ID, "guest"); err != nil {
+		t.Fatalf("retry did not share trip: %v", err)
 	}
 }
 

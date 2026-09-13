@@ -455,34 +455,12 @@ func (s *Store) ownedListTrips(ctx context.Context, listID, actor string) ([]Pac
 // ApproveInvitationWithTrips approves a list request and also adds the same
 // approved account to the chosen trips started from that list. The owner's
 // approval is the grant, so no separate trip invitation link is needed.
-// Trips are granted before the list approval commits: a failure leaves the
-// request pending, and resubmitting is idempotent.
+// The list approval commits first and trips are granted only to an account that
+// is then a list member: a failed trip grant leaves the list shared, and
+// resubmitting is idempotent. A removed member gets no trips from a stale approval.
 func (s *Store) ApproveInvitationWithTrips(ctx context.Context, listID, actor, hash string, tripIDs []string) error {
 	if len(tripIDs) == 0 {
 		return s.DecideInvitation(ctx, "packing-list", listID, actor, hash, true)
-	}
-	_, head, err := s.resource(ctx, "packing-list", listID, actor)
-	if err != nil {
-		return err
-	}
-	if head.UserID != actor {
-		return ErrForbidden
-	}
-	var applicant *Member
-	for _, inv := range head.Sharing.Invitations {
-		if inv.Hash != hash {
-			continue
-		}
-		_, member := head.Sharing.Members[subjectOf(inv.Applicant)]
-		pending := inv.Status == "pending" && inv.Expires.After(s.clock())
-		// A removed member is never re-added through a repeated approval.
-		if inv.Applicant == nil || !pending && !(inv.Status == "approved" && member) {
-			return ErrInvalid
-		}
-		applicant = inv.Applicant
-	}
-	if applicant == nil {
-		return ErrNotFound
 	}
 	trips, err := s.ownedListTrips(ctx, listID, actor)
 	if err != nil {
@@ -499,19 +477,31 @@ func (s *Store) ApproveInvitationWithTrips(ctx context.Context, listID, actor, h
 		}
 		chosen[id] = true
 	}
+	if err = s.DecideInvitation(ctx, "packing-list", listID, actor, hash, true); err != nil {
+		return err
+	}
+	_, head, err := s.canonical(ctx, "packing-list", listID, actor)
+	if err != nil {
+		return err
+	}
+	var applicant *Member
+	for _, inv := range head.Sharing.Invitations {
+		if inv.Hash == hash && inv.Status == "approved" && inv.Applicant != nil {
+			applicant = inv.Applicant
+		}
+	}
+	if applicant == nil {
+		return ErrInvalid
+	}
+	if _, ok := head.Sharing.Members[applicant.Subject]; !ok {
+		return ErrInvalid
+	}
 	for id := range chosen {
 		if err = s.addTripMember(ctx, id, actor, *applicant); err != nil {
 			return err
 		}
 	}
-	return s.DecideInvitation(ctx, "packing-list", listID, actor, hash, true)
-}
-
-func subjectOf(member *Member) string {
-	if member == nil {
-		return ""
-	}
-	return member.Subject
+	return nil
 }
 
 // addTripMember mirrors RequestAccess and DecideInvitation for an owner-approved

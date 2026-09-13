@@ -93,6 +93,10 @@ templ Layout(title string, csrfToken string) {
 				x-on:htmx:before-request.window="reset()"
 				x-on:htmx:response-error.window="failed($event.detail.xhr)"
 				x-on:htmx:send-error.window="lost()"
+				x-on:mouseenter="hold('hovered', true)"
+				x-on:mouseleave="hold('hovered', false)"
+				x-on:focusin="hold('focused', true)"
+				x-on:focusout="hold('focused', $root.contains($event.relatedTarget))"
 			>
 				<div>
 					<p class="error-title">That did not save</p>

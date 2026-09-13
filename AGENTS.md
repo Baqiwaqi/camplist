@@ -34,7 +34,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `EditPreparationTask`) instead of re-rendering or re-reading. Failed htmx
   requests answer with a user-facing plain-text reason (`http.Error`); the
   layout's error toast (`static/request-error.js`) shows it for statuses under
-  500 and offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`).
+  500, offers Reload on 409 and CSRF failures (`X-Camplist-Error: csrf`), and
+  auto-hides after 6s unless it offers Reload or reports a lost connection.
 - htmx mutations: branch on `isHTMX(r)` (`internal/web/item.go`) and give real
   forms a plain 303 fallback. Stop double submits with `hx-sync` (plus
   `hx-indicator` for a wider busy area), styled by the shared `.htmx-request`

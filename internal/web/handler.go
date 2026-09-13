@@ -553,7 +553,8 @@ func (h *handler) SetSessionItemHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if isHTMX(r) {
-		render(w, r, views.PackingChecklistUpdate(session, csrf.Token(r)))
+		item, _ := session.List.FindItem(itemID)
+		render(w, r, views.PackingItemSaved(session, item, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+sessionID, http.StatusSeeOther)

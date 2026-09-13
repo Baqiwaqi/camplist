@@ -28,7 +28,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
   on the triggering element supply the label and explanation. Packing updates and the
   list page's preparation Mark done return fragments; other mutations may
-  redirect or refresh. List-page controls embed the whole list's ETag, so a
+  redirect or refresh. Trip page forms keep the focused form in place and swap
+  only what changed by id (`hx-swap-oob` / `hx-select-oob`); once
+  `static/offline/session.mjs` mounts it owns the checklist and cancels server
+  swaps into it. List-page controls embed the whole list's ETag, so a
   fragment save there must send `HX-Trigger: list-revision` with the
   submitted and saved revisions (`static/revision.js`, see
   `EditPreparationTask`) instead of re-rendering or re-reading. Failed htmx

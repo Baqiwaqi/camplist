@@ -31,7 +31,7 @@ This is an evolving learning project. The functionality above describes the impl
 
 ## Architecture
 
-The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Packing check-off replaces the checklist section with HTML from the server; archiving, restoring or deleting a trip removes its card in place, and other deletions reload or leave the page. Normal packing forms also work without HTMX.
+The Go server renders HTML using templ. HTMX adds form navigation and actions such as deleting records and checking items. Packing check-off swaps only the toggled row and the progress card, and trip renames and additions update the page in place; archiving, restoring or deleting a trip removes its card in place, and other deletions reload or leave the page. Normal packing forms also work without HTMX.
 
 | Location | Purpose |
 | --- | --- |

@@ -142,6 +142,24 @@ shell and preserved the check, and a second offline check synchronized after a
 reconnect event. Both server item revisions advanced once. The worker upgrade
 path now waits for installation before reporting offline readiness.
 
+## Deleted trips offline follow-up (2026-09-13)
+
+Deleting a trip, removing a member or archiving a trip used to leave the device
+copy offered as "Available offline" on `/trips` and packable in the offline
+shell. Chromium at a 390px phone viewport against the in-memory fixture
+(`CAMPLIST_BROWSER_MEMORY=1`) confirmed the fix:
+
+| Check | Result |
+|---|---|
+| Owner deletes a trip from its card | Copy removed in the same tab, without a reload or `/api/sessions` call |
+| Owner reloads `/trips` | No card for deleted or archived trips; the archive page labels the archived card |
+| Owner offline, fresh tab on the deleted trip URL | Offline shell lists only the remaining copies |
+| Member reloads `/trips` after the owner deleted a shared trip or removed them | Both copies removed (404 and 403 `access_removed`) |
+| Member with an unsynced check when the owner deletes | Copy kept; `/trips` shows "Deleted online · 1 unsynced change(s)" linking to the shell; the trip page and the offline shell (also offline in a fresh tab) keep the deleted status and disable packing |
+| Member has the trip page open when the owner deletes it or removes them | Page says "This trip was deleted" or "Your access to this trip was removed" and disables packing |
+
+Take one host offline with `network?offline=1&host=camplist-member.localhost:3001`.
+
 ## Remaining deployment checks
 
 - Cold start, scale-to-zero wakeup, and authenticated session continuity across container revisions.

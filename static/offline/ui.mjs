@@ -1,5 +1,5 @@
 import {renderEntries,updateCategories,entryFromForm,renderFutureSaves} from './checklist.mjs';
-import { packingStatus } from './status.mjs';
+import { packingStatus, tripGone } from './status.mjs';
 import { openDatabase } from './db.mjs';
 import { OfflinePacking } from './packing.mjs';
 import { transport, downloadJSON } from './transport.mjs';
@@ -15,7 +15,7 @@ async function render(){
  if(account!==owner)return;
  const list=byId('saved-sessions');list.replaceChildren();
  if(!records.length){const p=document.createElement('p');p.textContent='No trips saved on this device yet. Open a packing session while connected and it will be saved automatically.';list.append(p);}
- for(const record of records){const p=document.createElement('p');const a=document.createElement('a');a.href='#'+encodeURIComponent(record.id);a.textContent=record.session.name||record.session.list.name;p.append(a);list.append(p);}
+ for(const record of records){const p=document.createElement('p');const a=document.createElement('a');a.href='#'+encodeURIComponent(record.id);a.textContent=record.session.name||record.session.list.name;p.append(a);if(tripGone(record))p.append(record.issue==='deleted'?' · Deleted online':' · Access removed');list.append(p);}
  const view=account&&id?await packing.open(account,id):null;
  if(account!==owner||id!==selected())return;
  byId('offline-trip').hidden=!view;if(!view)return;
@@ -27,11 +27,15 @@ async function render(){
  const gear=view.session.list.items.filter(item=>item.kind!=='task');
  byId('packing-progress').textContent=`${gear.filter(item=>item.checked).length} of ${gear.length} items packed`;
  byId('review-trip').href='/trips/'+encodeURIComponent(id)+'/review';
+ byId('review-trip').hidden=tripGone(view);
  const toggle=async(itemId,checked)=>{try{await packing.set(account,id,itemId,checked);await render();synchronize();}catch(error){message(error.message);}};
  const resolve=async(itemId,choice)=>{try{await packing.resolve(account,id,itemId,choice);await render();await synchronize();}catch(error){message(error.message);}};
  renderEntries(byId('offline-items'),view,'',toggle,resolve);
  renderEntries(byId('offline-tasks'),view,'task',toggle,resolve);
  updateCategories(byId('trip-categories'),view.session);
+ // A deleted or removed trip is kept only for export: no packing or additions.
+ const gone=tripGone(view);
+ for(const control of [...byId('offline-trip').querySelectorAll('#offline-items button,#offline-tasks button'),...byId('trip-entry-form').elements])if(gone)control.disabled=true;else if(control.form)control.disabled=false;
 }
 async function synchronize(){
  if(!owner)return;

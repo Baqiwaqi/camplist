@@ -5,6 +5,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/views"
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -580,5 +581,8 @@ func (h *handler) DeletePackingSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// static/offline/account.mjs drops or marks this device's offline copy.
+	trigger, _ := json.Marshal(map[string]map[string]string{"camplist:trip-deleted": {"id": id}})
+	w.Header().Set("HX-Trigger", string(trigger))
 	h.tripCardRemoved(w, r, userID, r.URL.Query().Get("view") == "archive")
 }

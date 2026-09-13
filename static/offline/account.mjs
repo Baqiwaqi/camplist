@@ -1,6 +1,6 @@
 import { mountSession } from './session.mjs';
 import { openDatabase } from './db.mjs';
-import { OfflinePacking } from './packing.mjs';
+import { OfflinePacking, unsynced } from './packing.mjs';
 import { transport, downloadJSON } from './transport.mjs';
 
 let modulePromise;
@@ -55,7 +55,7 @@ document.addEventListener('submit',async event=>{
   const identity=await transport.identity();
   const {db,packing}=await module();
   const records=await db.list(identity.userId);
-  const pending=records.some(record=>(Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length));
+  const pending=records.some(unsynced);
   const finish=async exported=>{
    await packing.forget(identity.userId,exported);
    form.querySelector('[name="_csrf"]').value=identity.csrfToken;
@@ -95,13 +95,60 @@ document.addEventListener('submit',async event=>{
 async function synchronizeSaved() {
  try {
   const identity=await transport.identity();const {db,packing}=await module();await db.setOwner(identity.userId);
-  for(const record of await db.list(identity.userId))if((Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length))await packing.sync(identity.userId,record.id);
+  for(const record of await db.list(identity.userId))if(unsynced(record))await packing.sync(identity.userId,record.id);
  }catch {/* Offline storage is optional for the normal online app. */}
 }
 synchronizeSaved();
 window.addEventListener('online',synchronizeSaved);
 
-if(document.getElementById('trips-overview'))(async()=>{
- const identity=await transport.identity(),{db}=await module();
- for(const record of await db.list(identity.userId)){let card=[...document.querySelectorAll('[data-saved-trip]')].find(card=>card.dataset.savedTrip===record.id);if(!card){card=document.createElement('article');card.className='card';card.dataset.savedTrip=record.id;const link=document.createElement('a');link.href='/offline#'+encodeURIComponent(record.id);link.textContent=record.session.name||record.session.list.name;card.append(link);document.getElementById('trips-overview').append(card);}if(card){const label=document.createElement('p');label.className='tag';label.textContent='Available offline';card.append(label);}}
-})().catch(()=>{});
+// Trip cards the server rendered get a label when this device holds a copy.
+// A saved copy the server did not list is never offered as a trip: the
+// overview asks the server about it first and shows a card only for a
+// deleted trip, or one this account lost, whose copy still holds unsynced changes.
+const TAG='inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase px-2 py-0.5 rounded-full';
+function label(card,text,colours){
+ let tag=card.querySelector('[data-offline-label]');
+ if(!tag){tag=document.createElement('p');tag.dataset.offlineLabel='';card.append(tag);}
+ tag.className=TAG+' mt-3 '+colours;tag.textContent=text;
+}
+function goneCard(copy){
+ const card=document.createElement('article');card.className='card';card.dataset.offlineCopy=copy.id;
+ const heading=document.createElement('h2');const link=document.createElement('a');link.className='no-underline';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
+ const detail=document.createElement('p');detail.className='text-muted';detail.textContent='Open it to export your changes from Recovery options.';
+ card.append(heading,detail);
+ label(card,`${copy.issue==='deleted'?'Deleted online':'Access removed'} · ${copy.unsynced} unsynced change(s)`,'text-red-800 bg-red-100');
+ return card;
+}
+async function showSavedCopies(){
+ const overview=document.getElementById('trips-overview'),archive=document.getElementById('trips-archive');
+ if(!overview&&!archive)return;
+ const identity=await transport.identity(),{db,packing}=await module();
+ const cards=[...document.querySelectorAll('[data-saved-trip]')];
+ if(archive){
+  const saved=new Set((await db.list(identity.userId)).map(record=>record.id));
+  for(const card of cards)if(saved.has(card.dataset.savedTrip))label(card,'Available offline','text-pine-700 bg-pine-100');
+  return;
+ }
+ const {available,gone}=await packing.reconcile(identity.userId,cards.map(card=>card.dataset.savedTrip));
+ for(const card of cards)if(available.includes(card.dataset.savedTrip))label(card,'Available offline','text-pine-700 bg-pine-100');
+ for(const card of document.querySelectorAll('[data-offline-copy]'))card.remove();
+ for(const copy of gone)overview.append(goneCard(copy));
+}
+showSavedCopies().catch(()=>{});
+
+// A delete answered with this event: drop this device's copy of the trip now,
+// or mark it deleted when it holds unsynced changes, so it is right even if
+// the device goes offline before the next overview check.
+document.addEventListener('camplist:trip-deleted',async event=>{
+ const id=event.detail?.id;if(!id)return;
+ try{
+  const {db,packing}=await module();
+  const owner=await transport.identity().then(identity=>identity.userId,()=>db.owner());
+  if(!owner)return;
+  const kept=await packing.gone(owner,id,'deleted');
+  if(kept&&document.getElementById('trips-overview')){
+   document.querySelector(`[data-offline-copy="${CSS.escape(id)}"]`)?.remove();
+   document.getElementById('trips-overview').append(goneCard({id,name:kept.session.name||kept.session.list.name,issue:'deleted',unsynced:kept.pending+kept.futureSaves.length}));
+  }
+ }catch{/* The next overview check or sync reaches the same result. */}
+});

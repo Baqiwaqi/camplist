@@ -84,7 +84,7 @@ export class OfflinePacking {
     let operation;
     const record = await this.db.update(owner,id, record => {
      if (!record) throw new Error('Session not saved on this device.');
-     record.issue = null;
+     record.issue = record.gone || null;
      const addition=Object.values(record.additions||{})[0];
      if(addition){operation=structuredClone(addition);return record;}
      const itemId = Object.keys(record.pending).find(key => !record.conflicts[key]);
@@ -105,7 +105,7 @@ export class OfflinePacking {
       continue;
      }
      const remote = await this.transport.getSession(owner,id,identity);
-     await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;return record;});
+     await this.db.update(owner,id,record => {record=mergeRemote(record,remote);record.lastSyncedAt=new Date().toISOString();record.fresh=true;record.issue=null;delete record.gone;return record;});
      return this.open(owner,id);
     }
     let result;
@@ -145,15 +145,47 @@ export class OfflinePacking {
     });
    }
   } catch(error) {
+   const issue = error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
+   if (GONE.includes(issue)) return this.gone(owner,id,issue,error);
    await this.db.update(owner,id,record => {
     if (!record) throw error;
     record.fresh=false;
-    record.issue = error.code === 'access_removed' ? 'access_removed' : error.code === 'account' ? 'account' : error.status === 401 || error.status === 403 ? 'signin' : error.status === 404 ? 'deleted' : 'network';
+    // Once the server said the trip is gone, only a successful refresh clears it.
+    record.issue = record.gone || issue;
     return record;
    });
    return this.open(owner,id);
   }
  }
+ // The trip was deleted or this account lost access. A copy without unsynced
+ // work is removed; one with unsynced work stays, marked, for export.
+ async gone(owner,id,issue,error) {
+  await this.db.update(owner,id,record => {
+   if (!record) { if (error) throw error; return null; }
+   if (!unsynced(record)) return null;
+   return {...record,fresh:false,issue,gone:issue};
+  });
+  return this.open(owner,id);
+ }
+ // Decide what the trips overview shows for this account's saved copies:
+ // listed trips are available offline; every other copy is checked with the
+ // server first, so only kept copies of gone trips are reported, never an
+ // archived trip or one the check could not reach.
+ async reconcile(owner,listedIds) {
+  const listed = new Set(listedIds), available = [], gone = [];
+  for (const record of await this.db.list(owner)) {
+   if (listed.has(record.id)) { available.push(record.id); continue; }
+   const view = await this.sync(owner,record.id);
+   if (!view || !GONE.includes(view.issue)) continue;
+   gone.push({id:record.id,name:view.session.name||view.session.list.name,issue:view.issue,unsynced:view.pending+view.futureSaves.length});
+  }
+  return {available,gone};
+ }
+}
+
+const GONE = ['deleted','access_removed'];
+export function unsynced(record) {
+ return Object.keys(record.pending).length+Object.keys(record.additions||{}).length+Object.keys(record.futureSaves||{}).length;
 }
 
 function mergeRemote(record, remote, advanceItem) {

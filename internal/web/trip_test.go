@@ -5,6 +5,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -215,13 +216,13 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 		return w
 	}
 
-	if w := deleteAs("member", trip.ID); w.Code != http.StatusForbidden {
-		t.Fatalf("member delete got %d, want 403", w.Code)
+	if w := deleteAs("member", trip.ID); w.Code != http.StatusForbidden || w.Header().Get("HX-Trigger") != "" {
+		t.Fatalf("member delete got %d trigger=%q, want 403 without a trigger", w.Code, w.Header().Get("HX-Trigger"))
 	}
 	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err != nil {
 		t.Fatalf("member delete removed the trip: %v", err)
 	}
-	if w := deleteAs("stranger", trip.ID); w.Code == http.StatusOK {
+	if w := deleteAs("stranger", trip.ID); w.Code == http.StatusOK || w.Header().Get("HX-Trigger") != "" {
 		t.Fatal("a user without access deleted the trip")
 	}
 
@@ -229,14 +230,18 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	if w.Code != http.StatusOK || w.Header().Get("HX-Refresh") != "" {
 		t.Fatalf("owner delete got %d refresh=%q, want 200 without a page refresh", w.Code, w.Header().Get("HX-Refresh"))
 	}
+	var trigger map[string]map[string]string
+	if err := json.Unmarshal([]byte(w.Header().Get("HX-Trigger")), &trigger); err != nil || trigger["camplist:trip-deleted"]["id"] != trip.ID {
+		t.Fatalf("owner delete trigger %q does not name the deleted trip: %v", w.Header().Get("HX-Trigger"), err)
+	}
 	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") || strings.Contains(body, "trip-archive-link") {
 		t.Fatalf("deleting the last archive card does not reveal the archive's empty state: %s", body)
 	}
 	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err == nil {
 		t.Fatal("owner delete left the trip in storage")
 	}
-	if w := deleteAs("owner", trip.ID); w.Code != http.StatusNotFound {
-		t.Fatalf("repeat delete got %d, want 404", w.Code)
+	if w := deleteAs("owner", trip.ID); w.Code != http.StatusNotFound || w.Header().Get("HX-Trigger") != "" {
+		t.Fatalf("repeat delete got %d trigger=%q, want 404 without a trigger", w.Code, w.Header().Get("HX-Trigger"))
 	}
 }
 

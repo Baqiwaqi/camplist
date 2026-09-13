@@ -615,6 +615,12 @@
     @apply bg-sand-300;
   }
 
+  /* A dialog holding a form (bulk add): centred and wider from 721px, a sheet
+     rising from the bottom edge below that. It scrolls when its form is long. */
+  .dialog-sheet {
+    @apply w-[min(calc(100%-2rem),36rem)] max-h-[min(90dvh,52rem)] overflow-y-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-b-0 max-md:p-4 max-md:pb-6;
+  }
+
   /* ---------- elements the offline scripts create without classes ---------- */
 
   /* Sign-out dialogs from static/offline/account.mjs. */
@@ -741,6 +747,22 @@
 
   .dialog[open]::backdrop {
     animation: backdrop-in 160ms ease;
+  }
+
+  @media (width < 721px) {
+    .dialog-sheet[open] {
+      animation: sheet-in 200ms ease-out;
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: none;
+    }
   }
 
   @keyframes dialog-in {

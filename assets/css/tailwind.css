@@ -245,6 +245,42 @@
     @apply bg-white border border-sand-200 rounded-card p-4 mb-4;
   }
 
+  /* A list or trip card opens on tap: its title link (.card-link) stretches
+     over the whole card. Status sits at the bottom of a card stretched to its
+     grid row. The More menu comes after the title and is positioned (.menu),
+     so it paints above the link's cover without a z-index of its own, and its
+     popup's z-index lifts it over the next card and that card's More. */
+  .card:has(.card-link) {
+    @apply relative flex flex-col mb-0;
+    transition: border-color var(--duration-colour) ease;
+  }
+
+  .card:has(.card-link:hover) {
+    @apply border-sand-400;
+  }
+
+  .card-link {
+    @apply no-underline;
+  }
+
+  .card-link:hover {
+    @apply opacity-100;
+  }
+
+  .card-link::after {
+    content: "";
+    @apply absolute inset-0 rounded-card;
+  }
+
+  /* The focus ring outlines the card the link covers. */
+  .card-link:focus-visible {
+    @apply outline-none;
+  }
+
+  .card-link:focus-visible::after {
+    @apply outline-2 outline-pine-700 outline-offset-2;
+  }
+
   /* Solid pine card for heroes and finished sessions; toggled by scripts. */
   .card-brand {
     @apply bg-pine-700 border-pine-700 text-white;
@@ -872,10 +908,6 @@
   /* A status rather than a gear fact. */
   .tag-quiet {
     @apply text-ink-900 bg-sand-100;
-  }
-
-  .card > .tag {
-    @apply mt-3 mb-0;
   }
 
   /* Offline shell (static/offline/offline.html): saved trips and item rows. */

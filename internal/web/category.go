@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -39,34 +38,6 @@ func (h *handler) rememberCategory(ctx context.Context, userID, category string)
 	if err := h.packingStore.RememberCategory(ctx, userID, category); err != nil {
 		log.Printf("remember category: %v", err)
 	}
-}
-
-// closeCategory returns the existing category item's category looks like a
-// typo of, when the item was just filed under it as a new one: the defaults,
-// the other items' categories and the remembered ones other than itself.
-func (h *handler) closeCategory(ctx context.Context, userID string, items []packing.PackingItem, item packing.PackingItem) string {
-	if item.Category == "" || packing.IsDefaultCategory(item.Category) {
-		return ""
-	}
-	others := slices.DeleteFunc(slices.Clone(items), func(other packing.PackingItem) bool { return other.ID == item.ID })
-	remembered, err := h.packingStore.RememberedCategories(ctx, userID)
-	if err != nil {
-		log.Printf("read remembered categories: %v", err)
-	}
-	remembered = slices.DeleteFunc(slices.Clone(remembered), func(category string) bool {
-		return strings.EqualFold(strings.TrimSpace(category), strings.TrimSpace(item.Category))
-	})
-	return packing.CloseCategory(item.Category, packing.CategorySuggestions(packing.ItemCategories(others), remembered))
-}
-
-// listPathChecking is the list page after a save without scripts. When the
-// item was filed under a category close to an existing one, the page asks
-// about it (views.CategoryHint).
-func listPathChecking(listID, itemID, closeMatch string) string {
-	if closeMatch == "" {
-		return "/packing-lists/" + listID
-	}
-	return "/packing-lists/" + listID + "?check=" + url.QueryEscape(itemID)
 }
 
 // CategoriesPage lists the signed-in camper's remembered categories to rename

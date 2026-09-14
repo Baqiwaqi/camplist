@@ -97,7 +97,6 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	categoryChanged := item.Category != form.Category
-	previousCategory := item.Category
 	item.SourceRevision = form.Revision
 	item.Name = form.Name
 	item.Category = form.Category
@@ -110,18 +109,8 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderItemForm(w, r, list, item, form)
 		return
 	}
-	closeMatch := ""
-	if categoryChanged && !isHTMX(r) {
-		closeMatch = h.closeCategory(r.Context(), userID, list.Items, item)
-	}
 	if categoryChanged {
 		h.rememberCategory(r.Context(), userID, item.Category)
-		// views.CategoryHint's "Use" also drops the typo it replaces.
-		if forget := r.PostForm.Get("forget"); forget != "" && strings.EqualFold(strings.TrimSpace(forget), strings.TrimSpace(previousCategory)) && !packing.IsDefaultCategory(forget) {
-			if err := h.packingStore.ForgetCategory(r.Context(), userID, forget); err != nil {
-				log.Printf("forget replaced category: %v", err)
-			}
-		}
 	}
 	if isHTMX(r) {
 		if replaced != form.Revision {
@@ -132,7 +121,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved)))
 		return
 	}
-	http.Redirect(w, r, listPathChecking(list.ID, item.ID, closeMatch), http.StatusSeeOther)
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 
 func (h *handler) renderItemForm(w http.ResponseWriter, r *http.Request, list packing.PackingList, item packing.PackingItem, form packing.CreateItemForm) {

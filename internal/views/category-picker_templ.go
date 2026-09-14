@@ -14,7 +14,7 @@ import "camplist/internal/packing"
 // the Pines UI one that offers options (the default categories, the ones on
 // this list and the camper's remembered ones), filters them while typing and
 // keeps a new name as typed. A new name close to an existing category (a
-// likely typo, packing.CloseCategory) first offers the existing one. Each
+// likely typo) first offers the existing one. Each
 // remembered custom category has a small menu to rename or remove it, which
 // opens CategoryDialog in the layout. The text input is the real form field
 // and the options are a server-rendered datalist, so without JavaScript it is

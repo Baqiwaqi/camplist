@@ -1,7 +1,5 @@
 package views
 
-import "camplist/internal/packing"
-
 // CategoryDialog is the rename form a category picker's menu opens: a bottom
 // sheet on phones and a centred dialog on wide screens. It also holds the
 // remove form the menu's Remove posts. Both answer htmx with HX-Trigger
@@ -122,28 +120,4 @@ templ CategoriesPage(categories []string, message string, errors []string, csrfT
 			</div>
 		</section>
 	}
-}
-
-// CategoryHint follows a save without scripts that filed an item under a new
-// category close to an existing one: it offers the existing one and keeps the
-// typed name otherwise.
-type CategoryHint struct {
-	Item       packing.PackingItem
-	Suggestion string
-}
-
-templ categoryHintNotice(list packing.PackingList, hint CategoryHint, csrfToken string) {
-	<div role="status" class="card mt-6">
-		<p class="font-bold wrap-anywhere">“{ hint.Item.Name }” is saved under the new category “{ hint.Item.Category }”. Did you mean “{ hint.Suggestion }”?</p>
-		<form method="post" action={ templ.SafeURL("/packing-lists/" + list.ID + "/edit-item/" + hint.Item.ID) } class="flex flex-wrap items-center gap-2 mt-3">
-			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			<input type="hidden" name="revision" value={ list.Revision() }/>
-			<input type="hidden" name="name" value={ hint.Item.Name }/>
-			<input type="hidden" name="scope" value={ hint.Item.Scope }/>
-			<input type="hidden" name="category" value={ hint.Suggestion }/>
-			<input type="hidden" name="forget" value={ hint.Item.Category }/>
-			<button type="submit" class="btn btn-primary btn-sm">Use “{ hint.Suggestion }”</button>
-			<a class="btn btn-secondary btn-sm" href={ templ.SafeURL("/packing-lists/" + list.ID) }>Keep “{ hint.Item.Category }”</a>
-		</form>
-	</div>
 }

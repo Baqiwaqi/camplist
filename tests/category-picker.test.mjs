@@ -70,7 +70,7 @@ test('a close typo offers the existing category before creating the new one', ()
   assert.equal(component.matches()[0].label, 'Use “Kitchen and cooking”?')
 })
 
-test('the close match follows the same rule as packing.CloseCategory', () => {
+test('the close match needs four letters and at most one edit on short names', () => {
   const component = picker([...defaults, { value: 'Fishing', custom: true }, { value: 'Tarps', custom: true }])
   for (const [typed, want] of [['Shleter', 'Shelter'], ['Clothnig', 'Clothing'], ['Tarp', 'Tarps'], ['Hut', undefined], ['Fshng', undefined], ['Paddling', undefined]]) {
     component.query = typed

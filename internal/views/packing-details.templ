@@ -8,12 +8,6 @@ import (
 )
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
-	@PackingDetailsHinted(name, list, form, nil, csrfToken)
-}
-
-// PackingDetailsHinted is the list page with a CategoryHint after a save
-// without scripts.
-templ PackingDetailsHinted(name string, list packing.PackingList, form packing.CreateItemForm, hint *CategoryHint, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
 			<div class="card card-brand p-4 sm:p-6 mb-6">
@@ -40,9 +34,6 @@ templ PackingDetailsHinted(name string, list packing.PackingList, form packing.C
 				</div>
 			</div>
 			<p class="text-muted max-w-[60ch]">Starting a trip copies this list. Your reusable list stays unchanged as you pack.</p>
-			if hint != nil {
-				@categoryHintNotice(list, *hint, csrfToken)
-			}
 		</section>
 		@ListRevision(list, false)
 		<section class="mt-8">

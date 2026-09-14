@@ -88,30 +88,6 @@ func TestRememberedCategoriesSeedFromOwnListsUntilOneIsSaved(t *testing.T) {
 	}
 }
 
-func TestCloseCategoryCatchesSmallTypos(t *testing.T) {
-	known := append(slices.Clone(packing.DefaultCategories), "Fishing", "Tarps")
-	for typed, want := range map[string]string{
-		"Fishnig":                  "Fishing", // neighbours swapped
-		" fihsing ":                "Fishing",
-		"Fishin":                   "Fishing", // letter dropped
-		"Shleter":                  "Shelter",
-		"Clothnig":                 "Clothing",
-		"Kitchen and cookign":      "Kitchen and cooking",
-		"Electornics and lihgting": "Electronics and lighting", // two edits on long names
-		"Tarp":                     "Tarps",
-		"Fishing":                  "", // already known
-		"FISHING":                  "",
-		"Hut":                      "", // too short to guess
-		"Paddling":                 "",
-		"Fshng":                    "", // two edits on a short name
-		"":                         "",
-	} {
-		if got := packing.CloseCategory(typed, known); got != want {
-			t.Errorf("CloseCategory(%q) = %q, want %q", typed, got, want)
-		}
-	}
-}
-
 // renameFixture stores a camper's own lists, a list someone shared with them
 // and a trip they already started, all using the typo "Fishnig".
 func renameFixture(t *testing.T) (context.Context, *packing.Store, []packing.PackingList, packing.PackingList, packing.PackingSession) {
@@ -237,6 +213,29 @@ func TestRenameCategoryMergesIntoExistingCategory(t *testing.T) {
 	}
 	if got, err := store.RememberedCategories(ctx, "camper"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
 		t.Errorf("remembered after default merge %q, %v", got, err)
+	}
+}
+
+func TestRenameCategoryMergesIntoACategoryOnlyOnItems(t *testing.T) {
+	ctx, store, own, _, _ := renameFixture(t)
+	if err := store.ForgetCategory(ctx, "camper", "Fishing"); err != nil {
+		t.Fatal(err)
+	}
+	result, err := store.RenameCategory(ctx, "camper", "Fishnig", "fishing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Category != "Fishing" {
+		t.Errorf("merged into %q", result.Category)
+	}
+	if got := itemCategories(t, store, own[1].ID, "camper"); !slices.Equal(got, []string{"Fishing", "Fishing"}) {
+		t.Errorf("river categories = %q", got)
+	}
+	if got := itemCategories(t, store, own[0].ID, "camper"); !slices.Equal(got, []string{"Fishing", "Fishing", "Shelter"}) {
+		t.Errorf("lake categories = %q", got)
+	}
+	if got, err := store.RememberedCategories(ctx, "camper"); err != nil || !slices.Equal(got, []string{"Fishing"}) {
+		t.Errorf("remembered %q, %v", got, err)
 	}
 }
 

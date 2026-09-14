@@ -94,57 +94,6 @@ func MatchCategory(category string) string {
 	return category
 }
 
-// CloseCategory returns the category in known that typed is most likely a
-// typo of, or "" when there is none. typed must not already be one of known
-// (apart from case and spaces) and must be at least four letters; a close
-// category is at most one edit away (a letter added, dropped, changed, or two
-// neighbours swapped), or two when both are eight letters or longer. The
-// picker in static/category-picker.js applies the same rule while typing.
-func CloseCategory(typed string, known []string) string {
-	typedKey := []rune(categoryKey(typed))
-	if len(typedKey) < 4 || indexCategory(known, typed) >= 0 {
-		return ""
-	}
-	best, bestDistance := "", 3
-	for _, category := range known {
-		key := []rune(categoryKey(category))
-		allowed := 1
-		if len(typedKey) >= 8 && len(key) >= 8 {
-			allowed = 2
-		}
-		if d := editDistance(typedKey, key); d <= allowed && d < bestDistance {
-			best, bestDistance = strings.TrimSpace(category), d
-		}
-	}
-	return best
-}
-
-// editDistance counts the single-letter insertions, deletions, substitutions
-// and swaps of neighbouring letters that turn a into b.
-func editDistance(a, b []rune) int {
-	d := make([][]int, len(a)+1)
-	for i := range d {
-		d[i] = make([]int, len(b)+1)
-		d[i][0] = i
-	}
-	for j := range d[0] {
-		d[0][j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		for j := 1; j <= len(b); j++ {
-			cost := 1
-			if a[i-1] == b[j-1] {
-				cost = 0
-			}
-			d[i][j] = min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost)
-			if i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1] {
-				d[i][j] = min(d[i][j], d[i-2][j-2]+1)
-			}
-		}
-	}
-	return d[len(a)][len(b)]
-}
-
 // ItemCategories lists the categories used by items in order of first use.
 func ItemCategories(items []PackingItem) []string {
 	used := make([]string, 0, len(items))
@@ -284,7 +233,8 @@ type RenamedList struct {
 
 // RenameCategory renames a remembered custom category for userID and moves the
 // items filed under it, in any capitalisation, on the lists userID owns. A new
-// name that matches a default or another remembered category merges into it.
+// name that matches a default, another remembered category or a category on
+// those lists' items merges into it.
 // Lists shared with userID by someone else and trips already started keep
 // their own copy. Defaults cannot be renamed.
 func (s *Store) RenameCategory(ctx context.Context, userID, from, to string) (CategoryRename, error) {
@@ -302,15 +252,23 @@ func (s *Store) RenameCategory(ctx context.Context, userID, from, to string) (Ca
 		return CategoryRename{}, ErrNotFound
 	}
 	from = doc.Categories[i]
-	if j := indexCategory(doc.Categories, to); j >= 0 && j != i {
-		to = doc.Categories[j]
-	}
-	result := CategoryRename{Category: to}
-
 	lists, err := s.ownPackingLists(ctx, userID)
 	if err != nil {
 		return CategoryRename{}, err
 	}
+	if categoryKey(to) != categoryKey(from) && !IsDefaultCategory(to) {
+		var used []PackingItem
+		for _, list := range lists {
+			used = append(used, list.Items...)
+		}
+		if j := indexCategory(doc.Categories, to); j >= 0 {
+			to = doc.Categories[j]
+		} else if names := ItemCategories(used); indexCategory(names, to) >= 0 {
+			to = names[indexCategory(names, to)]
+		}
+	}
+	result := CategoryRename{Category: to}
+
 	for _, list := range lists {
 		if countCategory(list.Items, from, to) == 0 {
 			continue

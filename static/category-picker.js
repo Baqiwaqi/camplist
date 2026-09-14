@@ -2,7 +2,7 @@
 // shaped like the Pines UI combobox: typing filters the options, arrow keys move
 // through them, Enter or a click picks one, and a name that is not in the list
 // is offered as a new category. A new name that looks like a typo of an
-// existing category (closeCategory, the same rule as packing.CloseCategory)
+// existing category (closeCategory)
 // offers the existing one first. The text input stays the real form field, so
 // picking an option only fills it in. Options are read from the picker's
 // datalist each time, which lets the offline scripts add categories to it.

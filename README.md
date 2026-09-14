@@ -139,8 +139,10 @@ require a connection.
 
 Changes persist in this browser and synchronize while the app is open, connected,
 and signed into the same account. Conflicting changes offer a choice between this
-device and the online state. Expired login or a deleted session keeps the local
-copy available for export. Sign-out offers sync or export before clearing this
+device and the online state. Expired login keeps the local copy. When a trip is
+deleted or your access is removed, a copy without unsynced changes is removed
+from this device; one with unsynced changes stays, marked and read-only, for
+export from **Saved on this device**. Sign-out offers sync or export before clearing this
 account's local records. If storage cannot be inspected, an explicit server-only
 sign-out option explains that local copies may remain. Browser storage can be evicted; local changes are not a
 cloud backup. Offline support requires HTTPS (or localhost), IndexedDB, service

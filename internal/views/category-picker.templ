@@ -47,7 +47,7 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 			x-on:keydown.arrow-up.prevent="move(-1)"
 			x-on:keydown.enter="enter($event)"
 			x-on:keydown.escape="escape($event)"
-			class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"
+			class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"
 		/>
 		<datalist id={ optionsID }>
 			@categoryOptions(options)

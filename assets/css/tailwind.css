@@ -25,8 +25,11 @@
   --color-sand-100: #eee7dd;
   --color-sand-200: #e5ded3;
   --color-sand-300: #ddd6cc;
+  /* Hover line for bordered controls. */
+  --color-sand-400: #c9c0b3;
   --color-ink-900: #1f2933;
-  --color-muted: #6b7280;
+  /* Warm stone: 5.8:1 on white, 5.3:1 on sand-50. */
+  --color-muted: #6b645a;
   --color-pine-100: #e3ede4;
   --color-pine-500: #3f7a4c;
   --color-pine-700: #2f5d3a;
@@ -55,11 +58,42 @@
   --text-xl--line-height: 1.5;
   --text-2xl--line-height: 1.5;
 
-  --tracking-display: -0.02em;
-  --tracking-eyebrow: 0.08em;
-  --tracking-tag: 0.04em;
+  /* Type roles on a 1.2 ratio from 16px. The display roles (moment, page,
+     section, object) are Bricolage 800 through the .t-* classes below; the
+     text roles are plain utilities (text-meta, text-caption). Sentence case
+     everywhere: no uppercase tracked labels. */
+  --text-caption: 0.8125rem; /* 13: tags, group counts, save status */
+  --text-caption--line-height: 1.35;
+  --text-meta: 0.875rem; /* 14: dates, counts, hints, labels */
+  --text-meta--line-height: 1.45;
+  --text-body: 1rem; /* 16 */
+  --text-body--line-height: 1.5;
+  --text-object: 1.1875rem; /* 19: list and trip names on cards */
+  --text-object--line-height: 1.15;
+  --text-section: 1.375rem; /* 22: h2, dialog titles */
+  --text-section--line-height: 1.1;
+  --text-page: 2rem; /* 32 on phones, 40 from md: the h1 */
+  --text-page--line-height: 1.05;
+  --text-moment: 2.5rem; /* 40: finished trip, landing hero */
+  --text-moment--line-height: 1;
 
+  --tracking-display: -0.02em;
+
+  /* Spacing is Tailwind's 4px grid: 1 tag inner, 2 between buttons, 3 title
+     to sheet and card to card, 4 gutter and field to field, 6 page head to
+     content, 8 and 12 section to section on phones and desktop. */
+
+  /* Pills (rounded-full) for buttons, tags and tabs; 12px for cards, popups
+     and dialogs; 10px for fields, select triggers and options; 6px for
+     checkboxes. Elevation is border-only: no shadows. */
+  --radius-field: 10px;
   --radius-card: 12px;
+
+  /* Motion, all off under prefers-reduced-motion. */
+  --duration-colour: 120ms;
+  --duration-switch: 150ms;
+  --duration-popup: 160ms;
+  --duration-tab: 200ms;
 
   /* The design system's cut-offs: max-sm covers phones (<= 600px) and
      max-md the narrow layouts of the login and landing pages (<= 720px). */
@@ -76,7 +110,7 @@
   h1,
   h2,
   h3 {
-    @apply font-display font-extrabold leading-[1.05] tracking-display;
+    @apply font-display font-extrabold tracking-display;
   }
 
   h1,
@@ -84,16 +118,17 @@
     @apply mb-2 wrap-anywhere;
   }
 
+  /* h1 is the page role, h2 the section role, h3 the object role. */
   h1 {
-    font-size: clamp(2rem, 1.25rem + 3vw, 2.75rem);
+    @apply text-page md:text-[2.5rem];
   }
 
   h2 {
-    @apply text-2xl;
+    @apply text-section;
   }
 
   h3 {
-    @apply text-xl mt-4 mb-2;
+    @apply text-object mt-4 mb-2;
   }
 
   a {
@@ -115,6 +150,24 @@
 
 @layer components {
   /* ---------- type ---------- */
+
+  /* Display type roles for elements whose tag does not match their role, such
+     as an h2 naming a list on a card (object). */
+  .t-moment {
+    @apply font-display font-extrabold text-moment tracking-display wrap-anywhere;
+  }
+
+  .t-page {
+    @apply font-display font-extrabold text-page md:text-[2.5rem] tracking-display wrap-anywhere;
+  }
+
+  .t-section {
+    @apply font-display font-extrabold text-section tracking-display;
+  }
+
+  .t-object {
+    @apply font-display font-extrabold text-object tracking-display wrap-anywhere;
+  }
 
   /* A display-sized paragraph; the packing scripts read it as the progress label. */
   .display {
@@ -142,18 +195,17 @@
 
   /* ---------- buttons ---------- */
 
+  /* Variants: primary (pine), go (ember, once per screen), secondary (white
+     outline), quiet (sand fill, overflow), ghost (resting row action), danger
+     (solid red, confirm dialogs only). 44px, or 36px with .btn-sm (44px on
+     coarse pointers). */
   .btn {
-    @apply inline-flex items-center justify-center font-sans text-base font-bold py-2 px-4 min-h-10 rounded-full border border-transparent cursor-pointer no-underline whitespace-nowrap;
-    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+    @apply inline-flex items-center justify-center gap-2 font-sans text-body font-bold py-2 px-5 min-h-11 rounded-full border border-transparent cursor-pointer no-underline whitespace-nowrap;
+    transition: background-color var(--duration-colour) ease, border-color var(--duration-colour) ease, color var(--duration-colour) ease;
   }
 
   .btn:not(:disabled):hover {
     opacity: 1;
-    transform: translateY(-1px);
-  }
-
-  .btn:not(:disabled):active {
-    transform: none;
   }
 
   .btn:disabled {
@@ -177,11 +229,11 @@
     @apply bg-pine-900 border-pine-900;
   }
 
-  .btn-accent {
+  .btn-go {
     @apply bg-ember-500 text-white border-ember-500;
   }
 
-  .btn-accent:not(:disabled):hover {
+  .btn-go:not(:disabled):hover {
     @apply bg-ember-700 border-ember-700;
   }
 
@@ -190,22 +242,31 @@
   }
 
   .btn-secondary:not(:disabled):hover {
-    @apply bg-sand-50;
+    @apply bg-sand-50 border-sand-400;
+  }
+
+  .btn-quiet {
+    @apply bg-sand-100 text-ink-900 border-sand-100;
+  }
+
+  .btn-quiet:not(:disabled):hover,
+  .btn-quiet[aria-expanded="true"] {
+    @apply bg-sand-200 border-sand-200;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-ink-900;
+  }
+
+  .btn-ghost:not(:disabled):hover {
+    @apply bg-sand-100;
   }
 
   .btn-danger {
-    @apply bg-transparent text-red-700 border-red-300;
-  }
-
-  .btn-danger:not(:disabled):hover {
-    @apply bg-red-100;
-  }
-
-  .btn-danger-solid {
     @apply bg-red-700 text-white border-red-700;
   }
 
-  .btn-danger-solid:not(:disabled):hover {
+  .btn-danger:not(:disabled):hover {
     @apply bg-red-800 border-red-800;
   }
 
@@ -215,11 +276,10 @@
 
   .btn-link:not(:disabled):hover {
     opacity: 0.7;
-    transform: none;
   }
 
   .btn-sm {
-    @apply text-sm py-1 px-3 min-h-8 pointer-coarse:min-h-10;
+    @apply text-meta py-1 px-3.5 min-h-9 pointer-coarse:min-h-11;
   }
 
   .btn-lg {
@@ -295,7 +355,7 @@
 
   .pack-action {
     @apply flex-none text-sm font-bold py-1 px-3 rounded-full border border-sand-300 bg-white;
-    transition: background-color 120ms ease;
+    transition: background-color var(--duration-colour) ease;
   }
 
   .pack-row:not(:disabled):hover .pack-action {
@@ -342,7 +402,6 @@
   .menu-trigger:not(:disabled):hover,
   .menu-trigger[aria-expanded="true"] {
     @apply bg-sand-300 border-sand-300;
-    transform: none;
   }
 
   .card-brand .menu-trigger {
@@ -385,7 +444,7 @@
 
   /* A field with a caret: shaped like the text fields beside it. */
   .select-trigger {
-    @apply relative flex items-center justify-between gap-2 w-full min-h-11 py-2 pl-3 pr-9 rounded-[10px] border border-sand-300 bg-white text-left font-normal cursor-pointer;
+    @apply relative flex items-center justify-between gap-2 w-full min-h-11 py-2 pl-3 pr-9 rounded-field border border-sand-300 bg-white text-left font-normal cursor-pointer;
   }
 
   /* A plain caret drawn from borders, like the native control's; it turns
@@ -424,7 +483,7 @@
   }
 
   .option {
-    @apply relative flex items-center gap-2 w-full min-h-10 py-2 px-3 rounded-[10px] font-semibold text-ink-900 text-left no-underline cursor-pointer wrap-anywhere;
+    @apply relative flex items-center gap-2 w-full min-h-10 py-2 px-3 rounded-field font-semibold text-ink-900 text-left no-underline cursor-pointer wrap-anywhere;
   }
 
   .option:hover,
@@ -530,7 +589,7 @@
   }
 
   .dialog-title {
-    @apply font-display font-extrabold text-2xl leading-[1.05] tracking-display mb-2;
+    @apply font-display font-extrabold text-section tracking-display mb-2;
   }
 
   /* The rename category form rises from the bottom on phones. */
@@ -548,7 +607,7 @@
 
   /* Opens the rename and remove menu of a remembered category. */
   .category-more {
-    @apply flex-none mr-1 min-h-8 px-3 rounded-full bg-sand-100 text-sm font-bold text-ink-900 cursor-pointer;
+    @apply flex-none mr-1 min-h-8 px-3 rounded-full bg-sand-100 text-meta font-bold text-ink-900 cursor-pointer;
   }
 
   .category-more:hover,
@@ -593,7 +652,7 @@
   /* Conflict boxes under a packing row, on the session page and offline. */
   [data-conflict],
   .offline-items .item-row > div {
-    @apply basis-full flex flex-wrap items-center gap-2 mb-2 p-3 rounded-sm bg-ember-100 text-sm;
+    @apply basis-full flex flex-wrap items-center gap-2 mb-2 p-3 rounded-field bg-ember-100 text-sm;
   }
 
   [data-conflict] p,
@@ -601,20 +660,26 @@
     @apply basis-full m-0;
   }
 
-  /* Meta text and tags the offline scripts create: "Updated by ..." under a
-     packing row (checklist.mjs), and "Available offline" or a deleted trip's
-     red "Deleted online" tag on a trip card (account.mjs). Same look as the
-     text-muted and tag utilities in views. */
+  /* Meta text the offline scripts create: "Updated by ..." under a packing
+     row (checklist.mjs). */
   .muted {
-    @apply text-sm text-muted;
+    @apply text-meta text-muted;
   }
 
   .item-row > .muted {
     @apply basis-full -mt-3 pl-[34px];
   }
 
+  /* Tags in views, and the ones account.mjs sets on trip cards: "Available
+     offline", or a deleted trip's red "Deleted online". Sentence case, pine
+     tint for gear facts. */
   .tag {
-    @apply w-fit whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full;
+    @apply inline-flex w-fit items-center whitespace-nowrap text-caption font-semibold text-pine-900 bg-pine-100 px-2.5 py-0.5 rounded-full;
+  }
+
+  /* A status rather than a gear fact. */
+  .tag-quiet {
+    @apply text-ink-900 bg-sand-100;
   }
 
   .card > .tag {
@@ -652,7 +717,7 @@
   /* Alpine transition classes for the phone menu and dropdowns: a short fade
      with a small drop. */
   .drop-enter {
-    transition: opacity 160ms ease, transform 160ms ease;
+    transition: opacity var(--duration-popup) ease, transform var(--duration-popup) ease;
   }
 
   .drop-leave {
@@ -738,10 +803,6 @@
     *::after {
       transition: none !important;
       animation: none !important;
-    }
-
-    .btn:not(:disabled):hover {
-      transform: none;
     }
   }
 }

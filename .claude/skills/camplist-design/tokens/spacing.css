@@ -5,6 +5,9 @@
 --space-4:1rem;
 --space-6:1.5rem;
 --space-8:2rem;
+--space-12:3rem;
+/* 4px grid roles: 1 tag inner, 2 between buttons, 3 title to sheet and card to card,
+   4 gutter and field to field, 6 page head to content, 8 / 12 section to section (phone / desktop) */
 /* layout */
 --content-max:900px;
 --nav-padding:1rem;

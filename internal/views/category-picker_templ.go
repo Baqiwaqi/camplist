@@ -98,7 +98,7 @@ func CategoryPicker(id string, optionsID string, value string, placeholder strin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" autocomplete=\"off\" role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" x-ref=\"input\" x-bind:aria-controls=\"listboxID()\" x-bind:aria-expanded=\"matches().length > 0\" x-bind:aria-activedescendant=\"activeID()\" x-on:focus=\"detach()\" x-on:click=\"show()\" x-on:input=\"filter()\" x-on:keydown.arrow-down.prevent=\"move(1)\" x-on:keydown.arrow-up.prevent=\"move(-1)\" x-on:keydown.enter=\"enter($event)\" x-on:keydown.escape=\"escape($event)\" class=\"w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0\"> <datalist id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" autocomplete=\"off\" role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" x-ref=\"input\" x-bind:aria-controls=\"listboxID()\" x-bind:aria-expanded=\"matches().length > 0\" x-bind:aria-activedescendant=\"activeID()\" x-on:focus=\"detach()\" x-on:click=\"show()\" x-on:input=\"filter()\" x-on:keydown.arrow-down.prevent=\"move(1)\" x-on:keydown.arrow-up.prevent=\"move(-1)\" x-on:keydown.enter=\"enter($event)\" x-on:keydown.escape=\"escape($event)\" class=\"w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0\"> <datalist id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

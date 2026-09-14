@@ -12,7 +12,6 @@ import (
 templ SharingPage(view packing.SharingView, link string, token string, trips []packing.PackingSession, approving string) {
 	@Layout("Sharing", token) {
 		<section class="max-w-[560px]">
-			<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Sharing</p>
 			<h1>Pack together.</h1>
 			<p class="mb-3"><a class="btn btn-secondary btn-sm" href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
 			if view.Kind=="packing-session" {
@@ -61,7 +60,7 @@ templ InviteCard(view packing.SharingView, link string, token string) {
 		if link!="" {
 			<div class="grid gap-1 mb-4" x-data="invitationShare">
 				<label for="invitation-link" class="text-sm font-bold">Invitation link</label>
-				<input id="invitation-link" type="text" readonly autofocus value={ link } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" x-ref="invitationLink"/>
+				<input id="invitation-link" type="text" readonly autofocus value={ link } class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" x-ref="invitationLink"/>
 				<div class="flex flex-wrap gap-2 justify-self-start">
 					<button type="button" class="btn btn-primary" x-show="supported" x-cloak x-on:click="shareInvitation">Share invitation</button>
 					<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
@@ -116,7 +115,7 @@ templ MemberList(view packing.SharingView, oob bool, focus bool, token string) {
 					data-confirm-action="Remove access"
 					data-confirm-detail={ removeDetail(view) }
 				>
-					<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-danger" type="submit">Remove access</button>
+					<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-secondary text-red-700" type="submit">Remove access</button>
 				</form>
 			</div>
 		}
@@ -278,7 +277,6 @@ templ JoinPage(link packing.InvitationLink, status string, profile auth.Profile,
 		<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Join · Camplist</title><link rel="stylesheet" href="/static/tailwind.css"/></head>
 		<body>
 			<main class="max-w-[560px] mx-auto px-4 py-8">
-				<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Invitation</p>
 				<h1>Join the packing.</h1>
 				<section class="card">
 					<p class="mb-3">Signed in as { profile.Name } · { profile.Email }</p>

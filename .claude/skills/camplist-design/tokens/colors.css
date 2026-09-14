@@ -4,8 +4,11 @@
 --sand-100:#eee7dd;
 --sand-200:#e5ded3;
 --sand-300:#ddd6cc;
+--sand-400:#c9c0b3;
 --white:#ffffff;
 --ink-900:#1f2933;
+--stone-500:#6b645a;
+/* legacy cool grey, kept only for the reference React kit; the app uses --stone-500 */
 --gray-500:#6b7280;
 --red-100:#fee2e2;
 --red-300:#fca5a5;
@@ -24,11 +27,12 @@
 --surface-card:var(--white);
 --surface-header:var(--white);
 --text-body:var(--ink-900);
---text-muted:var(--gray-500);
+--text-muted:var(--stone-500); /* warm stone: 5.8:1 on white, 5.3:1 on sand-50 */
 --text-link:var(--ink-900);
 --border-header:var(--sand-300);
 --border-card:var(--sand-200);
 --border-row:var(--sand-100);
+--border-hover:var(--sand-400);
 --error-bg:var(--red-100);
 --error-border:var(--red-300);
 --error-text:var(--red-700);
@@ -38,6 +42,7 @@
 --accent:var(--ember-500);
 --accent-hover:var(--ember-700);
 --accent-soft:var(--ember-100);
+/* legacy: page heads no longer carry eyebrows; kept only for the reference React kit */
 --text-eyebrow:var(--ember-700);
 --progress-track:var(--sand-100);
 --progress-fill:var(--pine-500);
@@ -48,4 +53,10 @@
 --button-secondary-bg:var(--white);
 --button-secondary-border:var(--sand-300);
 --button-danger-text:var(--red-700);
+/* button variants: primary pine, go ember (once per screen), secondary white outline,
+   quiet sand fill, ghost transparent, danger solid red (confirm dialogs only) */
+--button-go-bg:var(--ember-500);
+--button-quiet-bg:var(--sand-100);
+--button-ghost-hover:var(--sand-100);
+--button-danger-bg:var(--red-700);
 }

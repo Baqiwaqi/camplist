@@ -14,8 +14,8 @@ The system should make you want to go. Three levers: **ember** (one orange "go" 
 ## Content fundamentals
 
 - **Voice:** plain, second person, short imperative sentences with forward motion: "Where to next?", "Let's get packing.", "Pick a list and start a session — your list stays untouched.", "All packed. Go!" Source copy was terse and had typos ("all you lists", "Keep is simple!"); the kit rewrites those lines — port them back to the templates.
-- **Eyebrows** are uppercase tracked labels naming the context: YOUR LISTS · PACKING SESSION · SEP 5, 2026.
-- **Casing:** page titles and button labels are Title Case ("Create New", "Add Item", "Delete Session", "New Packing List"); a few are sentence case ("Start session", "Login with google"); the nav's "signout" is all-lowercase. Labels are single words ("Name", "Category", "Description").
+- **No eyebrows:** page heads are a title, one meta line and actions. The nav already says where you are, so there is no uppercase label above the title.
+- **Casing:** sentence case everywhere: titles, buttons, labels and tags ("Start trip", "Add an item", "Available offline"). No uppercase tracked labels. Some older strings are still Title Case ("Add Item", "Create New"); fix them when you touch them.
 - **Buttons are verbs:** Create, Edit, Details, Delete, Save, Check / Uncheck, Start session.
 - **Confirmations** are terse questions: "Delete this list?", "Delete this item?", "Delete this session".
 - **Errors** are short declaratives without periods: "Name is required", "Storing packing list failed".
@@ -25,14 +25,14 @@ The system should make you want to go. Three levers: **ember** (one orange "go" 
 
 ## Visual foundations
 
-- **Palette:** a warm sand page (`#f6f5f2`) with pure-white cards and header; near-black blue-grey ink (`#1f2933`) for all text and links; one muted grey (`#6b7280`). Borders are three tints of sand (`#ddd6cc` header, `#e5ded3` card, `#eee7dd` row). Error red trio (`#fee2e2` / `#fca5a5` / `#b91c1c`). **Brand: pine green** (`--brand` `#2f5d3a`, hover `#1f3f28`, soft `#e3ede4`) for the logomark, primary buttons, hero cards, ticks, category tags, progress. **Accent: ember orange** (`--accent` `#e8762b`, hover `#c4581a`, soft `#fdebd9`) for exactly one "go" action per screen, eyebrows, and completed progress. The page stays sand + white + ink.
-- **Type:** display = Bricolage Grotesque 800 (Google Fonts, loaded via `@import` in `tokens/typography.css`), 1.05 leading, −0.02em tracking, sizes 1.5 / 2.75 / 3.5rem. Body = `system-ui` 400/700. Eyebrows and category tags: 12px uppercase, 0.08em / 0.04em tracking. Nav links are bold, undecorated ink.
-- **Spacing:** rem-based (0.25 / 0.5 / 0.75 / 1 / 2). Content column max 900px, centred; nav padding 1rem; main padding 2rem 1rem; card padding 1rem with 1rem bottom margin; rows 0.75rem vertical padding and 0.75rem gap.
-- **Shape:** never use coloured left-border accents on cards or banners. Cards 12px radius; buttons, tags and progress bars are pills; fields and error box 4px; 1px borders everywhere. Elevation is border-only — **no shadows**, inner or outer. Hero/session-header cards may be solid pine (`tone="brand"`).
+- **Palette:** a warm sand page (`#f6f5f2`) with pure-white cards and header; near-black blue-grey ink (`#1f2933`) for all text and links; one warm muted stone (`#6b645a`, 5.8:1 on white). Borders are tints of sand (`#ddd6cc` header and controls, `#e5ded3` card, `#eee7dd` row) plus a hover line (`#c9c0b3`, sand-400). Error red trio (`#fee2e2` / `#fca5a5` / `#b91c1c`). **Brand: pine green** (`--brand` `#2f5d3a`, hover `#1f3f28`, soft `#e3ede4`) for the logomark, primary buttons, hero cards, ticks, category tags, progress. **Accent: ember orange** (`--accent` `#e8762b`, hover `#c4581a`, soft `#fdebd9`) for exactly one "go" action per screen and completed progress. The page stays sand + white + ink.
+- **Type roles** (1.2 ratio from 16px, `--size-*` in `tokens/typography.css`): moment 40px (finished trip, landing hero), page 32px on phones / 40px from 721px (the h1), section 22px (h2, dialog titles), object 19px (list and trip names on cards), all Bricolage Grotesque 800 (Google Fonts) with −0.02em tracking; body 16/1.5 `system-ui` (row names 600, text 400, buttons 700); meta 14/1.45 muted (dates, counts, hints; labels 600 ink); caption 13/1.35 (tags, group counts, save status). Nav links are bold, undecorated ink.
+- **Spacing:** a 4px grid: 4 tag inner, 8 between buttons, 12 section title to sheet and card to card, 16 page gutter and field to field, 24 page head to content, 32 / 48 section to section on phones / desktop. Content column max 900px, centred; nav padding 1rem; main padding 2rem 1rem; card padding 1rem with 1rem bottom margin; rows 0.75rem vertical padding and 0.75rem gap.
+- **Shape:** never use coloured left-border accents on cards or banners. Cards 12px radius; popups and dialogs 12px; buttons, tags, tabs and progress bars are pills; fields, select triggers and options 10px; checkboxes 6px; 1px borders everywhere. Elevation is border-only — **no shadows**, inner or outer. Hero/session-header cards may be solid pine (`tone="brand"`).
 - **Backgrounds:** flat colour only. No images, gradients, patterns, textures, blur or transparency.
 - **Cards:** white, 1px sand border, 12px radius, 1rem padding, stacked with 1rem gap; rows inside separated by hairlines, last row borderless.
-- **Motion:** 120ms ease on colour + 1px lift for buttons; 240ms ease on progress width/colour; tick fills instantly. No bounces, no page transitions.
-- **Hover / press:** buttons darken one step (pine 700→900, ember 500→700) and lift 1px; secondary tints to page sand; links dim to 70%. No shrink on press.
+- **Motion:** 120ms colour, 150ms switch, 160ms popup drop, 200ms tab marker, 240ms progress width/colour; tick fills instantly; all off under reduced motion. No lifts, bounces or page transitions.
+- **Hover / press:** buttons darken one step (pine 700→900, ember 500→700); secondary tints to page sand with a sand-400 line; quiet steps sand-100→200; links dim to 70%. No shrink or lift.
 - **Layout rules:** header is static (not sticky), full width, content centred at 900px. Page actions sit top-right of the title block via flex space-between.
 - **Imagery:** none. If added, keep it warm and natural (campsite, daylight), never cool-toned or stylised.
 - **Iconography:** none — see below.
@@ -50,7 +50,7 @@ Inventory taken from `static/style.css` (`.card`, `.item-row`, `.muted`, `.error
 - **ErrorBanner** — `.error`, redesigned: solid red block, white glyph, display heading, 12px radius, no borders
 - **AppHeader** — `header > nav` with brand, Sessions, signout, user name
 - **Field** — `label + input` / `textarea` as used in the list and item forms
-- **Button** — the templates' `<button>` elements (primary / accent / secondary / danger / link)
+- **Button** — `.btn` with primary (pine), go (ember, once per screen), secondary (white outline), quiet (sand fill, overflow), ghost (resting row action), danger (solid red, confirm dialogs only), link; 44px, or 36px with `.btn-sm` (44px on coarse pointers). The React kit still names go `accent` and shows the older outline danger.
 - **ProgressBar** — packing progress (intentional addition)
 
 `.muted` is exposed as the `--text-muted` token rather than a component.
@@ -63,7 +63,7 @@ Inventory taken from `static/style.css` (`.card`, `.item-row`, `.muted`, `.error
 
 - `styles.css` — entry; imports `tokens/colors.css`, `tokens/typography.css`, `tokens/spacing.css`, `tokens/shape.css`
 - `assets/` — `logo.svg`, `logomark.svg`, `logomark-white.svg`
-- `guidelines/` — specimen cards: Colors (surfaces, text, brand, accent, semantic, button additions), Type (families, headings, eyebrow & tags, scale, links), Spacing (scale, page layout), Shape (radius, card anatomy), Brand (logo)
+- `guidelines/` — specimen cards: Colors (surfaces, text, brand, accent, semantic, button additions), Type (families, headings, tags, scale, links), Spacing (scale, page layout), Shape (radius, card anatomy), Brand (logo)
 - `components/core/` — seven components above + `core.card.html`
 - `ui_kits/camplist/` — click-through web app (login, lists, new/edit list, details, session, sessions overview); see its README
 - `thumbnail.html` — homepage tile

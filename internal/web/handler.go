@@ -142,7 +142,7 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) NewListPage(w http.ResponseWriter, r *http.Request) {
 	form := packing.NewCreatePackingListForm()
-	render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
+	render(w, r, views.NewPackingListPage(form, csrf.Token(r)))
 }
 
 func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func (h *handler) EditListPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := packing.EditPackingListForm(list)
-	render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
+	render(w, r, views.EditPackingListPage(list.Name, form, csrf.Token(r)))
 }
 
 func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
@@ -189,7 +189,7 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	// validate the input
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
+		render(w, r, views.NewPackingListPage(form, csrf.Token(r)))
 		return
 	}
 	ctx := r.Context()
@@ -205,7 +205,7 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_, message := storeErrorDetails(err, "Storing packing list failed")
 		form.Error = []string{message}
-		render(w, r, views.NewPackingListPage("New list", "Start a new list", form, csrf.Token(r)))
+		render(w, r, views.NewPackingListPage(form, csrf.Token(r)))
 		return
 	}
 
@@ -252,13 +252,13 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 
 	if errs := form.Validate(); len(errs) > 0 {
 		form.Error = errs
-		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
+		render(w, r, views.EditPackingListPage(list.Name, form, csrf.Token(r)))
 		return
 	}
 
 	if list.IsShared() && form.Revision != list.Revision() {
 		form.Error = []string{"This list changed. Reload it and review the current version before saving."}
-		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
+		render(w, r, views.EditPackingListPage(list.Name, form, csrf.Token(r)))
 		return
 	}
 	list.Name = form.Name
@@ -268,7 +268,7 @@ func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_, message := storeErrorDetails(err, "Storing packing list failed")
 		form.Error = []string{message}
-		render(w, r, views.NewPackingListPage("Edit list", list.Name, form, csrf.Token(r)))
+		render(w, r, views.EditPackingListPage(list.Name, form, csrf.Token(r)))
 		return
 	}
 

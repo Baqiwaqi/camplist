@@ -47,7 +47,7 @@ func PackingListPage(name string, lists []packing.PackingList, csrfToken string)
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section x-data x-on:htmx:before-swap=\"\n\t\t\t\tconst card = $event.detail.target;\n\t\t\t\tif (!$event.detail.shouldSwap || !card.matches('article[id^=list-]')) return;\n\t\t\t\tconst sibling = [card.nextElementSibling, card.previousElementSibling].find(el => el && el.matches('article'));\n\t\t\t\tconst next = sibling ? sibling.querySelector('h2 a') : $refs.create;\n\t\t\t\tsetTimeout(() => next.focus());\n\t\t\t\"><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">Your lists</p><h1>Where to next?</h1><p class=\"text-muted max-w-[60ch]\">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p></div><div class=\"flex flex-wrap items-center gap-2 sm:pt-6\"><a class=\"btn btn-primary max-sm:flex-auto\" href=\"/packing-lists/new\" x-ref=\"create\">Create list</a></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section x-data x-on:htmx:before-swap=\"\n\t\t\t\tconst card = $event.detail.target;\n\t\t\t\tif (!$event.detail.shouldSwap || !card.matches('article[id^=list-]')) return;\n\t\t\t\tconst sibling = [card.nextElementSibling, card.previousElementSibling].find(el => el && el.matches('article'));\n\t\t\t\tconst next = sibling ? sibling.querySelector('h2 a') : $refs.create;\n\t\t\t\tsetTimeout(() => next.focus());\n\t\t\t\"><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><h1>Where to next?</h1><p class=\"text-muted max-w-[60ch]\">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p></div><div class=\"flex flex-wrap items-center gap-2\"><a class=\"btn btn-primary max-sm:flex-auto\" href=\"/packing-lists/new\" x-ref=\"create\">Create list</a></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,7 +156,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(PackingListCardID(list.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 59, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 58, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -167,19 +167,19 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 			return templ_7745c5c3_Err
 		}
 		if list.IsShared() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p class=\"inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2\">Shared</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p class=\"tag mb-2\">Shared</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"flex flex-wrap justify-between items-start gap-4 max-sm:flex-col\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_240px]\"><h2><a class=\"no-underline\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"flex flex-wrap justify-between items-start gap-4 max-sm:flex-col\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_240px]\"><h2 class=\"t-object\"><a class=\"no-underline\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 templ.SafeURL
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 65, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 64, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -192,7 +192,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(list.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 65, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 64, Col: 97}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -210,7 +210,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(list.Description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 67, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 66, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -221,14 +221,14 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted\"><span class=\"inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted\"><span class=\"tag\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(itemSummary(list.Items))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 70, Col: 167}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 69, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -246,7 +246,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 72, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 71, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -264,7 +264,7 @@ func PackingListCard(list packing.PackingList, csrfToken string) templ.Component
 		var templ_7745c5c3_Var11 templ.SafeURL
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 77, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing.templ`, Line: 76, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {

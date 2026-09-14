@@ -51,7 +51,10 @@ function closeCategory(typed, options) {
 // it while items in view use it (data-used, or data-trip from the offline
 // scripts) unless the rename moved them (renamedInView); a rename adds the new
 // name unless it is already offered. Values already in the fields stay as they
-// are.
+// are, except in the picker the rename started from (renamedFrom), whose own
+// field follows the new name so saving it cannot write the old one back.
+let renamedFrom = null
+
 document.addEventListener('categories-changed', event => {
   const { from, to, custom, renamedInView } = event.detail
   for (const datalist of document.querySelectorAll('datalist')) {
@@ -72,6 +75,9 @@ document.addEventListener('categories-changed', event => {
     else option.dataset.default = ''
     datalist.append(option)
   }
+  const renamed = renamedFrom
+  renamedFrom = null
+  if (to && renamed && categoryKey(renamed.value) === categoryKey(from)) renamed.value = to
 })
 
 document.addEventListener('alpine:init', () => {
@@ -140,6 +146,7 @@ document.addEventListener('alpine:init', () => {
     },
     rename(value) {
       this.close()
+      renamedFrom = this.$refs.input
       window.dispatchEvent(new CustomEvent('category-rename', { detail: { name: value, input: this.$refs.input } }))
     },
     remove(value) {

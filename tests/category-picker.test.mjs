@@ -132,3 +132,20 @@ test('a rename that moved the items in view drops the old name there but leaves 
   assert.equal(editing.value, 'Fishnig')
   assert.deepEqual(datalists[0].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishing', true]])
 })
+
+test('the picker a rename starts from follows the new name, other fields do not', () => {
+  const editing = { value: 'Fishnig' }
+  const elsewhere = { value: 'Fishnig' }
+  const { listeners, factories, datalists } = load([[...defaults, { value: 'Fishnig', custom: true }]], [editing, elsewhere])
+  const component = factories.categoryPicker()
+  component.$refs = { input: editing }
+  component.rename('Fishnig')
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, renamedInView: true } })
+  assert.equal(editing.value, 'Fishing')
+  assert.equal(elsewhere.value, 'Fishnig')
+  assert.deepEqual(datalists[0].options.map(option => option.value).slice(3), ['Fishing'])
+
+  // The next change comes from somewhere else, so no field follows it.
+  listeners['categories-changed']({ detail: { from: 'Fishing', to: 'Angling', custom: true, renamedInView: true } })
+  assert.equal(editing.value, 'Fishing')
+})

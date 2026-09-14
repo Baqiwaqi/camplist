@@ -90,8 +90,10 @@ func TestCosmosValidation(t *testing.T) {
 		t.Fatal("partition isolation failed")
 	}
 	added := packing.NewItem("Matches", "Kitchen")
-	must(t, store.AddItem(ctx, list.ID, owner, added))
-	must(t, store.RemoveItem(ctx, list.ID, owner, added.ID))
+	_, _, err = store.AddItem(ctx, list.ID, owner, added)
+	must(t, err)
+	_, _, err = store.RemoveItem(ctx, list.ID, owner, added.ID, "")
+	must(t, err)
 	session, err := store.CreatePackingSession(ctx, list.ID, owner)
 	must(t, err)
 	lists, err := store.GetPackingLists(ctx, owner)

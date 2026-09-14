@@ -4,87 +4,107 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 	"context"
-	"encoding/json"
+	"html"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 )
 
-// Mark done on the reusable list used to post a plain form and redirect, which
-// reloaded the page and scrolled back to the top.
-func TestMarkPreparationDoneSwapsOnlyTheTaskList(t *testing.T) {
+// The preparation card used to post plain forms and redirect, which reloaded
+// the page and scrolled back to the top. htmx saves now swap only the card and
+// the page's list revision; a normal form post still redirects.
+func TestPreparationSavesSwapTheCardAndSupportNormalForms(t *testing.T) {
 	ctx := context.Background()
 	store := packing.NewStore(testsupport.NewDocuments())
 	list := packing.NewList("user", "Weekend", "")
-	list.Tasks = []packing.PreparationTask{{ID: "fuel", Name: "Buy fuel"}, {ID: "tent", Name: "Repair tent"}}
+	list.Tasks = []packing.PreparationTask{{ID: "fuel", Name: "Buy fuel"}, {ID: "tent", Name: "Repair tent"}, {ID: "lamp", Name: "Charge lamp"}}
 	if err := store.SavePackingList(ctx, list); err != nil {
 		t.Fatal(err)
 	}
-	list, err := store.GetPackingList(ctx, list.ID, "user")
-	if err != nil {
-		t.Fatal(err)
-	}
 	h := handler{packingStore: store}
-	toggle := func(taskID, name, revision string, headers map[string]string) *httptest.ResponseRecorder {
-		return togglePreparation(h, list.ID, taskID, name, revision, headers)
+	current := func() packing.PackingList {
+		t.Helper()
+		list, err := store.GetPackingList(ctx, list.ID, "user")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return list
 	}
+	card := func(w *httptest.ResponseRecorder, saved packing.PackingList, want ...string) string {
+		t.Helper()
+		body := w.Body.String()
+		if w.Code != 200 || w.Header().Get("HX-Redirect") != "" || w.Header().Get("HX-Refresh") != "" {
+			t.Fatalf("htmx save: %d %v %s", w.Code, w.Header(), body)
+		}
+		if got := listRevision(t, body); got != saved.Revision() {
+			t.Errorf("list revision %q, want the saved %q", got, saved.Revision())
+		}
+		for _, want := range append(want, `<section id="list-preparation"`) {
+			if !strings.Contains(body, want) {
+				t.Errorf("card missing %q", want)
+			}
+		}
+		for _, page := range []string{"<html", "<header", "Add an item"} {
+			if strings.Contains(body, page) {
+				t.Errorf("card renders page content %q", page)
+			}
+		}
+		return body
+	}
+	htmx := map[string]string{"HX-Request": "true"}
 
-	w := toggle("fuel", "Buy fuel", list.Revision(), markDone)
-	if w.Code != 200 || w.Header().Get("HX-Redirect") != "" {
-		t.Fatalf("mark done: %d redirect=%q %s", w.Code, w.Header().Get("HX-Redirect"), w.Body.String())
-	}
-	saved, err := store.GetPackingList(ctx, list.ID, "user")
-	if err != nil {
-		t.Fatal(err)
-	}
+	opened := current()
+	w := savePreparation(h, list.ID, url.Values{"taskId": {"fuel"}, "name": {"Buy fuel"}, "scope": {"shared"}, "action": {"save"}, "done": {"true"}, "revision": {opened.Revision()}}, htmx)
+	saved := current()
 	if !saved.Tasks[0].Done || saved.Tasks[1].Done {
 		t.Fatalf("done state not saved: %+v", saved.Tasks)
 	}
-	if from, to := listRevisionTrigger(t, w); from != list.Revision() || to != saved.Revision() {
-		t.Fatalf("list-revision trigger from %q to %q, want %q to %q", from, to, list.Revision(), saved.Revision())
-	}
-	body := w.Body.String()
-	for _, want := range []string{
-		`<ul id="preparation-tasks">`,
-		`aria-pressed="true" aria-label="Toggle done for Buy fuel"`,
-		`name="revision" value="` + saved.Revision() + `"`,
-	} {
-		if !strings.Contains(body, want) {
-			t.Errorf("fragment missing %q", want)
-		}
-	}
-	if strings.Contains(body, `value="`+list.Revision()+`"`) {
-		t.Error("fragment still carries the stale revision")
-	}
-	for _, page := range []string{"<html", "<header", "Add an item", "Prepare before your next trip", "hx-swap-oob"} {
-		if strings.Contains(body, page) {
-			t.Errorf("fragment renders page content %q", page)
-		}
+	body := card(w, saved, `aria-pressed="true" aria-label="Toggle done for Buy fuel"`, "1 of 3 done", `x-data="{ editing: false }"`)
+	if strings.Contains(body, "autofocus") {
+		t.Error("mark done moves focus; htmx keeps it on the toggle")
 	}
 
-	// The swapped rows carry the new revision, so the next toggle succeeds.
-	if w := toggle("tent", "Repair tent", saved.Revision(), markDone); w.Code != 200 {
-		t.Fatalf("second toggle with fresh revision: %d %s", w.Code, w.Body.String())
-	}
-	if w := toggle("fuel", "Buy fuel", saved.Revision(), markDone); w.Code != 409 || w.Header().Get("HX-Trigger") != "" {
-		t.Fatalf("stale revision: %d trigger=%q", w.Code, w.Header().Get("HX-Trigger"))
+	// The page's previous revision is stale now.
+	if w := savePreparation(h, list.ID, url.Values{"taskId": {"tent"}, "name": {"Repair tent"}, "scope": {"shared"}, "action": {"save"}, "done": {"true"}, "revision": {opened.Revision()}}, htmx); w.Code != 409 {
+		t.Fatalf("stale revision: %d", w.Code)
 	}
 
-	current, _ := store.GetPackingList(ctx, list.ID, "user")
-	if w := toggle("fuel", "Buy fuel", current.Revision(), nil); w.Code != 303 || w.Header().Get("Location") != "/packing-lists/"+list.ID {
+	// Add focuses the new task field again.
+	w = savePreparation(h, list.ID, url.Values{"name": {"Pack pegs"}, "scope": {"shared"}, "revision": {saved.Revision()}}, htmx)
+	saved = current()
+	card(w, saved, "Pack pegs", `id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus`)
+
+	// A rename made in edit mode keeps edit mode and its field.
+	w = savePreparation(h, list.ID, url.Values{"taskId": {"tent"}, "name": {"Repair tent poles"}, "scope": {"shared"}, "action": {"save"}, "done": {"false"}, "editing": {"true"}, "revision": {saved.Revision()}}, htmx)
+	saved = current()
+	card(w, saved, `x-data="{ editing: true }"`, `id="task-tent" name="name" value="Repair tent poles" required maxlength="200" autofocus`)
+
+	// Remove focuses the task the button named.
+	w = savePreparation(h, list.ID, url.Values{"taskId": {"tent"}, "name": {"Repair tent poles"}, "action": {"remove"}, "next": {"lamp"}, "editing": {"true"}, "revision": {saved.Revision()}}, htmx)
+	saved = current()
+	body = card(w, saved, `x-data="{ editing: true }"`, `id="task-lamp" name="name" value="Charge lamp" required maxlength="200" autofocus`)
+	if strings.Contains(body, "Repair tent poles") {
+		t.Error("removed task still rendered")
+	}
+
+	// Removing the last task leaves edit mode and returns to the new task field.
+	for _, task := range saved.Tasks {
+		w = savePreparation(h, list.ID, url.Values{"taskId": {task.ID}, "name": {task.Name}, "action": {"remove"}, "editing": {"true"}, "revision": {current().Revision()}}, htmx)
+	}
+	card(w, current(), `x-data="{ editing: false }"`, "No tasks yet", `placeholder="Like buying fuel" required maxlength="200" autofocus`)
+
+	if w := savePreparation(h, list.ID, url.Values{"name": {"Buy fuel"}, "scope": {"shared"}, "revision": {current().Revision()}}, nil); w.Code != 303 || w.Header().Get("Location") != "/packing-lists/"+list.ID {
 		t.Fatalf("no-script fallback: %d %q", w.Code, w.Header().Get("Location"))
-	}
-	current, _ = store.GetPackingList(ctx, list.ID, "user")
-	if w := toggle("fuel", "Buy fuel", current.Revision(), map[string]string{"HX-Request": "true"}); w.Code != 200 || w.Header().Get("HX-Redirect") != "/packing-lists/"+list.ID {
-		t.Fatalf("other htmx edits keep reloading: %d %q", w.Code, w.Header().Get("HX-Redirect"))
 	}
 }
 
-// On a shared list, item Delete and an open inline edit carry the page's list
-// revision. After Mark done they must work with the revision the toggle
-// produced, while another member's later write still conflicts.
-func TestSharedListItemActionsAfterMarkDone(t *testing.T) {
+// On a shared list, item Delete, an inline edit and the preparation card all
+// send the page's one list revision. After a save they must work with the
+// revision that save swapped in, while another member's later write still
+// conflicts.
+func TestSharedListActionsFollowTheSwappedRevision(t *testing.T) {
 	ctx := context.Background()
 	store := packing.NewStore(testsupport.NewDocuments())
 	list := packing.NewList("user", "Weekend", "")
@@ -125,17 +145,16 @@ func TestSharedListItemActionsAfterMarkDone(t *testing.T) {
 		}
 		return page
 	}
-	markDoneFrom := func(page packing.PackingList, done bool) string {
-		values := map[bool]string{true: "true", false: "false"}
-		w := togglePreparationDone(h, list.ID, "fuel", "Buy fuel", values[done], page.Revision(), markDone)
+	markDoneFrom := func(revision string, done string) string {
+		w := savePreparation(h, list.ID, url.Values{"taskId": {"fuel"}, "name": {"Buy fuel"}, "scope": {"shared"}, "action": {"save"}, "done": {done}, "revision": {revision}}, map[string]string{"HX-Request": "true"})
 		if w.Code != 200 {
 			t.Fatalf("mark done: %d %s", w.Code, w.Body.String())
 		}
-		from, to := listRevisionTrigger(t, w)
-		if from != page.Revision() || to == "" || to == from {
-			t.Fatalf("list-revision trigger from %q to %q, page %q", from, to, page.Revision())
+		swapped := listRevision(t, w.Body.String())
+		if swapped == "" || swapped == revision {
+			t.Fatalf("mark done swapped revision %q after %q", swapped, revision)
 		}
-		return to
+		return swapped
 	}
 	deleteItem := func(itemID, revision string) *httptest.ResponseRecorder {
 		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/remove-item/"+itemID, nil), list.ID, itemID)
@@ -156,28 +175,30 @@ func TestSharedListItemActionsAfterMarkDone(t *testing.T) {
 	}
 	tent, stove := list.Items[0].ID, list.Items[1].ID
 
-	opened := page()
-	if w := deleteItem(tent, markDoneFrom(opened, true)); w.Code != 200 || w.Header().Get("HX-Refresh") != "true" {
+	revision := markDoneFrom(page().Revision(), "true")
+	w := deleteItem(tent, revision)
+	if w.Code != 200 || w.Header().Get("HX-Refresh") != "" {
 		t.Fatalf("delete after mark done: %d %s", w.Code, w.Body.String())
 	}
+	revision = listRevision(t, w.Body.String())
 
-	opened = page()
-	w := editItem(stove, "Gas stove", markDoneFrom(opened, false))
+	w = editItem(stove, "Gas stove", revision)
 	if w.Code != 200 || strings.Contains(w.Body.String(), "This list changed") || !strings.Contains(w.Body.String(), "Gas stove") {
-		t.Fatalf("inline edit after mark done: %d %s", w.Code, w.Body.String())
+		t.Fatalf("inline edit after delete: %d %s", w.Code, w.Body.String())
 	}
+	revision = listRevision(t, w.Body.String())
+	markDoneFrom(revision, "false")
 	if saved := page(); len(saved.Items) != 1 || saved.Items[0].Name != "Gas stove" || saved.Tasks[0].Done {
 		t.Fatalf("saved list: %+v %+v", saved.Items, saved.Tasks)
 	}
 
-	// Another member writes right after the toggle is saved: the trigger still
-	// names the toggle's own revision, so the page's controls stay stale.
+	// Another member writes right after the toggle is saved: the response
+	// still carries the toggle's own revision, so the page stays stale.
 	racing.after = memberWrite
-	opened = page()
-	advanced := markDoneFrom(opened, true)
+	advanced := markDoneFrom(page().Revision(), "true")
 	racing.after = nil
-	if current := page(); advanced == current.Revision() {
-		t.Fatal("trigger advanced controls past another member's write")
+	if advanced == page().Revision() {
+		t.Fatal("swapped revision skipped another member's write")
 	}
 	if w := deleteItem(stove, advanced); w.Code != 409 {
 		t.Fatalf("delete over another member's write: %d", w.Code)
@@ -189,8 +210,6 @@ func TestSharedListItemActionsAfterMarkDone(t *testing.T) {
 		t.Fatalf("stale actions changed the list: %+v", saved.Items)
 	}
 }
-
-var markDone = map[string]string{"HX-Request": "true", "HX-Target": "preparation-tasks"}
 
 type writeAfterPreparation struct {
 	*packing.Store
@@ -205,12 +224,7 @@ func (s *writeAfterPreparation) EditPreparationTask(ctx context.Context, id, act
 	return list, err
 }
 
-func togglePreparation(h handler, listID, taskID, name, revision string, headers map[string]string) *httptest.ResponseRecorder {
-	return togglePreparationDone(h, listID, taskID, name, "true", revision, headers)
-}
-
-func togglePreparationDone(h handler, listID, taskID, name, done, revision string, headers map[string]string) *httptest.ResponseRecorder {
-	values := url.Values{"taskId": {taskID}, "name": {name}, "scope": {"shared"}, "action": {"save"}, "done": {done}, "revision": {revision}}
+func savePreparation(h handler, listID string, values url.Values, headers map[string]string) *httptest.ResponseRecorder {
 	r := withItemRoute(packingRequest("/packing-lists/"+listID+"/preparation/edit", values), listID, "")
 	for key, value := range headers {
 		r.Header.Set(key, value)
@@ -220,13 +234,14 @@ func togglePreparationDone(h handler, listID, taskID, name, done, revision strin
 	return w
 }
 
-func listRevisionTrigger(t *testing.T, w *httptest.ResponseRecorder) (from, to string) {
+var listRevisionInput = regexp.MustCompile(`<input type="hidden" id="list-revision" value="([^"]*)" hx-swap-oob="true">`)
+
+// listRevision is the revision a response swaps into the page's #list-revision.
+func listRevision(t *testing.T, body string) string {
 	t.Helper()
-	var trigger struct {
-		ListRevision struct{ From, To string } `json:"list-revision"`
+	match := listRevisionInput.FindAllStringSubmatch(body, -1)
+	if len(match) != 1 {
+		t.Fatalf("want one out-of-band list revision, found %d in %s", len(match), body)
 	}
-	if err := json.Unmarshal([]byte(w.Header().Get("HX-Trigger")), &trigger); err != nil {
-		t.Fatalf("HX-Trigger %q: %v", w.Header().Get("HX-Trigger"), err)
-	}
-	return trigger.ListRevision.From, trigger.ListRevision.To
+	return html.UnescapeString(match[0][1])
 }

@@ -21,25 +21,33 @@ func TestPreparationRowsToggleRenameAndRemove(t *testing.T) {
 	body := out.String()
 	for _, want := range []string{
 		`aria-label="Toggle done for Buy fuel"`,
-		`class="pack-row packed"`,
+		`class="pack-row py-2 packed"`,
 		">Mark done<",
 		">Undo<",
 		`name="done" value="true"`,
 		`name="done" value="false"`,
+		`<section id="list-preparation" class="card p-0" x-data="{ editing: false }">`,
+		"1 of 2 done",
 		`x-on:click="editing = !editing"`,
 		">Edit tasks<",
-		`class="btn btn-danger btn-sm" data-confirm-action="Remove task"`,
-		`hx-post="/packing-lists/` + list.ID + `/preparation/edit"`,
 		`data-confirm-action="Remove task"`,
+		`&#34;next&#34;:&#34;fixed&#34;`,
 		`id="task-fuel" name="name" value="Buy fuel"`,
 		`<ul id="preparation-tasks">`,
-		`method="post" action="/packing-lists/` + list.ID + `/preparation/edit" hx-post="/packing-lists/` + list.ID + `/preparation/edit" hx-target="#preparation-tasks" hx-swap="outerHTML" hx-sync="#preparation-tasks:drop"`,
+		`method="post" action="/packing-lists/` + list.ID + `/preparation/edit" hx-post="/packing-lists/` + list.ID + `/preparation/edit" hx-swap="outerHTML" hx-sync="this:drop" hx-target="#list-preparation"`,
+		`name="editing" x-bind:value="editing"`,
 		`id="task-done-fuel"`,
+		`<input type="hidden" id="list-revision" value="">`,
+		`<ul id="list-items" class="columns-[17rem] gap-x-8" data-empty-focus="item-name-new">`,
 		`<script src="/static/revision.js" defer></script>`,
+		`<script src="/static/removal-focus.js" defer></script>`,
 	} {
 		if !strings.Contains(body, want) {
-			t.Errorf("preparation card missing %q", want)
+			t.Errorf("list page missing %q", want)
 		}
+	}
+	if strings.Contains(body, "autofocus") || strings.Contains(body, "hx-boost") {
+		t.Error("list page autofocuses a field or boosts a form")
 	}
 	if strings.Contains(body, `type="checkbox"`) || strings.Contains(body, "Save task") {
 		t.Error("old checkbox rows are still rendered")

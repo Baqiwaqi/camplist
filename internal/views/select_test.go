@@ -155,8 +155,8 @@ func TestFormsHaveNoBareNativeSelects(t *testing.T) {
 	session := packing.NewPackingSession(list)
 	for name, component := range map[string]templ.Component{
 		"add item":      ListItemForm(packing.NewCreateItemForm(list.ID), "token"),
-		"edit item row": ItemEditRow(list.ID, "item", packing.CreateItemForm{Scope: "person"}, "token"),
-		"task row":      PreparationTaskRow(list, task, "token"),
+		"edit item row": ItemEditRow(list.ID, "item", packing.CreateItemForm{Scope: "person"}),
+		"task row":      PreparationTaskRow(list, task, "token", true, "", ""),
 		"trip entry":    TripEntryForm(session, nil, "token"),
 	} {
 		t.Run(name, func(t *testing.T) {

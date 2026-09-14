@@ -11,11 +11,15 @@ import (
 // from a shared list; approving names the invitation whose trip prompt is open.
 templ SharingPage(view packing.SharingView, link string, token string, trips []packing.PackingSession, approving string) {
 	@Layout("Sharing", token) {
+		{{ backLabel := "Packing list" }}
+		if view.Kind=="packing-session" {
+			{{ backLabel = "Trip" }}
+		}
 		<section class="max-w-[560px]">
 			@PageHead(PageHeading{
 				Title:     "Pack together.",
 				BackHref:  "/" + view.Kind + "/" + view.ID,
-				BackLabel: backToSharedLabel(view),
+				BackLabel: backLabel,
 			})
 			if view.Kind=="packing-session" {
 				<p class="mb-3">Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>

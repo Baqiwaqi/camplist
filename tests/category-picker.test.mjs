@@ -222,6 +222,22 @@ test('Enter on the Edit cell opens the category dialog instead of picking', () =
   assert.deepEqual(dispatched.map(sent => [sent.type, sent.detail.name]), [['category-rename', 'Fishnig']])
 })
 
+test('pointing at an Edit button leaves Enter picking the category', () => {
+  const input = { id: 'item-category', value: '', focus() {} }
+  const { factories, datalists, dispatched } = load([[...defaults, { value: 'Fishnig', custom: true }]], [input])
+  const component = factories.categoryPicker()
+  component.$root = { querySelector: () => datalists[0] }
+  component.$refs = { input }
+  component.open = true
+  component.filtering = false
+  component.point(3)
+  assert.equal(component.activeID(), 'item-category-option-3')
+  const event = { preventDefault() {} }
+  component.enter(event)
+  assert.equal(input.value, 'Fishnig')
+  assert.deepEqual(dispatched, [])
+})
+
 test('moving between rows returns to the category cell', () => {
   const input = { id: 'item-category', value: '' }
   const component = picker([...defaults, { value: 'Fishnig', custom: true }])

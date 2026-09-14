@@ -86,7 +86,7 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 						x-bind:aria-selected="index === active && column === 0"
 						x-bind:data-active="index === active && column === 0"
 						x-text="item.label"
-						x-on:mousemove="point(index, 0)"
+						x-on:mousemove="point(index)"
 						x-on:click="pick(item)"
 					></span>
 					<template x-if="item.custom">
@@ -98,7 +98,7 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 								x-bind:id="actionID(index)"
 								x-bind:aria-label="`Rename or remove ${item.value}`"
 								x-bind:data-active="index === active && column === 1"
-								x-on:mousemove="point(index, 1)"
+								x-on:mousemove="point(index)"
 								x-on:click.stop="manage(item.value)"
 							>Edit</button>
 						</span>

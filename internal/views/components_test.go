@@ -167,19 +167,19 @@ func TestSwitchKeepsTheCheckboxAsTheSubmittedField(t *testing.T) {
 	}
 }
 
-func TestChipIsACheckboxOrARadioDependingOnTheGroup(t *testing.T) {
-	multi := findAll(renderDoc(t, Chip("forgotten", "true", "Forgotten", true, false)), byTag("input"))
-	if len(multi) != 1 {
-		t.Fatalf("inputs %d, want 1", len(multi))
+func TestChipIsACheckbox(t *testing.T) {
+	inputs := findAll(renderDoc(t, Chip("forgotten", "true", "Forgotten", true)), byTag("input"))
+	if len(inputs) != 1 {
+		t.Fatalf("inputs %d, want 1", len(inputs))
 	}
-	if got, _ := attr(multi[0], "type"); got != "checkbox" {
+	if got, _ := attr(inputs[0], "type"); got != "checkbox" {
 		t.Errorf("type %q, want checkbox", got)
 	}
-	single := findAll(renderDoc(t, Chip("action", "add", "Add", false, true)), byTag("input"))
-	if got, _ := attr(single[0], "type"); got != "radio" {
-		t.Errorf("type %q, want radio", got)
+	if !hasAttrKey(inputs[0], "checked") {
+		t.Error("a chosen chip must render checked")
 	}
-	if hasAttrKey(single[0], "checked") {
+	unchosen := findAll(renderDoc(t, Chip("unused", "true", "Unused", false)), byTag("input"))
+	if hasAttrKey(unchosen[0], "checked") {
 		t.Error("an unchosen chip must not render checked")
 	}
 }

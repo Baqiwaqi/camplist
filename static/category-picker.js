@@ -124,10 +124,11 @@ document.addEventListener('alpine:init', () => {
       if (!this.open || this.active < 0) return null
       return this.column === 1 ? this.actionID(this.active) : this.optionID(this.active)
     },
-    // The row the pointer is over becomes the active one, on the cell it is on.
-    point(index, column) {
+    // The row the pointer is over becomes the active one. Only the keyboard
+    // moves to the Edit cell, so Enter in the field still picks the category.
+    point(index) {
       this.active = index
-      this.column = column
+      this.column = 0
     },
     show() {
       if (this.open) return

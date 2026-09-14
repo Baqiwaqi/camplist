@@ -310,11 +310,3 @@ func confirmDialogAttrs() templ.Attributes {
 		"x-on:close":               "issue = null",
 	}
 }
-
-// backToSharedLabel names the page the sharing page came from.
-func backToSharedLabel(view packing.SharingView) string {
-	if view.Kind == "packing-session" {
-		return "Back to the trip"
-	}
-	return "Back to the list"
-}

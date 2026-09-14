@@ -13,7 +13,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 			Title:     "Make the next trip easier",
 			Meta:      "Review " + session.List.Name + ". Observations stay with this trip; only selected changes affect your next one.",
 			BackHref:  "/trips/" + session.ID,
-			BackLabel: "Back to packing",
+			BackLabel: session.List.Name,
 		})
 		if message != "" {
 			<p class="error" role="alert">{ message }</p>
@@ -87,9 +87,9 @@ templ ReviewForm(session packing.PackingSession, revision string, available bool
 		<fieldset class="min-w-0 mb-4">
 			<legend class="label mb-2">Observations (choose at least one)</legend>
 			<div class="flex flex-wrap gap-2">
-				@Chip("forgotten", "true", "Forgotten", entry.Forgotten, false)
-				@Chip("unused", "true", "Unused", entry.Unused, false)
-				@Chip("needsAttention", "true", "Needs repair or replacement", entry.NeedsAttention, false)
+				@Chip("forgotten", "true", "Forgotten", entry.Forgotten)
+				@Chip("unused", "true", "Unused", entry.Unused)
+				@Chip("needsAttention", "true", "Needs repair or replacement", entry.NeedsAttention)
 			</div>
 		</fieldset>
 		<div class="my-3 max-w-[34rem]">

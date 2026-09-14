@@ -239,10 +239,6 @@
     @apply mt-1 text-meta text-muted;
   }
 
-  .hint-error {
-    @apply font-bold text-red-700;
-  }
-
   /* ---------- cards and rows ---------- */
 
   .card {

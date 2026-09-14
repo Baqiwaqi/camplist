@@ -142,8 +142,14 @@ templ ListPreparation(list packing.PackingList, csrfToken string, editing bool, 
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			<input type="hidden" name="editing" x-bind:value="editing"/>
-			<label class="sr-only" for="new-task">New preparation task</label>
-			<input id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus?={ focus == "new-task" } class="field"/>
+			@Field(TextField{
+				ID:          "new-task",
+				Name:        "name",
+				Label:       "New preparation task",
+				Placeholder: "Like buying fuel",
+				HideLabel:   true,
+				Attrs:       templ.Attributes{"required": true, "maxlength": "200", "autofocus": focus == "new-task"},
+			})
 			<div class="max-sm:order-last max-sm:w-48">
 				@ScopeSelect("scope", "new-task-scope", "", false, true)
 			</div>
@@ -400,8 +406,14 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(task.Done) }/>
 			<input type="hidden" name="editing" x-bind:value="editing"/>
-			<label class="sr-only" for={ "task-" + task.ID }>Task name</label>
-			<input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" autofocus?={ focus == "task-"+task.ID } class="field"/>
+			@Field(TextField{
+				ID:        "task-" + task.ID,
+				Name:      "name",
+				Label:     "Task name",
+				Value:     task.Name,
+				HideLabel: true,
+				Attrs:     templ.Attributes{"required": true, "maxlength": "200", "autofocus": focus == "task-"+task.ID},
+			})
 			<div class="max-sm:order-last max-sm:w-48">
 				@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false, true)
 			</div>
@@ -441,19 +453,18 @@ templ AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) {
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="revision" value={ form.Revision }/>
 		<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_auto]">
-			<label for="item-name-new" class="sr-only">Item name</label>
-			<input
-				type="text"
-				id="item-name-new"
-				name="name"
-				placeholder="Like a headlamp"
-				value={ form.Name }
-				class="field col-span-2 sm:col-span-1"
-				if form.NameHasError() {
-					aria-invalid="true"
-				}
-				autofocus?={ focus }
-			/>
+			<div class="col-span-2 sm:col-span-1">
+				@Field(TextField{
+					ID:          "item-name-new",
+					Name:        "name",
+					Label:       "Item name",
+					Value:       form.Name,
+					Placeholder: "Like a headlamp",
+					HideLabel:   true,
+					Invalid:     form.NameHasError(),
+					Attrs:       templ.Attributes{"autofocus": focus},
+				})
+			</div>
 			<label for="item-category-new" class="sr-only">Category</label>
 			@CategoryPicker("item-category-new", "item-category-new-options", form.Category, "Category", form.Categories)
 			<button type="submit" class="btn btn-primary min-h-11 shrink-0">{ form.SubmitButtonText }</button>

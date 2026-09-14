@@ -107,8 +107,6 @@ type TextField struct {
 	// Invalid marks a field the server rejected; the error itself is reported
 	// by the page's error banner.
 	Invalid bool
-	// Class adds utilities to the control, such as a grid span.
-	Class string
 	Attrs templ.Attributes
 }
 
@@ -119,7 +117,7 @@ templ Field(field TextField) {
 			<textarea
 				id={ field.ID }
 				name={ field.Name }
-				class={ "field field-multiline", field.Class }
+				class="field field-multiline"
 				if field.Placeholder != "" {
 					placeholder={ field.Placeholder }
 				}
@@ -137,7 +135,7 @@ templ Field(field TextField) {
 				id={ field.ID }
 				name={ field.Name }
 				value={ field.Value }
-				class={ "field", field.Class }
+				class="field"
 				if field.Placeholder != "" {
 					placeholder={ field.Placeholder }
 				}
@@ -167,13 +165,12 @@ templ Switch(name string, label string, checked bool, attrs templ.Attributes) {
 	</label>
 }
 
-// Chip is one choice in a pill group: a checkbox by default, or a radio when
-// the group is a single choice. The input stays in the form and carries the
-// value; the pill is its label.
-templ Chip(name string, value string, label string, checked bool, single bool) {
+// Chip is one choice in a multi-select pill group. The checkbox stays in the
+// form and carries the value; the pill is its label.
+templ Chip(name string, value string, label string, checked bool) {
 	<label class="chip">
 		<input
-			type={ chipType(single) }
+			type="checkbox"
 			name={ name }
 			value={ value }
 			checked?={ checked }
@@ -181,13 +178,6 @@ templ Chip(name string, value string, label string, checked bool, single bool) {
 		/>
 		{ label }
 	</label>
-}
-
-func chipType(single bool) string {
-	if single {
-		return "radio"
-	}
-	return "checkbox"
 }
 
 // Tab is one segment of a tab strip. Count is the number or fraction shown

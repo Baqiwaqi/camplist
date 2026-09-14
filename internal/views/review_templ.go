@@ -52,7 +52,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 				Title:     "Make the next trip easier",
 				Meta:      "Review " + session.List.Name + ". Observations stay with this trip; only selected changes affect your next one.",
 				BackHref:  "/trips/" + session.ID,
-				BackLabel: "Back to packing",
+				BackLabel: session.List.Name,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -331,15 +331,15 @@ func ReviewForm(session packing.PackingSession, revision string, available bool,
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Chip("forgotten", "true", "Forgotten", entry.Forgotten, false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Chip("forgotten", "true", "Forgotten", entry.Forgotten).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Chip("unused", "true", "Unused", entry.Unused, false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Chip("unused", "true", "Unused", entry.Unused).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Chip("needsAttention", "true", "Needs repair or replacement", entry.NeedsAttention, false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Chip("needsAttention", "true", "Needs repair or replacement", entry.NeedsAttention).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -94,13 +94,14 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - `npm run css` builds `static/tailwind.css` (gitignored, the only stylesheet)
   from `assets/css/tailwind.css`; Air and the Dockerfile run it too. Tailwind v4
   is the styling system, with Preflight on: the `@theme` block holds the
-  Camplist tokens (`bg-pine-700`, `text-muted`, `rounded-card`, `font-display`,
-  `tracking-eyebrow`; body sizes keep 1.5 leading) and removes Tailwind's default
-  colours, shadows and breakpoints, so `max-sm:` means phones (<= 600px) and
-  `md:` the wide layouts (>= 721px). Style with utilities in the templ views;
-  `@layer base` re-adds body colour, headings, links, focus ring and checkboxes,
-  and `@layer components` keeps the classes that carry state, pseudo elements or
-  runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
+  Camplist tokens (`bg-pine-700`, `text-muted`, `rounded-card`, `rounded-field`,
+  `font-display`, the `text-meta`/`text-caption` type roles; body sizes keep
+  1.5 leading) and removes Tailwind's default colours, shadows and breakpoints,
+  so `max-sm:` means phones (<= 600px) and `md:` the wide layouts (>= 721px).
+  Style with utilities in the templ views; `@layer base` re-adds body colour,
+  headings, links, focus ring and checkboxes, and `@layer components` keeps the
+  display type roles (`.t-*`) and the classes that carry state, pseudo elements
+  or runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`, `.error`,
   `.dialog`, `.sync-status`, the `drop-*`/toast transitions, and the
   `.muted`/`.tag` the offline scripts set) plus rules for elements the offline
@@ -115,9 +116,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
   logo assets, and a React click-through kit for reference only). Invoke
   `/camplist-design` for brand context before designing new UI.
 - Runtime: tokens live in the `@theme` block of `assets/css/tailwind.css`;
-  logomarks live in `static/`. Views combine utilities (eyebrows, tags, fields,
-  page and card heads are utility strings) with the component classes listed
-  under Build / run; the React components are not shipped.
+  logomarks live in `static/`. Views combine utilities (fields, page and card
+  heads are utility strings) with the component classes listed under Build /
+  run; the React components are not shipped.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
   classes such as `.error`, `.card` and `.item-row` at runtime, so keep those
@@ -126,10 +127,13 @@ The teaching-only phase is complete. Default to **implementing requested changes
   list in `sw.js`. The worker serves those assets network-first (cache only as
   offline fallback), so a restyle needs no cache version bump; bump `CACHE`
   only when the asset list changes.
-- Rules: one ember (`.btn-accent`) "go" action per screen, pine for primary
-  actions, red only for errors and delete; border-only elevation (no shadows);
-  pills for buttons and tags; flat colour, no icons, images or gradients;
-  h1/h2 in Bricolage Grotesque 800, body in system-ui; must work on phones.
+- Rules: one ember (`.btn-go`) "go" action per screen, pine for primary
+  actions, red only for errors and delete (solid `.btn-danger` only in confirm
+  dialogs); border-only elevation (no shadows); pills for buttons and tags;
+  flat colour, no icons, images or gradients; titles in Bricolage Grotesque 800
+  on the type roles (h1 page, h2 section, h3 or `.t-object` for names on cards),
+  body in system-ui; sentence case, no uppercase eyebrows or tracked labels;
+  must work on phones.
 
 ## Shared resources
 

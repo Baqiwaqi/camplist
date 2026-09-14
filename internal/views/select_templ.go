@@ -210,7 +210,7 @@ func selectField(id string, name string, label string, hideLabel bool, class str
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" x-ref=\"native\" tabindex=\"-1\" class=\"select-native w-full min-h-11 px-2 py-2 rounded-sm border border-sand-300 bg-white font-normal\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" x-ref=\"native\" tabindex=\"-1\" class=\"select-native w-full min-h-11 px-2 py-2 rounded-field border border-sand-300 bg-white font-normal\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -13,14 +13,13 @@ templ PackingSessionPage(name string, session packing.PackingSession, canReview 
 		<section>
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trip</p>
 					@TripTitle(session, false)
 					<p class="text-muted max-w-[60ch]">
 						Started <time datetime={ session.CreatedAt.Format(time.RFC3339) }>{ session.CreatedAt.Format("Jan 2, 2006") }</time>.
 						Your reusable list stays unchanged.
 					</p>
 				</div>
-				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+				<div class="flex flex-wrap items-center gap-2">
 					if canReview {
 						<a class="btn btn-secondary" href={ "/trips/" + session.ID + "/review" }>Review this trip</a>
 					}
@@ -77,7 +76,7 @@ templ TripRenameForm(session packing.PackingSession, csrfToken string) {
 		class="card mt-8 flex flex-wrap items-end gap-3"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
-		<div class="grid gap-1 grow basis-56"><label for="rename-trip" class="text-sm font-bold">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+		<div class="grid gap-1 grow basis-56"><label for="rename-trip" class="text-sm font-bold">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
 		<button class="btn btn-secondary">Rename trip</button>
 	</form>
 }
@@ -99,7 +98,7 @@ templ PackingChecklist(session packing.PackingSession, csrfToken string) {
 					for _, group := range groupByParticipant(session.List.Items) {
 						<div class="break-inside-avoid pb-3 last:pb-0">
 							if group.Name != "" {
-								<p class="text-xs font-bold tracking-eyebrow uppercase text-muted pb-1">{ group.Name }</p>
+								<p class="text-meta font-bold pb-1">{ group.Name }</p>
 							}
 							<ul>
 								for _, item := range group.Items {
@@ -268,7 +267,7 @@ templ TripEntryForm(session packing.PackingSession, categories []string, csrfTok
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			@TripEntryOperation(false)
 			<div class="grid gap-3 sm:grid-cols-2">
-				<div class="grid gap-1"><label for="entry-name" class="text-sm font-bold">Name</label><input id="entry-name" name="name" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+				<div class="grid gap-1"><label for="entry-name" class="text-sm font-bold">Name</label><input id="entry-name" name="name" required maxlength="200" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
 				<div class="grid gap-1">
 					<label for="entry-category" class="text-sm font-bold">Category</label>
 					@CategoryPicker("entry-category", "trip-categories", "", "Pick or type one", categories)

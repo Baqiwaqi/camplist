@@ -127,7 +127,7 @@ templ Layout(title string, csrfToken string) {
 				<p class="text-muted mb-3" x-show="detail" x-text="detail"></p>
 				<div class="flex flex-wrap items-center justify-end gap-2 mt-4 max-sm:*:flex-auto">
 					<button type="submit" class="btn btn-secondary m-1">Cancel</button>
-					<button type="button" class="btn btn-danger-solid m-1" x-on:click="const go = issue; $el.closest('dialog').close(); if (go) go(true)" x-text="action">Delete</button>
+					<button type="button" class="btn btn-danger m-1" x-on:click="const go = issue; $el.closest('dialog').close(); if (go) go(true)" x-text="action">Delete</button>
 				</div>
 			</form>
 		</dialog>

@@ -127,7 +127,7 @@ func TestArchivePageOffersRestoreOnlyForManuallyArchivedTrips(t *testing.T) {
 	packed.List.Items[0].UpdatedAt = now.Add(-48 * time.Hour)
 	ctx := context.WithValue(context.Background(), auth.USER_ID_KEY, "user")
 	var out bytes.Buffer
-	if err := ArchivedPackingSessionsPage("Trip archive", []packing.PackingSession{manual, packed}, "token").Render(ctx, &out); err != nil {
+	if err := ArchivedPackingSessionsPage("Trip archive", []packing.PackingSession{manual, packed}, 0, "token").Render(ctx, &out); err != nil {
 		t.Fatal(err)
 	}
 	body := out.String()

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"camplist/internal/packing"
 
@@ -71,6 +72,29 @@ func groupByCategory(items []packing.PackingItem) []itemGroup {
 		groups = append(groups, itemGroup{Name: name, Items: other})
 	}
 	return groups
+}
+
+// startDateLayout matches the date the store appends to a new trip's name.
+const startDateLayout = "Jan 2, 2006"
+
+// tripCardTitle is the trip's name without the start date that default names
+// end with, because the card's meta line already shows it. A name that is
+// nothing but the date keeps it.
+func tripCardTitle(s packing.PackingSession) string {
+	name := s.DisplayName()
+	title := strings.TrimSuffix(name, " – "+s.CreatedAt.Format(startDateLayout))
+	if strings.TrimSpace(title) == "" {
+		return name
+	}
+	return title
+}
+
+// tripStatus names where packing stands, above the card's progress bar.
+func tripStatus(s packing.PackingSession) string {
+	if allPacked(s.List.CountChecked(), len(s.List.Items)) {
+		return "All packed"
+	}
+	return "Keep packing"
 }
 
 // allPacked reports whether every item in a non-empty session is packed.

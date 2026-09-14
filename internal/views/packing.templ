@@ -25,9 +25,11 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 				<a class="btn btn-primary" href="/packing-lists/new" x-ref="create">Create list</a>
 			}
 			@PackingListsEmpty(len(lists) == 0, false)
-			for _, list := range lists {
-				@PackingListCard(list, csrfToken)
-			}
+			<div class="grid gap-3 md:grid-cols-2">
+				for _, list := range lists {
+					@PackingListCard(list, csrfToken)
+				}
+			</div>
 		</section>
 	}
 }
@@ -50,36 +52,34 @@ templ PackingListsEmpty(show bool, oob bool) {
 }
 
 // PackingListCard is one list on the lists page. Its id lets the delete
-// request target the card and tells the handler to delete it in place.
+// request target the card and tells the handler to delete it in place. The
+// title link opens the list from anywhere on the card.
 templ PackingListCard(list packing.PackingList, csrfToken string) {
 	<article id={ PackingListCardID(list.ID) } class="card [&.htmx-request]:opacity-60">
-		if list.IsShared() {
-			<p class="tag mb-2">Shared</p>
+		<div class="flex items-start gap-3">
+			<div class="min-w-0 flex-auto">
+				<h2 class="t-object mb-0"><a class="card-link" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
+				<p class="text-meta text-muted mt-1">{ itemSummary(list.Items) }</p>
+			</div>
+			@Menu("More") {
+				@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
+				@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
+				if list.UserID == auth.Subject(ctx) {
+					@MenuSeparator()
+					@MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
+				}
+			}
+		</div>
+		if list.Description != "" {
+			<p class="text-muted mt-2 wrap-anywhere">{ list.Description }</p>
 		}
-		<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
-			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-				<h2 class="t-object"><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
-				if list.Description != "" {
-					<p class="text-muted mb-3">{ list.Description }</p>
-				}
-				<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-					<span class="tag">{ itemSummary(list.Items) }</span>
-					for _, category := range categories(list.Items, 4) {
-						<span>{ category }</span>
-					}
-				</div>
-			</div>
-			<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-				<a class="btn btn-primary btn-sm max-sm:flex-auto" href={ "/packing-lists/" + list.ID }>Open</a>
-				@Menu("More") {
-					@MenuLink("/packing-lists/"+list.ID+"/edit", "Edit list")
-					@MenuLink("/sharing/packing-list/"+list.ID, "Sharing")
-					if list.UserID == auth.Subject(ctx) {
-						@MenuSeparator()
-						@MenuButton("Delete list", true, confirmDeleteCard("/packing-lists/"+list.ID, PackingListCardID(list.ID), "Delete this list?", "Delete list", "Trips you already started keep their own copy."))
-					}
-				}
-			</div>
+		<div class="mt-auto pt-3 flex flex-wrap gap-1.5 empty:hidden">
+			if list.IsShared() {
+				<span class="tag">Shared</span>
+			}
+			for _, category := range categories(list.Items, 4) {
+				<span class="tag tag-quiet">{ category }</span>
+			}
 		</div>
 	</article>
 }

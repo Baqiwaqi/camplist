@@ -234,7 +234,7 @@ func TestDeleteTripRemovesOnlyTheOwnersTripCard(t *testing.T) {
 	if err := json.Unmarshal([]byte(w.Header().Get("HX-Trigger")), &trigger); err != nil || trigger["camplist:trip-deleted"]["id"] != trip.ID {
 		t.Fatalf("owner delete trigger %q does not name the deleted trip: %v", w.Header().Get("HX-Trigger"), err)
 	}
-	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") || strings.Contains(body, "trip-archive-link") {
+	if body := w.Body.String(); !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No archived trips yet.") || !strings.Contains(body, `In progress <span class="tab-count">0</span>`) {
 		t.Fatalf("deleting the last archive card does not reveal the archive's empty state: %s", body)
 	}
 	if _, err := store.GetPackingSession(ctx, trip.ID, "owner"); err == nil {
@@ -270,7 +270,7 @@ func TestArchiveAndRestoreTripAreOwnerOnlyAndHideItForMembers(t *testing.T) {
 		t.Fatalf("owner archive got %d: %s", w.Code, w.Body.String())
 	}
 	body := w.Body.String()
-	if !strings.Contains(body, `id="trip-archive-link"`) || !strings.Contains(body, "Archive (1)") || !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No trips in progress.") {
+	if !strings.Contains(body, `<div id="trip-tabs" class="mb-4" hx-swap-oob="true">`) || !strings.Contains(body, `Archive <span class="tab-count">1</span>`) || !strings.Contains(body, visibleEmptyState) || !strings.Contains(body, "No trips in progress.") {
 		t.Fatalf("archiving the last trip does not update the archive count and empty state: %s", body)
 	}
 	if !archivedFor("owner") || !archivedFor("member") {

@@ -128,7 +128,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   Style with utilities in the templ views; `@layer base` re-adds body colour,
   headings, links, focus ring and checkboxes, and `@layer components` keeps the
   display type roles (`.t-*`) and the classes that carry state, pseudo elements
-  or runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
+  or runtime toggles (`.btn-*`, `.card`/`.card-brand`/`.card-link`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`,
   `.field`/`.label`/`.hint`, `.page-head`/`.section-head`/`.back-link`,
   `.tabs`/`.tab`, `.switch`, `.chip`, `.error`, `.toast`, `.dialog`,
@@ -149,7 +149,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   components and the component classes listed under Build / run; the React
   components are not shipped. A page head is a back link, a title, one meta
   line and actions at natural width; a section is a title with its count and
-  at most one text action, then one white sheet of hairline rows.
+  at most one text action, then one white sheet of hairline rows. List and
+  trip cards open through one title link with `.card-link` (it covers the
+  card); keep the More menu after that link in the markup so it stays above
+  the cover without a z-index. A trip card's tags sit in its `data-card-tags`
+  row, where `account.mjs` adds "Available offline".
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
   classes such as `.error`, `.card` and `.item-row` at runtime, so keep those

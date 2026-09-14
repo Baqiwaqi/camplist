@@ -63,8 +63,8 @@ func (h *handler) RestoreTrip(w http.ResponseWriter, r *http.Request) {
 }
 
 // tripCardRemoved answers a trip card action after the change is saved. The
-// card's own swap removes it; this sends the page's empty state and archive
-// count out of band. If the recount fails the change still stands, so the
+// card's own swap removes it; this sends the page's empty state and tab
+// counts out of band. If the recount fails the change still stands, so the
 // card goes and only those extras stay stale.
 func (h *handler) tripCardRemoved(w http.ResponseWriter, r *http.Request, userID string, archivePage bool) {
 	sessions, err := h.packingStore.ListPackingSession(r.Context(), userID)
@@ -74,11 +74,7 @@ func (h *handler) tripCardRemoved(w http.ResponseWriter, r *http.Request, userID
 		return
 	}
 	active, archived := packing.PartitionSessions(sessions, time.Now().UTC())
-	remaining := len(active)
-	if archivePage {
-		remaining = len(archived)
-	}
-	render(w, r, views.TripCardRemoved(archivePage, remaining, len(archived)))
+	render(w, r, views.TripCardRemoved(archivePage, len(active), len(archived)))
 }
 
 func (h *handler) AddTripEntry(w http.ResponseWriter, r *http.Request) {

@@ -101,37 +101,39 @@ async function synchronizeSaved() {
 synchronizeSaved();
 window.addEventListener('online',synchronizeSaved);
 
-// Trip cards the server rendered get a label when this device holds a copy.
-// A saved copy the server did not list is never offered as a trip: the
-// overview asks the server about it first and shows a card only for a
-// deleted trip, or one this account lost, whose copy still holds unsynced changes.
-function label(card,text,colours=''){
+// Trip cards the server rendered get a tag in their tag row when this device
+// holds a copy. A saved copy the server did not list is never offered as a
+// trip: the overview asks the server about it first and shows a card only for
+// a deleted trip, or one this account lost, whose copy still holds unsynced changes.
+function label(card,text,colours){
  let tag=card.querySelector('[data-offline-label]');
- if(!tag){tag=document.createElement('p');tag.dataset.offlineLabel='';card.append(tag);}
- tag.className=('tag '+colours).trim();tag.textContent=text;
+ if(!tag){tag=document.createElement('span');tag.dataset.offlineLabel='';(card.querySelector('[data-card-tags]')||card).append(tag);}
+ tag.className='tag '+colours;tag.textContent=text;
 }
 function goneCard(copy){
  const card=document.createElement('article');card.className='card';card.dataset.offlineCopy=copy.id;
- const heading=document.createElement('h2');heading.className='t-object';const link=document.createElement('a');link.className='no-underline';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
- const detail=document.createElement('p');detail.className='muted';detail.textContent='Open it to export your changes from Recovery options.';
- card.append(heading,detail);
+ const heading=document.createElement('h2');heading.className='t-object mb-0';const link=document.createElement('a');link.className='card-link';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
+ const detail=document.createElement('p');detail.className='muted mt-1';detail.textContent='Open it to export your changes from Recovery options.';
+ const tags=document.createElement('div');tags.className='mt-auto pt-3 flex flex-wrap gap-1.5';tags.dataset.cardTags='';
+ card.append(heading,detail,tags);
  label(card,`${copy.issue==='deleted'?'Deleted online':'Access removed'} · ${copy.unsynced} unsynced change(s)`,'text-red-800 bg-red-100');
  return card;
 }
 async function showSavedCopies(){
  const overview=document.getElementById('trips-overview'),archive=document.getElementById('trips-archive');
  if(!overview&&!archive)return;
+ const list=document.getElementById('trip-cards');
  const identity=await transport.identity(),{db,packing}=await module();
  const cards=[...document.querySelectorAll('[data-saved-trip]')];
  if(archive){
   const saved=new Set((await db.list(identity.userId)).map(record=>record.id));
-  for(const card of cards)if(saved.has(card.dataset.savedTrip))label(card,'Available offline');
+  for(const card of cards)if(saved.has(card.dataset.savedTrip))label(card,'Available offline','tag-quiet');
   return;
  }
  const {available,gone}=await packing.reconcile(identity.userId,cards.map(card=>card.dataset.savedTrip));
- for(const card of cards)if(available.includes(card.dataset.savedTrip))label(card,'Available offline');
+ for(const card of cards)if(available.includes(card.dataset.savedTrip))label(card,'Available offline','tag-quiet');
  for(const card of document.querySelectorAll('[data-offline-copy]'))card.remove();
- for(const copy of gone)overview.append(goneCard(copy));
+ for(const copy of gone)list.append(goneCard(copy));
 }
 showSavedCopies().catch(()=>{});
 
@@ -147,7 +149,7 @@ document.addEventListener('camplist:trip-deleted',async event=>{
   const kept=await packing.gone(owner,id,'deleted');
   if(kept&&document.getElementById('trips-overview')){
    document.querySelector(`[data-offline-copy="${CSS.escape(id)}"]`)?.remove();
-   document.getElementById('trips-overview').append(goneCard({id,name:kept.session.name||kept.session.list.name,issue:'deleted',unsynced:kept.pending+kept.futureSaves.length}));
+   document.getElementById('trip-cards').append(goneCard({id,name:kept.session.name||kept.session.list.name,issue:'deleted',unsynced:kept.pending+kept.futureSaves.length}));
   }
  }catch{/* The next overview check or sync reaches the same result. */}
 });

@@ -113,7 +113,7 @@ func (h *handler) sessionsPage(w http.ResponseWriter, r *http.Request, archive b
 
 	active, archived := packing.PartitionSessions(sessions, time.Now().UTC())
 	if archive {
-		render(w, r, views.ArchivedPackingSessionsPage("Trip archive", archived, csrf.Token(r)))
+		render(w, r, views.ArchivedPackingSessionsPage("Trip archive", archived, len(active), csrf.Token(r)))
 		return
 	}
 

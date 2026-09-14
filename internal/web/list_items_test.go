@@ -60,7 +60,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 		`id="item-` + saved.Items[0].ID + `"`,
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">1 item</p>`,
 		`<p id="list-empty" class="text-muted mb-3" hidden hx-swap-oob="true">`,
-		`<option value="Night hike">`,
+		`<option value="Night hike" data-custom data-used>`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("add response missing %q", want)

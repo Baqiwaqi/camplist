@@ -508,7 +508,7 @@ templ itemRow(listID string, item packing.PackingItem, focusEdit bool) {
 	<li class="item-row break-inside-avoid [&.htmx-request]:opacity-60" id={ "item-" + item.ID }>
 		<span class="font-bold min-w-0 wrap-anywhere">{ item.Name }</span>
 		if item.Category != "" {
-			<span class="tag">{ item.Category }</span>
+			@ItemCategoryTag(item, false)
 		}
 		<div class="flex flex-wrap items-center gap-2 ml-auto">
 			<a
@@ -596,4 +596,16 @@ templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTo
 // keeps the label for screen readers in compact rows.
 templ ScopeSelect(name string, id string, scope string, personal bool, hideLabel bool) {
 	@SelectField(id, name, "Who is this for?", hideLabel, scopeOptions(personal), scopeValue(scope))
+}
+
+// ItemCategoryTag is an item row's category. A category rename swaps it out of
+// band; a row open for editing has none, so its form is left alone.
+templ ItemCategoryTag(item packing.PackingItem, oob bool) {
+	<span
+		id={ "item-category-tag-" + item.ID }
+		class="tag"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>{ item.Category }</span>
 }

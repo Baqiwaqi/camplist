@@ -7,7 +7,7 @@ import "camplist/internal/auth"
 // ReviewPage stacks its cards 2rem apart: every card after the first carries
 // mt-8, and which card is first depends on who is looking and whether the
 // reusable list is still available.
-templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, categories []string, message string, csrfToken string) {
+templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, csrfToken string) {
 	@Layout("Review your trip", csrfToken) {
 		<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
@@ -55,7 +55,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 // "Save and apply now" also applies the proposed change, so it is offered only
 // while the reusable list is available and a change is proposed. focusSave
 // moves focus to Save observation after that button disappears in a swap.
-templ ReviewForm(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []string, message string, focusSave bool, csrfToken string) {
+templ ReviewForm(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, focusSave bool, csrfToken string) {
 	<form
 		id="review-form"
 		method="post"
@@ -224,7 +224,7 @@ templ CurrentReviewList(list packing.PackingList, attrs templ.Attributes) {
 // saved but could not be applied; listChanged moves focus to Save observation
 // after an apply attempt. The list card is refreshed too, so it shows the
 // revision the new forms carry.
-templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, categories []string, saved string, message string, listChanged bool, csrfToken string) {
+templ ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, saved string, message string, listChanged bool, csrfToken string) {
 	@ReviewForm(session, list.Revision(), available, entry, categories, message, listChanged, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML">{ saved }</div>
 	@TripObservations(session, list, available, true, csrfToken, templ.Attributes{"hx-swap-oob": "outerHTML"})
@@ -235,7 +235,7 @@ templ ReviewSaved(session packing.PackingSession, list packing.PackingList, avai
 
 // ReviewFormError answers a failed htmx save with the form, the submitted
 // values and revision, and the message, and clears an earlier confirmation.
-templ ReviewFormError(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []string, message string, csrfToken string) {
+templ ReviewFormError(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, csrfToken string) {
 	@ReviewForm(session, revision, available, entry, categories, message, false, csrfToken)
 	<div id="review-save-status" hx-swap-oob="innerHTML"></div>
 }

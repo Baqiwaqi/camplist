@@ -71,6 +71,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   categories (one `item-categories` doc per user partition). Call
   `rememberCategory` after saving an item. Categories compare trimmed and
   case-insensitively; never rewrite the category of a replayable operation.
+  Remembered custom options carry `data-custom` and can be renamed (items on
+  lists the actor owns only, never started trips) or removed under
+  `/categories`; results reach every picker via the `categories-changed`
+  HX-Trigger (header values must stay ASCII).
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
@@ -103,9 +107,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
   display type roles (`.t-*`) and the classes that carry state, pseudo elements
   or runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`, `.error`,
-  `.dialog`, `.sync-status`, the `drop-*`/toast transitions, and the
-  `.muted`/`.tag` the offline scripts set) plus rules for elements the offline
-  scripts create without classes. Utilities are generated from `internal/views`
+  `.dialog`, `.category-more`, `.sync-status`, the `drop-*`/toast transitions,
+  and the `.muted`/`.tag` the offline scripts set) plus rules for elements the
+  offline scripts create without classes. Utilities are generated from `internal/views`
   and `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)

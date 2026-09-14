@@ -5,15 +5,19 @@ import "camplist/internal/packing"
 // CategoryPicker is the category field on item forms: a combobox shaped like
 // the Pines UI one that offers options (the default categories, the ones on
 // this list and the camper's remembered ones), filters them while typing and
-// keeps a new name as typed. The text input is the real form field and the
-// options are a server-rendered datalist, so without JavaScript it is a plain
-// field with the browser's suggestions. Behaviour lives in
-// static/category-picker.js (Alpine.data("categoryPicker")). optionsID names
-// the datalist, which the offline scripts look up to add trip categories.
+// keeps a new name as typed. A new name close to an existing category (a
+// likely typo) first offers the existing one. Each
+// remembered custom category has a small menu to rename or remove it, which
+// opens CategoryDialog in the layout. The text input is the real form field
+// and the options are a server-rendered datalist, so without JavaScript it is
+// a plain field with the browser's suggestions and a link to the categories
+// page. Behaviour lives in static/category-picker.js
+// (Alpine.data("categoryPicker")). optionsID names the datalist, which the
+// offline scripts look up to add trip categories.
 // The popup's ids are bound rather than rendered, like views.Menu's: htmx
 // restores rendered attributes of elements with an id after a boosted swap,
 // which would undo Alpine's x-show.
-templ CategoryPicker(id string, optionsID string, value string, placeholder string, options []string) {
+templ CategoryPicker(id string, optionsID string, value string, placeholder string, options []packing.CategoryOption) {
 	<div
 		class="relative"
 		x-data="categoryPicker"
@@ -46,10 +50,11 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 			class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"
 		/>
 		<datalist id={ optionsID }>
-			for _, option := range options {
-				<option value={ option } data-default?={ packing.IsDefaultCategory(option) }></option>
-			}
+			@categoryOptions(options)
 		</datalist>
+		<noscript>
+			<a href="/categories" class="block w-fit py-1 text-sm">Fix a category name</a>
+		</noscript>
 		<ul
 			x-bind:id="listboxID()"
 			role="listbox"
@@ -59,21 +64,55 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 			x-transition:enter="drop-enter"
 			x-transition:enter-start="drop-start"
 			x-transition:enter-end="drop-end"
-			class="absolute inset-x-0 top-[calc(100%+6px)] z-5 max-h-64 overflow-y-auto p-1 bg-white border border-sand-300 rounded-card"
+			class="absolute inset-x-0 top-[calc(100%+6px)] z-5 max-h-64 overflow-y-auto overscroll-contain p-1 bg-white border border-sand-300 rounded-card"
 		>
 			<template x-for="(item, index) in matches()" x-bind:key="item.label">
 				<li
 					role="option"
 					x-bind:id="optionID(index)"
 					x-bind:aria-selected="index === active"
-					x-bind:class="[index === active ? 'bg-sand-100' : '', item.create ? 'text-pine-700' : 'text-ink-900']"
+					x-bind:class="index === active ? 'bg-sand-100' : ''"
 					x-on:mousedown.prevent
 					x-on:mousemove="active = index"
 					x-on:click="pick(item)"
-					x-text="item.label"
-					class="py-2 px-3 rounded-lg font-bold cursor-pointer wrap-anywhere"
-				></li>
+					class="rounded-lg cursor-pointer"
+				>
+					<span class="flex items-center gap-2">
+						<span
+							x-text="item.label"
+							x-bind:class="item.kind === 'option' ? 'text-ink-900' : 'text-pine-700'"
+							class="flex-auto min-w-0 py-2 px-3 font-bold wrap-anywhere"
+						></span>
+						<template x-if="item.custom">
+							<button
+								type="button"
+								class="category-more"
+								aria-haspopup="menu"
+								x-bind:aria-label="`Rename or remove ${item.value}`"
+								x-bind:aria-expanded="managing === item.value"
+								x-on:click.stop="manage(item.value)"
+								x-on:keydown.escape.stop.prevent="managing = null"
+							>Edit</button>
+						</template>
+					</span>
+					<template x-if="managing === item.value">
+						<span role="menu" x-bind:aria-label="`${item.value} category`" class="grid mx-1 mb-1 p-1 bg-white border border-sand-300 rounded-card" x-on:click.stop x-init="$nextTick(() => $el.querySelector('button').focus({ preventScroll: true }))">
+							<button type="button" role="menuitem" class="option" x-on:click="rename(item.value)">Rename…</button>
+							<button type="button" role="menuitem" class="option option-danger" x-on:click="remove(item.value)">Remove</button>
+						</span>
+					</template>
+				</li>
 			</template>
 		</ul>
 	</div>
+}
+
+// categoryOptions renders a picker's datalist options. data-default marks the
+// defaults, whose spelling a typed name adopts; data-custom marks the
+// remembered categories the picker can rename or remove; data-used marks the
+// categories on the items in view.
+templ categoryOptions(options []packing.CategoryOption) {
+	for _, option := range options {
+		<option value={ option.Name } data-default?={ packing.IsDefaultCategory(option.Name) } data-custom?={ option.Custom } data-used?={ option.Used }></option>
+	}
 }

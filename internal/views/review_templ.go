@@ -15,7 +15,7 @@ import "camplist/internal/auth"
 // ReviewPage stacks its cards 2rem apart: every card after the first carries
 // mt-8, and which card is first depends on who is looking and whether the
 // reusable list is still available.
-func ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, categories []string, message string, csrfToken string) templ.Component {
+func ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -222,7 +222,7 @@ func ReviewPage(session packing.PackingSession, list packing.PackingList, availa
 // "Save and apply now" also applies the proposed change, so it is offered only
 // while the reusable list is available and a change is proposed. focusSave
 // moves focus to Save observation after that button disappears in a swap.
-func ReviewForm(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []string, message string, focusSave bool, csrfToken string) templ.Component {
+func ReviewForm(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, focusSave bool, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -897,7 +897,7 @@ func CurrentReviewList(list packing.PackingList, attrs templ.Attributes) templ.C
 // saved but could not be applied; listChanged moves focus to Save observation
 // after an apply attempt. The list card is refreshed too, so it shows the
 // revision the new forms carry.
-func ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, categories []string, saved string, message string, listChanged bool, csrfToken string) templ.Component {
+func ReviewSaved(session packing.PackingSession, list packing.PackingList, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, saved string, message string, listChanged bool, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -955,7 +955,7 @@ func ReviewSaved(session packing.PackingSession, list packing.PackingList, avail
 
 // ReviewFormError answers a failed htmx save with the form, the submitted
 // values and revision, and the message, and clears an earlier confirmation.
-func ReviewFormError(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []string, message string, csrfToken string) templ.Component {
+func ReviewFormError(session packing.PackingSession, revision string, available bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

@@ -55,6 +55,8 @@ type packingStore interface {
 	DeletePackingSession(context.Context, string, string) error
 	RememberedCategories(context.Context, string) ([]string, error)
 	RememberCategory(context.Context, string, string) error
+	RenameCategory(context.Context, string, string, string) (packing.CategoryRename, error)
+	ForgetCategory(context.Context, string, string) error
 }
 
 type handler struct {

@@ -27,7 +27,7 @@ func (h *handler) renderReview(w http.ResponseWriter, r *http.Request, entry pac
 
 // reviewCategories offers the trip's and the reusable list's categories with
 // the defaults and the reader's remembered ones.
-func (h *handler) reviewCategories(r *http.Request, session packing.PackingSession, list packing.PackingList) []string {
+func (h *handler) reviewCategories(r *http.Request, session packing.PackingSession, list packing.PackingList) []packing.CategoryOption {
 	user, _ := auth.UserID(r.Context())
 	return h.categorySuggestions(r.Context(), user, append(append([]packing.PackingItem{}, session.List.Items...), list.Items...))
 }

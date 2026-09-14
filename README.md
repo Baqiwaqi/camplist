@@ -6,7 +6,7 @@ Camplist is a web app for preparing camping packing lists and checking off items
 
 1. Sign in with Google to access your lists and packing sessions.
 2. Create a packing list with a name and an optional description.
-3. Add items, such as a tent or sleeping bag, with an optional category. Pick one of the basic camping categories or type your own; Camplist remembers new categories and offers them on your other lists.
+3. Add items, such as a tent or sleeping bag, with an optional category. Pick one of the basic camping categories or type your own; Camplist remembers new categories and offers them on your other lists. While you type, the picker suggests a close existing category first. Fix a mistyped category with Rename (it updates items on lists you own, not trips already started) or drop it from your suggestions with Remove, from the picker or the Categories page.
 4. Start a packing session from a list.
 5. Check or uncheck items as you pack. The sessions overview shows the number of checked items against the total.
 

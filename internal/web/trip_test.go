@@ -95,7 +95,7 @@ func TestAddTripEntryReturnsSectionsAndSupportsNormalForms(t *testing.T) {
 			for _, want := range []string{
 				`id="packing-checklist"`, "Head torch", "0 of 2 items packed",
 				`id="trip-entry-operation" name="operationId"`,
-				`<datalist id="trip-categories" hx-swap-oob="true"><option value="Shelter" data-default>`,
+				`<datalist id="trip-categories" hx-swap-oob="true"><option value="Shelter" data-default data-used>`,
 				`<div id="trip-future-save" role="status" hx-swap-oob="innerHTML"></div>`,
 			} {
 				if !strings.Contains(body, want) {

@@ -115,6 +115,7 @@ templ Layout(title string, csrfToken string) {
 			</div>
 			{ children... }
 		</main>
+		@CategoryDialog(csrfToken)
 		<dialog
 			id="confirm-dialog"
 			class="dialog"

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, categories []string, csrfToken string) {
+templ PackingSessionPage(name string, session packing.PackingSession, canReview bool, categories []packing.CategoryOption, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
@@ -248,7 +248,7 @@ templ SessionPreparation(session packing.PackingSession, csrfToken string) {
 // response swaps the checklist or preparation section that gained the entry,
 // the next operation ID, the category suggestions and the future-save notice.
 // When a swap removes the focused notice button, focus returns to the name.
-templ TripEntryForm(session packing.PackingSession, categories []string, csrfToken string) {
+templ TripEntryForm(session packing.PackingSession, categories []packing.CategoryOption, csrfToken string) {
 	<section
 		id="trip-entry"
 		class="card mt-8"
@@ -290,11 +290,9 @@ templ TripEntryOperation(oob bool) {
 }
 
 // TripCategories refreshes the entry form's category picker options after an add.
-templ TripCategories(categories []string) {
+templ TripCategories(categories []packing.CategoryOption) {
 	<datalist id="trip-categories" hx-swap-oob="true">
-		for _, option := range categories {
-			<option value={ option } data-default?={ packing.IsDefaultCategory(option) }></option>
-		}
+		@categoryOptions(categories)
 	</datalist>
 }
 
@@ -320,7 +318,7 @@ templ FutureSaveSlot(session packing.PackingSession, failed *packing.PackingOper
 
 // TripEntrySaved answers an htmx add. The checklist and preparation sections
 // are picked out by the form's hx-select-oob; the rest swap by id.
-templ TripEntrySaved(session packing.PackingSession, op packing.PackingOperation, categories []string, failed bool, csrfToken string) {
+templ TripEntrySaved(session packing.PackingSession, op packing.PackingOperation, categories []packing.CategoryOption, failed bool, csrfToken string) {
 	if op.Kind == "task" {
 		@SessionPreparation(session, csrfToken)
 	} else {

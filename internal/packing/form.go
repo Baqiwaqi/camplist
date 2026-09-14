@@ -60,7 +60,7 @@ func (f CreatePackingListForm) Validate() []string {
 
 type CreateItemForm struct {
 	Scope            string
-	Categories       []string `schema:"-"`
+	Categories       []CategoryOption `schema:"-"`
 	Revision         string
 	Action           string `schema:"-"`
 	Initial          bool   `schema:"-"`

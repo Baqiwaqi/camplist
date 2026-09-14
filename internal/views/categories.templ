@@ -1,0 +1,107 @@
+package views
+
+// CategoryDialog is the rename form a category picker's menu opens: a bottom
+// sheet on phones and a centred dialog on wide screens. It also holds the
+// remove form the menu's Remove posts. Both answer htmx with HX-Trigger
+// categories-changed (static/category-picker.js) and keep a failure inside the
+// dialog, since the modal covers the error toast. The same forms post without
+// scripts from CategoriesPage. Behaviour lives in
+// Alpine.data("categoryDialog").
+templ CategoryDialog(csrfToken string) {
+	<dialog
+		id="category-dialog"
+		class="dialog dialog-sheet"
+		aria-labelledby="category-dialog-title"
+		x-data="categoryDialog"
+		x-on:category-rename.window="open($event.detail)"
+		x-on:category-remove.window="remove($event.detail.name)"
+		x-on:close="closed()"
+	>
+		<form
+			method="post"
+			action="/categories/rename"
+			hx-post="/categories/rename"
+			hx-swap="none"
+			hx-sync="this:drop"
+			x-on:htmx:response-error.stop="failed($event.detail.xhr)"
+			x-on:htmx:send-error.stop="lost()"
+			x-on:htmx:after-request="if ($event.detail.successful) $root.close()"
+			class="[&.htmx-request]:opacity-60"
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="from" x-bind:value="from"/>
+			<input type="hidden" name="revision" value=""/>
+			<h2 id="category-dialog-title" class="dialog-title wrap-anywhere" x-text="`Rename “${from}”`">Rename category</h2>
+			<p class="text-sm text-muted mb-4">Items on your own lists move to the new name. Lists shared with you and trips you already started keep theirs.</p>
+			<label for="category-new-name" class="block text-sm font-bold mb-1">New name</label>
+			<input
+				id="category-new-name"
+				name="to"
+				required
+				maxlength="100"
+				autocomplete="off"
+				x-ref="name"
+				x-model="to"
+				aria-describedby="category-dialog-note"
+				class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"
+			/>
+			<p id="category-dialog-note" class="min-h-[1.5em] mt-1 text-sm text-muted" aria-live="polite" x-text="note()"></p>
+			<p class="text-sm font-bold text-red-700 mt-1" role="alert" x-show="error" x-text="error"></p>
+			<div class="flex flex-wrap items-center justify-end gap-2 mt-4 max-sm:*:flex-auto">
+				<button type="button" class="btn btn-secondary" x-on:click="$root.close()">Cancel</button>
+				<button type="submit" class="btn btn-primary">Rename</button>
+			</div>
+		</form>
+		<form
+			hidden
+			method="post"
+			action="/categories/remove"
+			hx-post="/categories/remove"
+			hx-swap="none"
+			x-ref="removeForm"
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="name" x-ref="removeName"/>
+		</form>
+	</dialog>
+}
+
+// CategoriesPage lists the camper's remembered custom categories with a
+// rename and a remove form each. It is where category pickers send a camper
+// without scripts; errors reports a failed change.
+templ CategoriesPage(categories []string, errors []string, csrfToken string) {
+	@Layout("Your categories", csrfToken) {
+		<section class="max-w-[560px]">
+			<h1>Your categories</h1>
+			<p class="text-muted mb-4">Categories you typed yourself. Renaming one moves the items on your own lists to the new name; lists shared with you and trips you already started keep theirs. Removing one only takes it out of your suggestions.</p>
+			if len(errors) > 0 {
+				@ErrorBanner(errors)
+			}
+			<div class="card p-0">
+				if len(categories) == 0 {
+					<p class="p-4 text-muted">No categories of your own yet. Type a new one on an item and it shows up here.</p>
+				}
+				<ul>
+					for i, category := range categories {
+						<li class="grid gap-2 p-4 border-b border-sand-100 last:border-b-0">
+							<form method="post" action="/categories/rename" class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+								<input type="hidden" name="_csrf" value={ csrfToken }/>
+								<input type="hidden" name="from" value={ category }/>
+								<div class="grid gap-1">
+									<label for={ categoryFieldID(i) } class="text-sm font-bold wrap-anywhere">Rename “{ category }”</label>
+									<input id={ categoryFieldID(i) } name="to" value={ category } required maxlength="100" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+								</div>
+								<button type="submit" class="btn btn-primary min-h-11">Rename</button>
+							</form>
+							<form method="post" action="/categories/remove">
+								<input type="hidden" name="_csrf" value={ csrfToken }/>
+								<input type="hidden" name="name" value={ category }/>
+								<button type="submit" class="btn btn-danger btn-sm">Remove “{ category }”</button>
+							</form>
+						</li>
+					}
+				</ul>
+			</div>
+		</section>
+	}
+}

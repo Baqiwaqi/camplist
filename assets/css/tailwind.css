@@ -592,17 +592,6 @@
     @apply font-display font-extrabold text-section tracking-display mb-2;
   }
 
-  /* The rename category form rises from the bottom on phones. */
-  @media (width <= 720px) {
-    .dialog-sheet {
-      @apply mb-0 w-full max-w-none rounded-b-none border-x-0 border-b-0 p-4 pb-6;
-    }
-
-    .dialog-sheet[open] {
-      animation: sheet-in 200ms ease;
-    }
-  }
-
   /* ---------- category picker (views.CategoryPicker) ---------- */
 
   /* Opens the rename and remove menu of a remembered category. */
@@ -615,10 +604,11 @@
     @apply bg-sand-300;
   }
 
-  /* A dialog holding a form (bulk add): centred and wider from 721px, a sheet
-     rising from the bottom edge below that. It scrolls when its form is long. */
+  /* A dialog holding a form (bulk add, category rename): centred and wider
+     from 721px, a sheet rising from the bottom edge below that. It scrolls
+     when its form is long. */
   .dialog-sheet {
-    @apply w-[min(calc(100%-2rem),36rem)] max-h-[min(90dvh,52rem)] overflow-y-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-b-0 max-md:p-4 max-md:pb-6;
+    @apply w-[min(calc(100%-2rem),36rem)] max-h-[min(90dvh,52rem)] overflow-y-auto max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0 max-md:p-4 max-md:pb-6;
   }
 
   /* ---------- elements the offline scripts create without classes ---------- */
@@ -773,16 +763,6 @@
 
     to {
       opacity: 1;
-      transform: none;
-    }
-  }
-
-  @keyframes sheet-in {
-    from {
-      transform: translateY(100%);
-    }
-
-    to {
       transform: none;
     }
   }

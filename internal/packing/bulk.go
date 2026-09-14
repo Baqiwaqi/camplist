@@ -129,10 +129,7 @@ func (s *Store) addItems(ctx context.Context, listID, actor string, items []Pack
 		if err != nil {
 			return AddItemsResult{}, err
 		}
-		list.etag = etag
-		for i := range list.Items {
-			list.Items[i].SourceRevision = etag
-		}
+		list.setRevision(etag)
 		result.List = list
 		return result, nil
 	}

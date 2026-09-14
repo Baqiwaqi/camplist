@@ -359,25 +359,26 @@ func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) 
 	return PackingList{}, "", ErrConflict
 }
 
-// RemoveItem removes an item and returns the saved list. On a shared list the
-// removal is refused when revision is stale.
-func (s *Store) RemoveItem(ctx context.Context, id, userID, itemID, revision string) (PackingList, error) {
+// RemoveItem removes an item and returns the saved list and the revision the
+// save replaced. On a shared list the removal is refused when revision is stale.
+func (s *Store) RemoveItem(ctx context.Context, id, userID, itemID, revision string) (saved PackingList, replaced string, err error) {
 	list, err := s.GetPackingList(ctx, id, userID)
 	if err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
-	if list.IsShared() && revision != list.Revision() {
-		return PackingList{}, ErrConflict
+	replaced = list.Revision()
+	if list.IsShared() && revision != replaced {
+		return PackingList{}, "", ErrConflict
 	}
 	if err := removeItemById(&list, itemID); err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
 	etag, err := s.saveList(ctx, list)
 	if err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
 	list.setRevision(etag)
-	return list, nil
+	return list, replaced, nil
 }
 
 func mapPackingList(ctx context.Context, pager *runtime.Pager[azcosmos.QueryItemsResponse]) ([]PackingList, error) {

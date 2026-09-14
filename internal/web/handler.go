@@ -45,8 +45,8 @@ type packingStore interface {
 	SavePackingList(context.Context, packing.PackingList) error
 	DeletePackingList(context.Context, string, string) error
 	AddItem(context.Context, string, string, packing.PackingItem) (packing.PackingList, string, error)
-	RemoveItem(context.Context, string, string, string, string) (packing.PackingList, error)
-	UpdateItem(context.Context, string, string, packing.PackingItem) (packing.PackingList, error)
+	RemoveItem(context.Context, string, string, string, string) (packing.PackingList, string, error)
+	UpdateItem(context.Context, string, string, packing.PackingItem) (packing.PackingList, string, error)
 	CreatePackingSession(context.Context, string, string, ...string) (packing.PackingSession, error)
 	StartTripWithMembers(context.Context, string, string, string, []string) (packing.PackingSession, error)
 	GetPackingSession(context.Context, string, string) (packing.PackingSession, error)
@@ -396,10 +396,15 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := h.packingStore.RemoveItem(ctx, listID, userID, itemID, r.Header.Get("X-Camplist-Revision"))
+	revision := r.Header.Get("X-Camplist-Revision")
+	list, replaced, err := h.packingStore.RemoveItem(ctx, listID, userID, itemID, revision)
 	if err != nil {
 		log.Printf("remove item from packing list: %v", err)
 		storeError(w, err, "Removing item off packing list failed")
+		return
+	}
+	if replaced != revision {
+		w.Header().Set("HX-Refresh", "true")
 		return
 	}
 

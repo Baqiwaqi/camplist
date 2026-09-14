@@ -16,22 +16,23 @@ func (l PackingList) FindItem(id string) (PackingItem, bool) {
 }
 
 // UpdateItem renames an item and changes its category and returns the saved
-// list. Other fields stay as stored. On a shared list the update is refused
-// when the item's SourceRevision is stale.
-func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, item PackingItem) (PackingList, error) {
+// list and the revision the save replaced. Other fields stay as stored. On a
+// shared list the update is refused when the item's SourceRevision is stale.
+func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, item PackingItem) (saved PackingList, replaced string, err error) {
 	list, err := s.GetPackingList(ctx, listID, userID)
 	if err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
-	if list.IsShared() && item.SourceRevision != list.Revision() {
-		return PackingList{}, ErrConflict
+	replaced = list.Revision()
+	if list.IsShared() && item.SourceRevision != replaced {
+		return PackingList{}, "", ErrConflict
 	}
 	index, err := getItemIndexById(list, item.ID)
 	if err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
 	if !validScope(item.Scope, false) {
-		return PackingList{}, ErrInvalid
+		return PackingList{}, "", ErrInvalid
 	}
 	list.Items[index].Scope = item.Scope
 	list.Items[index].Name = item.Name
@@ -39,8 +40,8 @@ func (s *Store) UpdateItem(ctx context.Context, listID string, userID string, it
 	list.Items[index].UpdatedAt = time.Now().UTC()
 	etag, err := s.saveList(ctx, list)
 	if err != nil {
-		return PackingList{}, err
+		return PackingList{}, "", err
 	}
 	list.setRevision(etag)
-	return list, nil
+	return list, replaced, nil
 }

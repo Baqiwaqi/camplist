@@ -169,7 +169,7 @@ func TestSharedTemplateFormsRejectStaleEditsAndEditorsManagePreparation(t *testi
 	owner, _ := store.GetPackingList(ctx, list.ID, "owner")
 	owner.Description = "Changed"
 	store.SavePackingList(ctx, owner)
-	if _, err := store.UpdateItem(ctx, list.ID, "editor", item); !errors.Is(err, packing.ErrConflict) {
+	if _, _, err := store.UpdateItem(ctx, list.ID, "editor", item); !errors.Is(err, packing.ErrConflict) {
 		t.Fatal("stale item form accepted", err)
 	}
 	current, _ := store.GetPackingList(ctx, list.ID, "editor")

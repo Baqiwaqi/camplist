@@ -92,7 +92,8 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 
 // Delete used to answer HX-Refresh. htmx removes the row itself; the response
 // updates the count, the empty text and the list revision.
-// Private lists have no revision conflicts, so a stale page still deletes.
+// Private lists have no revision conflicts, so a stale page still deletes and
+// edits, but reloads rather than advance its revision past the unseen write.
 func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 	ctx := context.Background()
 	store := packing.NewStore(testsupport.NewDocuments())
@@ -117,17 +118,18 @@ func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 	if err := store.SavePackingList(ctx, opened); err != nil {
 		t.Fatal(err)
 	}
-	if w := remove(list.Items[1].ID, stale.Revision()); w.Code != 200 {
-		t.Fatalf("private list delete from a stale page: %d %s", w.Code, w.Body.String())
+	w := remove(list.Items[1].ID, stale.Revision())
+	if saved, _ := store.GetPackingList(ctx, list.ID, "user"); w.Code != 200 || w.Header().Get("HX-Refresh") != "true" || strings.Contains(w.Body.String(), "list-revision") || len(saved.Items) != 1 {
+		t.Fatalf("private list delete from a stale page: %d %v %s items=%d", w.Code, w.Header(), w.Body.String(), len(saved.Items))
 	}
 
 	edit := url.Values{"name": {"Tarp tent"}, "category": {"Shelter"}, "scope": {"shared"}, "revision": {stale.Revision()}}
 	r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+list.Items[0].ID, edit), list.ID, list.Items[0].ID)
 	r.Header.Set("HX-Request", "true")
-	w := httptest.NewRecorder()
+	w = httptest.NewRecorder()
 	h.EditItemHandler(w, r)
-	if w.Code != 200 || strings.Contains(w.Body.String(), "This list changed") || !strings.Contains(w.Body.String(), "Tarp tent") {
-		t.Fatalf("private list edit from a stale page: %d %s", w.Code, w.Body.String())
+	if saved, _ := store.GetPackingList(ctx, list.ID, "user"); w.Code != 200 || w.Header().Get("HX-Refresh") != "true" || strings.Contains(w.Body.String(), "list-revision") || saved.Items[0].Name != "Tarp tent" {
+		t.Fatalf("private list edit from a stale page: %d %v %s items=%+v", w.Code, w.Header(), w.Body.String(), saved.Items)
 	}
 
 	current, _ := store.GetPackingList(ctx, list.ID, "user")

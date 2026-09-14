@@ -101,7 +101,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 	item.Name = form.Name
 	item.Category = form.Category
 	item.Scope = form.Scope
-	saved, err := h.packingStore.UpdateItem(r.Context(), list.ID, userID, item)
+	saved, replaced, err := h.packingStore.UpdateItem(r.Context(), list.ID, userID, item)
 	if err != nil {
 		log.Printf("update item: %v", err)
 		_, message := storeErrorDetails(err, "Saving the item failed")
@@ -113,6 +113,10 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 		h.rememberCategory(r.Context(), userID, item.Category)
 	}
 	if isHTMX(r) {
+		if replaced != form.Revision {
+			w.Header().Set("HX-Refresh", "true")
+			return
+		}
 		item, _ = saved.FindItem(item.ID)
 		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved)))
 		return

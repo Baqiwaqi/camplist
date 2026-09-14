@@ -92,7 +92,7 @@ func TestCosmosValidation(t *testing.T) {
 	added := packing.NewItem("Matches", "Kitchen")
 	_, _, err = store.AddItem(ctx, list.ID, owner, added)
 	must(t, err)
-	_, err = store.RemoveItem(ctx, list.ID, owner, added.ID, "")
+	_, _, err = store.RemoveItem(ctx, list.ID, owner, added.ID, "")
 	must(t, err)
 	session, err := store.CreatePackingSession(ctx, list.ID, owner)
 	must(t, err)

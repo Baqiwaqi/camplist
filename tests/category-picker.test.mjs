@@ -72,9 +72,9 @@ test('a close typo offers the existing category before creating the new one', ()
   assert.equal(component.matches()[0].label, 'Use “Kitchen and cooking”?')
 })
 
-test('the close match needs four letters and at most one edit on short names', () => {
+test('the close match needs four letters and at most one edit', () => {
   const component = picker([...defaults, { value: 'Fishing', custom: true }, { value: 'Tarps', custom: true }])
-  for (const [typed, want] of [['Shleter', 'Shelter'], ['Clothnig', 'Clothing'], ['Tarp', 'Tarps'], ['Hut', undefined], ['Fshng', undefined], ['Paddling', undefined]]) {
+  for (const [typed, want] of [['Shleter', 'Shelter'], ['Clothnig', 'Clothing'], ['Tarp', 'Tarps'], ['Hut', undefined], ['Fshng', undefined], ['Kitchn and cookign', undefined], ['Paddling', undefined]]) {
     component.query = typed
     const first = component.matches()[0]
     assert.equal(first?.kind === 'suggestion' ? first.value : undefined, want, typed)
@@ -148,4 +148,20 @@ test('the picker a rename starts from follows the new name, other fields do not'
   // The next change comes from somewhere else, so no field follows it.
   listeners['categories-changed']({ detail: { from: 'Fishing', to: 'Angling', custom: true, renamedInView: true } })
   assert.equal(editing.value, 'Fishing')
+})
+
+test('a merge that unified case on the list in view stops offering the old spelling', () => {
+  const editing = { value: 'Fishnig' }
+  const { listeners, datalists } = load([
+    [...defaults, { value: 'Fishnig', custom: true, used: true }, { value: 'fishing', custom: true, used: true }],
+  ], [editing])
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, renamedInView: true } })
+  assert.deepEqual(datalists[0].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishing', true]])
+  assert.equal(editing.value, 'Fishnig')
+})
+
+test('a merge elsewhere keeps the spelling the items in view use', () => {
+  const { listeners, datalists } = load([[...defaults, { value: 'fishing', trip: true }]])
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true } })
+  assert.deepEqual(datalists[0].options.map(option => option.value).slice(3), ['fishing'])
 })

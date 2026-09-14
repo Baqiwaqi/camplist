@@ -27,23 +27,11 @@ function editDistance(a, b) {
 }
 
 // closeCategory returns the option typed is most likely a typo of, or
-// undefined: at least four letters, not already an option, and one edit away
-// (two when both names have eight letters or more).
+// undefined: at least four letters, not already an option, and one edit away.
 function closeCategory(typed, options) {
   const typedKey = Array.from(categoryKey(typed))
   if (typedKey.length < 4 || options.some(option => categoryKey(option) === categoryKey(typed))) return undefined
-  let best
-  let bestDistance = 3
-  for (const option of options) {
-    const optionKey = Array.from(categoryKey(option))
-    const allowed = typedKey.length >= 8 && optionKey.length >= 8 ? 2 : 1
-    const distance = editDistance(typedKey, optionKey)
-    if (distance <= allowed && distance < bestDistance) {
-      best = option
-      bestDistance = distance
-    }
-  }
-  return best
+  return options.find(option => editDistance(typedKey, Array.from(categoryKey(option))) <= 1)
 }
 
 // A rename or removal answers with HX-Trigger categories-changed. Every picker
@@ -67,6 +55,7 @@ document.addEventListener('categories-changed', event => {
     const same = Array.from(datalist.options).find(option => categoryKey(option.value) === categoryKey(to))
     if (same) {
       if (custom) same.dataset.custom = ''
+      if (renamedInView) same.value = to
       continue
     }
     const option = document.createElement('option')

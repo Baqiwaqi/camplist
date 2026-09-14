@@ -418,6 +418,10 @@
     @apply bg-ember-500;
   }
 
+  .card:has(.card-link) .progress-done .progress-fill {
+    @apply bg-pine-500;
+  }
+
   .progress-done .progress-label {
     @apply text-ember-700;
   }

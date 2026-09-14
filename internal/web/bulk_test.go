@@ -17,6 +17,8 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/testsupport"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/data/azcosmos"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -111,6 +113,31 @@ func TestAddSeveralExplainsInvalidPastes(t *testing.T) {
 	h = handler{packingStore: bulkStore(t, full)}
 	if w := addSeveral(h, "camper", full.ID, "Tent", ""); !strings.Contains(w.Body.String(), "A list holds at most 2,000 items") {
 		t.Fatalf("full list: %s", w.Body.String())
+	}
+}
+
+// conflictingDocuments makes every conditional replacement lose to another
+// write, as when other campers keep editing the list during the add.
+type conflictingDocuments struct{ *testsupport.Documents }
+
+func (conflictingDocuments) ReplaceItem(context.Context, azcosmos.PartitionKey, string, []byte, *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
+	return azcosmos.ItemResponse{}, &azcore.ResponseError{StatusCode: http.StatusPreconditionFailed}
+}
+
+// A write that cannot land is a page-level failure the error toast reports
+// (with Reload on 409), not a problem with the pasted lines.
+func TestAddSeveralReportsWriteConflictsAsAStatus(t *testing.T) {
+	list := packing.NewList("camper", "Weekend", "")
+	docs := conflictingDocuments{testsupport.NewDocuments()}
+	store := packing.NewStore(docs)
+	if err := store.SavePackingList(context.Background(), list); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+
+	w := addSeveral(h, "camper", list.ID, "Tent", "")
+	if w.Code != http.StatusConflict || strings.Contains(w.Body.String(), "<form") || strings.TrimSpace(w.Body.String()) == "" {
+		t.Fatalf("conflict: %d %s", w.Code, w.Body.String())
 	}
 }
 

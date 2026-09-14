@@ -172,7 +172,7 @@ func TestAddReviewReturnsFragmentsForHTMXAndRedirectsNormalForms(t *testing.T) {
 			if w.Code != http.StatusOK || strings.Contains(body, "<html") || w.Header().Get("Location") != "" {
 				t.Fatalf("returned navigation instead of fragments: %d %s", w.Code, body)
 			}
-			for _, want := range []string{`id="review-form"`, `hx-sync="this:drop"`, `id="review-submit"`, `id="review-save-status" hx-swap-oob="innerHTML"`, "Saved “Matches”.", `id="trip-observations"`, `hx-swap-oob="outerHTML"`, "<h3 class=\"mt-0\">Matches</h3>", "Apply selected changes"} {
+			for _, want := range []string{`id="review-form"`, `hx-sync="this:drop"`, `id="review-submit"`, `id="review-save-status" hx-swap-oob="innerHTML"`, "Saved “Matches”.", `id="trip-observations"`, `hx-swap-oob="outerHTML"`, "<h3 class=\"my-0 mr-auto font-sans text-body font-semibold tracking-normal\">Matches</h3>", "Apply selected changes"} {
 				if !strings.Contains(body, want) {
 					t.Errorf("missing %q", want)
 				}
@@ -261,7 +261,7 @@ func TestSaveAndApplyNowAppliesTheProposedChange(t *testing.T) {
 				}
 				return
 			}
-			for _, want := range []string{"Saved and applied “Matches”.", `id="current-review-list" class="card mt-8" hx-swap-oob="outerHTML"`, "<li>Matches — </li>", ">Applied</span>", `name="revision" value="` + got.Revision() + `"`} {
+			for _, want := range []string{"Saved and applied “Matches”.", `id="current-review-list" class="mt-8 md:mt-12" hx-swap-oob="outerHTML"`, `>Matches</span> </li>`, ">Applied</span>", `name="revision" value="` + got.Revision() + `"`} {
 				if !strings.Contains(body, want) {
 					t.Errorf("missing %q", want)
 				}
@@ -299,7 +299,7 @@ func TestSaveOnlyRefreshesTheListCardWithTheRevisionTheFormsCarry(t *testing.T) 
 	w := httptest.NewRecorder()
 	h.AddReviewHandler(w, r)
 	body := w.Body.String()
-	for _, want := range []string{`id="current-review-list" class="card mt-8" hx-swap-oob="outerHTML"`, "<li>Stove — Kitchen</li>", `name="revision" value="` + current.Revision() + `"`} {
+	for _, want := range []string{`id="current-review-list" class="mt-8 md:mt-12" hx-swap-oob="outerHTML"`, `>Stove</span> <span class="text-meta text-muted">Kitchen</span></li>`, `name="revision" value="` + current.Revision() + `"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q", want)
 		}
@@ -350,7 +350,7 @@ func TestReviewPageShowsNoApplyStatusWhenTheListIsUnavailable(t *testing.T) {
 	if w.Code != http.StatusOK || !strings.Contains(body, "The reusable list is unavailable") {
 		t.Fatalf("list should be unavailable: %d %s", w.Code, body)
 	}
-	for _, want := range []string{`<h3 class="mt-0">Stove</h3></div>`, `<h3 class="mt-0">Matches</h3></div>`} {
+	for _, want := range []string{`<h3 class="my-0 mr-auto font-sans text-body font-semibold tracking-normal">Stove</h3></div>`, `<h3 class="my-0 mr-auto font-sans text-body font-semibold tracking-normal">Matches</h3></div>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q", want)
 		}
@@ -435,9 +435,9 @@ func TestReviewPageLabelsProposalsAndUsesListboxSelects(t *testing.T) {
 	h.ReviewPage(w, r)
 	body := w.Body.String()
 	for _, want := range []string{
-		`<h3 class="mt-0">Chair</h3></div>`,
-		`<h3 class="mt-0">Stove</h3><span class="tag tag-quiet">Waiting to be applied</span>`,
-		`<h3 class="mt-0">Matches</h3><span class="tag">Applied</span>`,
+		`<h3 class="my-0 mr-auto font-sans text-body font-semibold tracking-normal">Chair</h3></div>`,
+		`<h3 class="my-0 mr-auto font-sans text-body font-semibold tracking-normal">Stove</h3><span class="tag tag-quiet">Waiting to be applied</span>`,
+		`<h3 class="my-0 mr-auto font-sans text-body font-semibold tracking-normal">Matches</h3><span class="tag">Applied</span>`,
 		`role="combobox"`, `role="listbox"`, `role="option"`,
 		`<select id="review-item" name="itemId"`, `<select id="review-action" name="action"`,
 		`id="review-save-apply"`,

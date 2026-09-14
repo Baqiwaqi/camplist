@@ -37,7 +37,9 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 		@ListRevision(list, false)
 		<section class="mt-8">
 			@ListItemForm(form, csrfToken) {
-				@ListBulkActions(list.ID, list.Items, false)
+				<div class="mt-1 border-t border-sand-100 pt-3">
+					@BulkAddActions(list.ID)
+				</div>
 			}
 			@ListAddStatus("", false)
 		</section>
@@ -83,9 +85,8 @@ templ ListSummary(items []packing.PackingItem, oob bool) {
 	>{ itemSummary(items) }</p>
 }
 
-// ListEmpty is the empty items text with the ways to fill a new list. It stays
-// in the page, hidden while the list has items, so adding the first item or
-// deleting the last can toggle it.
+// ListEmpty is the empty items text. It stays in the page, hidden while the
+// list has items, so adding the first item or deleting the last can toggle it.
 templ ListEmpty(listID string, items []packing.PackingItem, oob bool) {
 	<div
 		id="list-empty"
@@ -96,22 +97,6 @@ templ ListEmpty(listID string, items []packing.PackingItem, oob bool) {
 		}
 	>
 		<p class="text-muted">No items yet. Add your first item above, paste several at once, or copy items from another list.</p>
-		@BulkAddActions(listID)
-	</div>
-}
-
-// ListBulkActions offers Add several and Add from a list on the add card. It
-// is hidden while the list is empty, whose empty state offers them instead.
-templ ListBulkActions(listID string, items []packing.PackingItem, oob bool) {
-	<div
-		id="list-bulk-actions"
-		class="mt-1 border-t border-sand-100 pt-3"
-		hidden?={ len(items) == 0 }
-		if oob {
-			hx-swap-oob="true"
-		}
-	>
-		@BulkAddActions(listID)
 	</div>
 }
 

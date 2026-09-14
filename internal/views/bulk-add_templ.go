@@ -88,8 +88,7 @@ func BulkAddActions(listID string) templ.Component {
 // phones and a centred dialog from 721px. It opens when a step is swapped
 // into its panel and closes when a finished add empties the panel. Closing
 // focuses the button that opened it, which browsers that do not focus a
-// clicked link would not restore; when that button was in the empty state,
-// which the add just hid, the same action on the add card takes focus.
+// clicked link would not restore.
 func BulkAddDialog() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -111,7 +110,7 @@ func BulkAddDialog() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<dialog id=\"bulk-add\" class=\"dialog dialog-sheet\" aria-labelledby=\"bulk-add-title\" x-data=\"{ opener: null }\" x-on:htmx:after-swap=\"if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }\" x-on:close=\"if (opener) (opener.checkVisibility() ? opener : [...document.querySelectorAll('#list-bulk-actions a')].find(a => a.getAttribute('href') === opener.getAttribute('href')))?.focus(); opener = null\"><div id=\"bulk-add-panel\"></div></dialog>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<dialog id=\"bulk-add\" class=\"dialog dialog-sheet\" aria-labelledby=\"bulk-add-title\" x-data=\"{ opener: null }\" x-on:htmx:after-swap=\"if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }\" x-on:close=\"opener?.focus(); opener = null\"><div id=\"bulk-add-panel\"></div></dialog>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -159,7 +158,7 @@ func ListAddStatus(message string, oob bool) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 44, Col: 11}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 43, Col: 11}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -214,7 +213,7 @@ func BulkAddPage(list packing.PackingList, title string, csrfToken string, body 
 			var templ_7745c5c3_Var9 templ.SafeURL
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/packing-lists/" + list.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 51, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 50, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -227,7 +226,7 @@ func BulkAddPage(list packing.PackingList, title string, csrfToken string, body 
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(list.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 51, Col: 121}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 50, Col: 121}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -286,7 +285,7 @@ func bulkAddHeading(title string, page bool, focus bool) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 63, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 62, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -314,7 +313,7 @@ func bulkAddHeading(title string, page bool, focus bool) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 72, Col: 10}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 71, Col: 10}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -359,7 +358,7 @@ func bulkAddCancel(listID string, page bool) templ.Component {
 			var templ_7745c5c3_Var15 templ.SafeURL
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/packing-lists/" + listID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 79, Col: 79}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 78, Col: 79}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -415,7 +414,7 @@ func AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrf
 		var templ_7745c5c3_Var17 templ.SafeURL
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(form.Action))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 95, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 94, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -438,7 +437,7 @@ func AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrf
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 100, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 99, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 		if templ_7745c5c3_Err != nil {
@@ -451,7 +450,7 @@ func AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrf
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(form.Revision)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 101, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 100, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 		if templ_7745c5c3_Err != nil {
@@ -472,7 +471,7 @@ func AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrf
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue("Documents:\nPassport\nDriving licence\nPaper map")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 114, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 113, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 		if templ_7745c5c3_Err != nil {
@@ -495,7 +494,7 @@ func AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrf
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(form.Lines)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 120, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 119, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -589,7 +588,7 @@ func AddFromListSources(list packing.PackingList, sources []packing.PackingList,
 					var templ_7745c5c3_Var23 string
 					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(source.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 147, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 146, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 					if templ_7745c5c3_Err != nil {
@@ -607,7 +606,7 @@ func AddFromListSources(list packing.PackingList, sources []packing.PackingList,
 					var templ_7745c5c3_Var24 templ.SafeURL
 					templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(addFromSourcePath(list.ID, source.ID)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 153, Col: 66}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 152, Col: 66}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 					if templ_7745c5c3_Err != nil {
@@ -636,7 +635,7 @@ func AddFromListSources(list packing.PackingList, sources []packing.PackingList,
 					var templ_7745c5c3_Var25 string
 					templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(source.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 159, Col: 64}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 158, Col: 64}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 					if templ_7745c5c3_Err != nil {
@@ -649,7 +648,7 @@ func AddFromListSources(list packing.PackingList, sources []packing.PackingList,
 					var templ_7745c5c3_Var26 string
 					templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(itemCount(len(source.Items)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 160, Col: 88}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 159, Col: 88}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 					if templ_7745c5c3_Err != nil {
@@ -728,7 +727,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(a.sourceSummary())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 181, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 180, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -759,7 +758,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var29 templ.SafeURL
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(addFromSourcePath(a.List.ID, a.Source.ID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 189, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 188, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -772,7 +771,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue("{ count: " + itoa(a.tickedCount()) + " }")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 190, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 189, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
 		if templ_7745c5c3_Err != nil {
@@ -795,7 +794,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 196, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 195, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 		if templ_7745c5c3_Err != nil {
@@ -808,7 +807,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.ResolveAttributeValue(a.List.Revision())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 197, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 196, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 		if templ_7745c5c3_Err != nil {
@@ -826,7 +825,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(a.Source.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 199, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 198, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -849,7 +848,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue("copy-group-" + itoa(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 203, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 202, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
 			if templ_7745c5c3_Err != nil {
@@ -862,7 +861,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 			var templ_7745c5c3_Var35 string
 			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.ResolveAttributeValue("copy-group-" + itoa(i))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 204, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 203, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35)
 			if templ_7745c5c3_Err != nil {
@@ -875,7 +874,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 			var templ_7745c5c3_Var36 string
 			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(groupName(group))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 204, Col: 115}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 203, Col: 115}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 			if templ_7745c5c3_Err != nil {
@@ -915,7 +914,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 				var templ_7745c5c3_Var39 string
 				templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.ResolveAttributeValue(item.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 212, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 211, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39)
 				if templ_7745c5c3_Err != nil {
@@ -944,7 +943,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 				var templ_7745c5c3_Var40 string
 				templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 216, Col: 61}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 215, Col: 61}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 				if templ_7745c5c3_Err != nil {
@@ -977,7 +976,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 		var templ_7745c5c3_Var41 templ.SafeURL
 		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(addFromListPath(a.List.ID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 230, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 229, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 		if templ_7745c5c3_Err != nil {
@@ -1005,7 +1004,7 @@ func AddFromListItems(a AddFromList, csrfToken string, page bool) templ.Componen
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(addItemsLabel(a.tickedCount()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 236, Col: 146}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/bulk-add.templ`, Line: 235, Col: 146}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
 			if templ_7745c5c3_Err != nil {

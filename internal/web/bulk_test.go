@@ -407,11 +407,10 @@ func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
 	saved, _ := store.GetPackingList(ctx, weekend.ID, "member")
 	body := w.Body.String()
 	for _, want := range []string{
-		`<p id="list-add-status" role="status" class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden" hx-swap-oob="innerHTML">Added 1 item to Documents. Skipped 1 already on this list: chalk bag.</p>`,
+		`<p id="list-add-status" role="status" class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden" hx-swap-oob="innerHTML">Added 1 item to Documents. Skipped 1 already on this list or repeated: chalk bag.</p>`,
 		`<ul hx-swap-oob="beforeend:#list-items">`,
 		`id="list-summary"`,
 		`id="list-empty"`,
-		`<div id="list-bulk-actions" class="mt-1 border-t border-sand-100 pt-3" hx-swap-oob="true">`,
 		`id="list-revision" value="` + html.EscapeString(saved.Revision()) + `" hx-swap-oob="true"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -460,16 +459,33 @@ func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
 	for _, want := range []string{
 		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3">`,
 		`<dialog id="bulk-add"`,
-		`<div id="list-bulk-actions" class="mt-1 border-t border-sand-100 pt-3" hidden>`,
 		`<p id="list-add-status" role="status"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("list page missing %q", want)
 		}
 	}
-	// Both actions sit in the empty state; the add card's pair stays hidden until items arrive.
-	if strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-several"`) != 2 || strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-from"`) != 2 {
+	// One always-visible pair on the add card serves the empty list and a full one alike.
+	if strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-several"`) != 1 || strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-from"`) != 1 {
 		t.Fatalf("bulk add actions: %s", body)
+	}
+}
+
+// A name repeated inside one paste is skipped like a name already on the list,
+// so the summary must not claim it was already there.
+func TestAddSeveralReportsRepeatedLinesAsSkipped(t *testing.T) {
+	list := packing.NewList("camper", "Weekend", "")
+	store := bulkStore(t, list)
+	h := handler{packingStore: store}
+	opened, _ := store.GetPackingList(context.Background(), list.ID, "camper")
+
+	w := httptest.NewRecorder()
+	h.AddSeveralHandler(w, htmxRequest(sharingRequest("POST", "/", "camper", map[string]string{"id": list.ID}, url.Values{"lines": {"Passport\npassport"}, "revision": {opened.Revision()}})))
+	if body := html.UnescapeString(w.Body.String()); !strings.Contains(body, "Added 1 item. Skipped 1 already on this list or repeated: passport.") {
+		t.Fatalf("repeated line: %s", body)
+	}
+	if got := savedNames(t, store, list.ID, "camper"); len(got) != 1 {
+		t.Fatalf("repeated line saved %v", got)
 	}
 }
 

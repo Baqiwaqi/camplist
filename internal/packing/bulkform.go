@@ -65,8 +65,8 @@ func (f AddSeveralForm) Items() ([]PackingItem, []string) {
 }
 
 // Summary describes a bulk add for the camper, for example "Added 2 items to
-// Documents. Skipped 1 already on this list: Passport." from, such as "from
-// Climbing", names where the items came from.
+// Documents. Skipped 1 already on this list or repeated: Passport." from, such
+// as "from Climbing", names where the items came from.
 func (r AddItemsResult) Summary(from string) string {
 	var b strings.Builder
 	noun := "items"
@@ -88,7 +88,7 @@ func (r AddItemsResult) Summary(from string) string {
 			more = fmt.Sprintf(" and %d more", len(names)-shown)
 			names = names[:shown]
 		}
-		fmt.Fprintf(&b, " Skipped %d already on this list: %s%s.", len(r.Skipped), strings.Join(names, ", "), more)
+		fmt.Fprintf(&b, " Skipped %d already on this list or repeated: %s%s.", len(r.Skipped), strings.Join(names, ", "), more)
 	}
 	return b.String()
 }

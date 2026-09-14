@@ -16,8 +16,7 @@ templ BulkAddActions(listID string) {
 // phones and a centred dialog from 721px. It opens when a step is swapped
 // into its panel and closes when a finished add empties the panel. Closing
 // focuses the button that opened it, which browsers that do not focus a
-// clicked link would not restore; when that button was in the empty state,
-// which the add just hid, the same action on the add card takes focus.
+// clicked link would not restore.
 templ BulkAddDialog() {
 	<dialog
 		id="bulk-add"
@@ -25,7 +24,7 @@ templ BulkAddDialog() {
 		aria-labelledby="bulk-add-title"
 		x-data="{ opener: null }"
 		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }"
-		x-on:close="if (opener) (opener.checkVisibility() ? opener : [...document.querySelectorAll('#list-bulk-actions a')].find(a => a.getAttribute('href') === opener.getAttribute('href')))?.focus(); opener = null"
+		x-on:close="opener?.focus(); opener = null"
 	>
 		<div id="bulk-add-panel"></div>
 	</dialog>

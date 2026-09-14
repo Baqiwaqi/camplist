@@ -27,7 +27,7 @@ func NewAddSeveralForm(list PackingList) AddSeveralForm {
 // Items reads the pasted lines into new items, or explains what to fix.
 func (f AddSeveralForm) Items() ([]PackingItem, []string) {
 	if len(f.Lines) > maxPasteLength {
-		return nil, []string{fmt.Sprintf("That is too much text to add at once. Add at most %d items at a time.", MaxItemsPerAdd)}
+		return nil, []string{"That is too much text to add at once. Paste at most 32,000 characters, so split it in two."}
 	}
 	fallback := MatchCategory(f.Category)
 	if len(fallback) > MaxCategoryLength {

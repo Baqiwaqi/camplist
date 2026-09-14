@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	// MaxListEntries bounds a list's items plus preparation tasks, so the list
-	// can still start a trip (see createPackingSession).
+	// MaxListEntries bounds a list's items plus preparation tasks. Starting a
+	// trip applies its own limit to the expanded entries, which person-scoped
+	// entries multiply by the number of campers (see createPackingSession).
 	MaxListEntries = 2000
 	// MaxItemNameLength matches the limit on trip entries.
 	MaxItemNameLength = 200

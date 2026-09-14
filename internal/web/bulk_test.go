@@ -97,6 +97,8 @@ func TestAddSeveralExplainsInvalidPastes(t *testing.T) {
 	many := strings.Repeat("Item\n", packing.MaxItemsPerAdd+1)
 	for _, test := range []struct{ lines, category, want string }{
 		{"\n - \n", "", "Type or paste at least one item, one per line."},
+		// A few very long lines trip the text-length guard, not the item count.
+		{strings.Repeat(strings.Repeat("a", 2000)+"\n", 20), "", "Paste at most 32,000 characters, so split it in two."},
 		{many, "", "Add at most 100 items at a time. This has 101, so split it in two."},
 		{"Tent\n" + strings.Repeat("a", 201), "", "Line 2 is longer than 200 characters."},
 		{strings.Repeat("c", 101) + ":\nTent", "", "The category heading above line 2 is longer than 100 characters."},

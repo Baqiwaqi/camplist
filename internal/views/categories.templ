@@ -81,15 +81,12 @@ templ StatusToast() {
 
 // CategoriesPage lists the camper's remembered custom categories with a
 // rename and a remove form each. It is where category pickers send a camper
-// without scripts; message reports the last change and errors a failed one.
-templ CategoriesPage(categories []string, message string, errors []string, csrfToken string) {
+// without scripts; errors reports a failed change.
+templ CategoriesPage(categories []string, errors []string, csrfToken string) {
 	@Layout("Your categories", csrfToken) {
 		<section class="max-w-[560px]">
 			<h1>Your categories</h1>
 			<p class="text-muted mb-4">Categories you typed yourself. Renaming one moves the items on your own lists to the new name; lists shared with you and trips you already started keep theirs. Removing one only takes it out of your suggestions.</p>
-			if message != "" {
-				<p role="status" class="card mb-4 font-bold">{ message }</p>
-			}
 			if len(errors) > 0 {
 				@ErrorBanner(errors)
 			}

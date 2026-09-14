@@ -18,9 +18,11 @@ function load(lists = [], inputs = []) {
       options: [],
       append(option) { option.remove = () => datalist.options.splice(datalist.options.indexOf(option), 1); datalist.options.push(option) },
     }
-    for (const { value, custom, default: isDefault } of options) {
+    for (const { value, custom, used, trip, default: isDefault } of options) {
       const dataset = {}
       if (custom) dataset.custom = ''
+      if (used) dataset.used = ''
+      if (trip) dataset.trip = ''
       if (isDefault) dataset.default = ''
       datalist.append({ value, dataset })
     }
@@ -90,24 +92,34 @@ test('only remembered custom categories offer rename and remove', () => {
 })
 
 test('a rename updates every picker and a removal drops the option', () => {
-  const input = { value: 'fishnig' }
-  const other = { value: 'Tent' }
   const { listeners, datalists, dispatched } = load([
     [...defaults, { value: 'Fishnig', custom: true }],
     [...defaults, { value: 'Fishnig', custom: true }, { value: 'Fishing' }],
-  ], [input, other])
+  ])
   listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, message: 'Renamed' } })
   for (const datalist of datalists) {
     assert.deepEqual(datalist.options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishing', true]])
   }
-  assert.equal(input.value, 'Fishing')
-  assert.equal(other.value, 'Tent')
   assert.equal(dispatched.at(-1).detail.message, 'Renamed')
 
   listeners['categories-changed']({ detail: { from: 'fishing', to: '', custom: false, message: 'Removed' } })
   assert.deepEqual(datalists[0].options.map(option => option.value), ['Shelter', 'Clothing', 'Kitchen and cooking'])
-  assert.equal(input.value, 'Fishing')
 
   listeners['categories-changed']({ detail: { from: 'Shleter', to: 'Shelter', custom: false, message: 'Merged' } })
   assert.deepEqual(datalists[1].options.map(option => option.value), ['Shelter', 'Clothing', 'Kitchen and cooking'])
+})
+
+test('a rename leaves open fields alone and keeps the categories items in view use', () => {
+  const editing = { value: 'Fishnig' }
+  const { listeners, datalists } = load([
+    [...defaults, { value: 'Fishnig', custom: true, used: true }],
+    [...defaults, { value: 'Fishnig', trip: true }, { value: 'Tarps', custom: true, used: true }],
+  ], [editing])
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, message: 'Renamed' } })
+  assert.equal(editing.value, 'Fishnig')
+  assert.deepEqual(datalists[0].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishnig', false], ['Fishing', true]])
+  assert.deepEqual(datalists[1].options.map(option => option.value).slice(3), ['Fishnig', 'Tarps', 'Fishing'])
+
+  listeners['categories-changed']({ detail: { from: 'Tarps', to: '', custom: false, message: 'Removed' } })
+  assert.deepEqual(datalists[1].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishnig', false], ['Tarps', false], ['Fishing', true]])
 })

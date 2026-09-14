@@ -324,7 +324,7 @@ func TestRenameAndRemoveCategoryWithoutScripts(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"fishnig"}, "to": {"FISHING"}}, false, ""))
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "Renamed “fishnig” to “Fishing” on 2 items in 1 list.") {
+	if w.Code != 303 || w.Header().Get("Location") != "/categories" {
 		t.Errorf("merge without scripts: %d %s", w.Code, w.Body.String())
 	}
 	if got := itemCategoryNames(t, store, own.ID, "user"); !slices.Equal(got, []string{"Fishing", "Shelter", "Fishing"}) {
@@ -333,7 +333,7 @@ func TestRenameAndRemoveCategoryWithoutScripts(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	h.RemoveCategory(w, categoryRequest("/categories/remove", url.Values{"name": {"Fishing"}}, false, ""))
-	if w.Code != 200 || !strings.Contains(w.Body.String(), "Removed “Fishing” from your suggestions.") {
+	if w.Code != 303 || w.Header().Get("Location") != "/categories" {
 		t.Errorf("remove without scripts: %d %s", w.Code, w.Body.String())
 	}
 	if got, err := store.RememberedCategories(ctx, "user"); err != nil || len(got) != 0 {
@@ -421,7 +421,7 @@ func TestPickerMarksOnlyRememberedCustomCategories(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.ListDetailsPage(w, r)
 	body := w.Body.String()
-	for _, want := range []string{`<option value="Shelter" data-default>`, `<option value="Fishnig">`, `<option value="Tarps" data-custom>`, `id="category-dialog"`} {
+	for _, want := range []string{`<option value="Shelter" data-default data-used>`, `<option value="Fishnig" data-used>`, `<option value="Tarps" data-custom>`, `id="category-dialog"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("list page missing %q", want)
 		}

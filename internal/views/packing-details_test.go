@@ -95,7 +95,7 @@ func TestListItemFormOpensWhoItIsForWhenFilled(t *testing.T) {
 }
 
 func TestListItemFormShowsCategoryPicker(t *testing.T) {
-	doc := renderListItemForm(t, packing.CreateItemForm{Category: "Light", Categories: packing.CategoryOptions([]string{"Shelter", "Light"}, []string{"Light"})})
+	doc := renderListItemForm(t, packing.CreateItemForm{Category: "Light", Categories: packing.CategoryOptions([]string{"Shelter", "Light"}, nil, []string{"Light"})})
 
 	details := findElement(doc, func(n *html.Node) bool { return n.Data == "details" })
 	if findElement(details, hasAttr("name", "category")) != nil {

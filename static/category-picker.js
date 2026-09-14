@@ -47,14 +47,18 @@ function closeCategory(typed, options) {
 }
 
 // A rename or removal answers with HX-Trigger categories-changed. Every picker
-// on the page drops the old option, a rename adds the new name unless it is
-// already offered, and a field holding the old name takes the new one. The
-// result message goes to the layout's status toast.
+// on the page stops offering the old name as a remembered category, but keeps
+// it while items in view use it (data-used, or data-trip from the offline
+// scripts); a rename adds the new name unless it is already offered. Values
+// already in the fields stay as they are. The result message goes to the
+// layout's status toast.
 document.addEventListener('categories-changed', event => {
   const { from, to, custom, message } = event.detail
   for (const datalist of document.querySelectorAll('datalist')) {
     for (const option of Array.from(datalist.options)) {
-      if (categoryKey(option.value) === categoryKey(from)) option.remove()
+      if (categoryKey(option.value) !== categoryKey(from)) continue
+      if ('used' in option.dataset || 'trip' in option.dataset) delete option.dataset.custom
+      else option.remove()
     }
     if (!to) continue
     const same = Array.from(datalist.options).find(option => categoryKey(option.value) === categoryKey(to))
@@ -67,11 +71,6 @@ document.addEventListener('categories-changed', event => {
     if (custom) option.dataset.custom = ''
     else option.dataset.default = ''
     datalist.append(option)
-  }
-  if (to) {
-    for (const input of document.querySelectorAll('input[role="combobox"][name="category"]')) {
-      if (categoryKey(input.value) === categoryKey(from)) input.value = to
-    }
   }
   window.dispatchEvent(new CustomEvent('camplist-status', { detail: { message } }))
 })

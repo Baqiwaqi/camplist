@@ -66,17 +66,20 @@ func uniqueCategories(groups ...[]string) []string {
 }
 
 // CategoryOption is one category a picker offers. Custom marks a category the
-// camper remembered, which the picker lets them rename or remove.
+// camper remembered, which the picker lets them rename or remove; Used marks
+// one on the items in view, which the picker keeps offering after a rename or
+// removal.
 type CategoryOption struct {
 	Name   string
 	Custom bool
+	Used   bool
 }
 
-// CategoryOptions marks the suggestions that are among remembered.
-func CategoryOptions(suggestions, remembered []string) []CategoryOption {
+// CategoryOptions marks the suggestions that are among used and remembered.
+func CategoryOptions(suggestions, used, remembered []string) []CategoryOption {
 	options := make([]CategoryOption, 0, len(suggestions))
 	for _, name := range suggestions {
-		options = append(options, CategoryOption{Name: name, Custom: !IsDefaultCategory(name) && indexCategory(remembered, name) >= 0})
+		options = append(options, CategoryOption{Name: name, Custom: !IsDefaultCategory(name) && indexCategory(remembered, name) >= 0, Used: indexCategory(used, name) >= 0})
 	}
 	return options
 }

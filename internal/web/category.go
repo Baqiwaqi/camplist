@@ -29,7 +29,8 @@ func (h *handler) categorySuggestions(ctx context.Context, userID string, items 
 	if err != nil {
 		log.Printf("read remembered categories: %v", err)
 	}
-	return packing.CategoryOptions(packing.CategorySuggestions(packing.ItemCategories(items), remembered), remembered)
+	used := packing.ItemCategories(items)
+	return packing.CategoryOptions(packing.CategorySuggestions(used, remembered), used, remembered)
 }
 
 // rememberCategory keeps a category the camper just saved so their other lists
@@ -43,10 +44,10 @@ func (h *handler) rememberCategory(ctx context.Context, userID, category string)
 // CategoriesPage lists the signed-in camper's remembered categories to rename
 // or remove without scripts.
 func (h *handler) CategoriesPage(w http.ResponseWriter, r *http.Request) {
-	h.renderCategories(w, r, http.StatusOK, "", nil)
+	h.renderCategories(w, r, http.StatusOK, nil)
 }
 
-func (h *handler) renderCategories(w http.ResponseWriter, r *http.Request, status int, message string, errs []string) {
+func (h *handler) renderCategories(w http.ResponseWriter, r *http.Request, status int, errs []string) {
 	userID, err := auth.UserID(r.Context())
 	if err != nil {
 		sessionExpired(w)
@@ -60,7 +61,7 @@ func (h *handler) renderCategories(w http.ResponseWriter, r *http.Request, statu
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(status)
-	render(w, r, views.CategoriesPage(categories, message, errs, csrf.Token(r)))
+	render(w, r, views.CategoriesPage(categories, errs, csrf.Token(r)))
 }
 
 // RenameCategory renames one of the camper's remembered categories and the
@@ -87,11 +88,11 @@ func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 		h.categoryFailed(w, r, status, message)
 		return
 	}
-	message := renameMessage(from, result)
 	if !isHTMX(r) {
-		h.renderCategories(w, r, http.StatusOK, message, nil)
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
+	message := renameMessage(from, result)
 	if err := setCategoriesChanged(w, from, result.Category, message); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
@@ -137,11 +138,11 @@ func (h *handler) RemoveCategory(w http.ResponseWriter, r *http.Request) {
 		h.categoryFailed(w, r, status, message)
 		return
 	}
-	message := "Removed “" + name + "” from your suggestions. Items keep their category."
 	if !isHTMX(r) {
-		h.renderCategories(w, r, http.StatusOK, message, nil)
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
+	message := "Removed “" + name + "” from your suggestions. Items keep their category."
 	if err := setCategoriesChanged(w, name, "", message); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
@@ -152,7 +153,7 @@ func (h *handler) categoryFailed(w http.ResponseWriter, r *http.Request, status 
 		http.Error(w, message, status)
 		return
 	}
-	h.renderCategories(w, r, status, "", []string{message})
+	h.renderCategories(w, r, status, []string{message})
 }
 
 func categoryError(err error, category, fallback string) (int, string) {

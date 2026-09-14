@@ -109,9 +109,10 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 
 // categoryOptions renders a picker's datalist options. data-default marks the
 // defaults, whose spelling a typed name adopts; data-custom marks the
-// remembered categories the picker can rename or remove.
+// remembered categories the picker can rename or remove; data-used marks the
+// categories on the items in view.
 templ categoryOptions(options []packing.CategoryOption) {
 	for _, option := range options {
-		<option value={ option.Name } data-default?={ packing.IsDefaultCategory(option.Name) } data-custom?={ option.Custom }></option>
+		<option value={ option.Name } data-default?={ packing.IsDefaultCategory(option.Name) } data-custom?={ option.Custom } data-used?={ option.Used }></option>
 	}
 }

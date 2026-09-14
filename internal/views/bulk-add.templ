@@ -90,7 +90,8 @@ templ bulkAddResult(result string) {
 
 // AddSeveralPanel is the Add several form: one item per line, a line ending
 // in ":" starts a category, and the category field fills lines under no
-// heading. result is the summary of an add posted without scripts.
+// heading. The category comes first so its popup opens over the text box,
+// inside the dialog. result is the summary of an add posted without scripts.
 templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrfToken string, page bool, result string) {
 	@bulkAddHeading("Add several items", page, false)
 	<p class="text-muted mb-4 max-w-[48ch]">One item per line. A line ending in a colon starts a category, like “Documents:”. Items already on this list are skipped.</p>
@@ -106,6 +107,10 @@ templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csr
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="revision" value={ form.Revision }/>
 		<div class="grid gap-1">
+			<label for="bulk-category" class="font-bold">Category for lines without a heading</label>
+			@CategoryPicker("bulk-category", "bulk-category-options", form.Category, "Optional", form.Categories)
+		</div>
+		<div class="grid gap-1">
 			<label for="bulk-lines" class="font-bold">Items</label>
 			<textarea
 				id="bulk-lines"
@@ -120,10 +125,6 @@ templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csr
 					aria-describedby="bulk-lines-error"
 				}
 			>{ form.Lines }</textarea>
-		</div>
-		<div class="grid gap-1">
-			<label for="bulk-category" class="font-bold">Category for lines without one</label>
-			@CategoryPicker("bulk-category", "bulk-category-options", form.Category, "Optional", form.Categories)
 		</div>
 		if len(form.Error) > 0 {
 			<div id="bulk-lines-error">

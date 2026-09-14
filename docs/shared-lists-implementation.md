@@ -60,7 +60,9 @@ are retained. Different items merge; matching stale intent is acknowledged
 without changing the existing item revision or attribution. Disagreeing stale
 intent leaves shared state untouched. **Keep shared state** is the first choice;
 **Mark packed/unpacked instead** explicitly retries against the displayed version.
-Another intervening edit requires review again. Removed access or a deleted trip
+Another intervening edit requires review again. A pending change to an item
+removed online is dropped with a short notice; the other changes still upload.
+Removed access or a deleted trip
 preserves an unsynced local queue for export, explains that it will not upload,
 disables packing, and never recreates the server resource; a copy with nothing
 unsynced is removed from the device. Sign-out cleanup remains scoped to the signed-in account.

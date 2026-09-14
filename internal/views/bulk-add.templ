@@ -15,16 +15,17 @@ templ BulkAddActions(listID string) {
 // BulkAddDialog holds the bulk add steps on the list page: a bottom sheet on
 // phones and a centred dialog from 721px. It opens when a step is swapped
 // into its panel and closes when a finished add empties the panel. Closing
-// returns focus to the button that opened it; when that button was in the
-// empty state, which the add just hid, the same action on the add card takes it.
+// focuses the button that opened it, which browsers that do not focus a
+// clicked link would not restore; when that button was in the empty state,
+// which the add just hid, the same action on the add card takes focus.
 templ BulkAddDialog() {
 	<dialog
 		id="bulk-add"
 		class="dialog dialog-sheet"
 		aria-labelledby="bulk-add-title"
 		x-data="{ opener: null }"
-		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = document.activeElement; $el.showModal() }"
-		x-on:close="if (opener && !opener.checkVisibility()) [...document.querySelectorAll('#list-bulk-actions a')].find(a => a.getAttribute('href') === opener.getAttribute('href'))?.focus(); opener = null"
+		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }"
+		x-on:close="if (opener) (opener.checkVisibility() ? opener : [...document.querySelectorAll('#list-bulk-actions a')].find(a => a.getAttribute('href') === opener.getAttribute('href')))?.focus(); opener = null"
 	>
 		<div id="bulk-add-panel"></div>
 	</dialog>

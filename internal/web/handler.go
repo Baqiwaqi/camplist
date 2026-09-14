@@ -55,6 +55,8 @@ type packingStore interface {
 	DeletePackingSession(context.Context, string, string) error
 	RememberedCategories(context.Context, string) ([]string, error)
 	RememberCategory(context.Context, string, string) error
+	RenameCategory(context.Context, string, string, string) (packing.CategoryRename, error)
+	ForgetCategory(context.Context, string, string) error
 }
 
 type handler struct {
@@ -135,7 +137,13 @@ func (h *handler) ListDetailsPage(w http.ResponseWriter, r *http.Request) {
 	form := packing.NewCreateItemForm(id)
 	form.Categories = h.categorySuggestions(ctx, userID, list.Items)
 
-	render(w, r, views.PackingDetails(list.Name, list, form, csrf.Token(r)))
+	var hint *views.CategoryHint
+	if item, ok := list.FindItem(r.URL.Query().Get("check")); ok {
+		if closeMatch := h.closeCategory(ctx, userID, list.Items, item); closeMatch != "" {
+			hint = &views.CategoryHint{Item: item, Suggestion: closeMatch}
+		}
+	}
+	render(w, r, views.PackingDetailsHinted(list.Name, list, form, hint, csrf.Token(r)))
 }
 
 func (h *handler) NewListPage(w http.ResponseWriter, r *http.Request) {
@@ -363,10 +371,14 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		storeError(w, err, "Storing item on packing list failed")
 		return
 	}
+	closeMatch := ""
+	if !isHTMX(r) {
+		closeMatch = h.closeCategory(ctx, userID, list.Items, item)
+	}
 	h.rememberCategory(ctx, userID, item.Category)
 
 	if !isHTMX(r) {
-		http.Redirect(w, r, "/packing-lists/"+listID, http.StatusSeeOther)
+		http.Redirect(w, r, listPathChecking(listID, item.ID, closeMatch), http.StatusSeeOther)
 		return
 	}
 	// Another write landed after the page's revision, so the page is out of

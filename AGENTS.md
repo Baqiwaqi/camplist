@@ -71,6 +71,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   categories (one `item-categories` doc per user partition). Call
   `rememberCategory` after saving an item. Categories compare trimmed and
   case-insensitively; never rewrite the category of a replayable operation.
+  Remembered custom options carry `data-custom` and can be renamed (items on
+  lists the actor owns only, never started trips) or removed under
+  `/categories`; results reach every picker via the `categories-changed`
+  HX-Trigger (header values must stay ASCII). The typo rule lives twice, in
+  `packing.CloseCategory` and `closeCategory` in `static/category-picker.js`:
+  change both.
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and

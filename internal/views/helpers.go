@@ -268,3 +268,8 @@ func tripEntryRequest(tripID string) templ.Attributes {
 		"hx-sync":       "this:drop",
 	}
 }
+
+// categoryFieldID names the rename field of the i-th category on the categories page.
+func categoryFieldID(i int) string {
+	return "category-rename-" + strconv.Itoa(i)
+}

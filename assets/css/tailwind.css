@@ -533,6 +533,39 @@
     @apply font-display font-extrabold text-2xl leading-[1.05] tracking-display mb-2;
   }
 
+  /* The rename category form rises from the bottom on phones. */
+  @media (width <= 720px) {
+    .dialog-sheet {
+      @apply mb-0 w-full max-w-none rounded-b-none border-x-0 border-b-0 p-4 pb-6;
+    }
+
+    .dialog-sheet[open] {
+      animation: sheet-in 200ms ease;
+    }
+  }
+
+  /* ---------- category picker (views.CategoryPicker) ---------- */
+
+  /* Opens the rename and remove menu of a remembered category. */
+  .category-more {
+    @apply flex-none mr-1 min-h-8 px-3 rounded-full bg-sand-100 text-sm font-bold text-ink-900 cursor-pointer;
+  }
+
+  .category-more:hover,
+  .category-more[aria-expanded="true"] {
+    @apply bg-sand-300;
+  }
+
+  /* Confirmations (views.StatusToast): the error toast's place in ink. */
+  .status-toast {
+    @apply fixed left-1/2 bottom-4 w-[min(calc(100%-2rem),calc(900px-2rem))] z-10 flex items-center gap-3 py-3 px-4 rounded-card bg-ink-900 text-white font-bold;
+    transform: translateX(-50%);
+  }
+
+  .status-toast:not([hidden]) {
+    animation: toast-in 200ms ease;
+  }
+
   /* ---------- elements the offline scripts create without classes ---------- */
 
   /* Sign-out dialogs from static/offline/account.mjs. */
@@ -663,6 +696,16 @@
 
     to {
       opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
       transform: none;
     }
   }

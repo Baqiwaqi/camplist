@@ -8,6 +8,12 @@ import (
 )
 
 templ PackingDetails(name string, list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
+	@PackingDetailsHinted(name, list, form, nil, csrfToken)
+}
+
+// PackingDetailsHinted is the list page with a CategoryHint after a save
+// without scripts.
+templ PackingDetailsHinted(name string, list packing.PackingList, form packing.CreateItemForm, hint *CategoryHint, csrfToken string) {
 	@Layout(name, csrfToken) {
 		<section>
 			<div class="card card-brand p-4 sm:p-6 mb-6">
@@ -34,6 +40,9 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 				</div>
 			</div>
 			<p class="text-muted max-w-[60ch]">Starting a trip copies this list. Your reusable list stays unchanged as you pack.</p>
+			if hint != nil {
+				@categoryHintNotice(list, *hint, csrfToken)
+			}
 		</section>
 		@ListRevision(list, false)
 		<section class="mt-8">
@@ -509,7 +518,7 @@ templ itemRow(listID string, item packing.PackingItem, focusEdit bool) {
 	<li class="item-row break-inside-avoid [&.htmx-request]:opacity-60" id={ "item-" + item.ID }>
 		<span class="font-bold min-w-0 wrap-anywhere">{ item.Name }</span>
 		if item.Category != "" {
-			<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ item.Category }</span>
+			@ItemCategoryTag(item, false)
 		}
 		<div class="flex flex-wrap items-center gap-2 ml-auto">
 			<a
@@ -597,4 +606,16 @@ templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTo
 // keeps the label for screen readers in compact rows.
 templ ScopeSelect(name string, id string, scope string, personal bool, hideLabel bool) {
 	@SelectField(id, name, "Who is this for?", hideLabel, scopeOptions(personal), scopeValue(scope))
+}
+
+// ItemCategoryTag is an item row's category. A category rename swaps it out of
+// band; a row open for editing has none, so its form is left alone.
+templ ItemCategoryTag(item packing.PackingItem, oob bool) {
+	<span
+		id={ "item-category-tag-" + item.ID }
+		class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>{ item.Category }</span>
 }

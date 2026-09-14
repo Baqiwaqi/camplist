@@ -18,15 +18,12 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 				setTimeout(() => next.focus());
 			"
 		>
-			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
-				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-					<h1>Where to next?</h1>
-					<p class="text-muted max-w-[60ch]">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p>
-				</div>
-				<div class="flex flex-wrap items-center gap-2">
-					<a class="btn btn-primary max-sm:flex-auto" href="/packing-lists/new" x-ref="create">Create list</a>
-				</div>
-			</div>
+			@PageHead(PageHeading{
+				Title: "Where to next?",
+				Meta:  "Keep reusable lists for your camping trips. Start a fresh trip each time you go.",
+			}) {
+				<a class="btn btn-primary" href="/packing-lists/new" x-ref="create">Create list</a>
+			}
 			@PackingListsEmpty(len(lists) == 0, false)
 			for _, list := range lists {
 				@PackingListCard(list, csrfToken)

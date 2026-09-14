@@ -12,8 +12,11 @@ import (
 templ SharingPage(view packing.SharingView, link string, token string, trips []packing.PackingSession, approving string) {
 	@Layout("Sharing", token) {
 		<section class="max-w-[560px]">
-			<h1>Pack together.</h1>
-			<p class="mb-3"><a class="btn btn-secondary btn-sm" href={ "/" + view.Kind + "/" + view.ID }>Back to your list or trip</a></p>
+			@PageHead(PageHeading{
+				Title:     "Pack together.",
+				BackHref:  "/" + view.Kind + "/" + view.ID,
+				BackLabel: backToSharedLabel(view),
+			})
 			if view.Kind=="packing-session" {
 				<p class="mb-3">Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>
 				<p class="text-muted mb-3">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>
@@ -58,9 +61,9 @@ templ InviteCard(view packing.SharingView, link string, token string) {
 		<h2>Invite someone</h2>
 		<p class="mb-3">Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
 		if link!="" {
-			<div class="grid gap-1 mb-4" x-data="invitationShare">
-				<label for="invitation-link" class="text-sm font-bold">Invitation link</label>
-				<input id="invitation-link" type="text" readonly autofocus value={ link } class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0" x-ref="invitationLink"/>
+			<div class="grid gap-2 mb-4" x-data="invitationShare">
+				<label for="invitation-link" class="label mb-0">Invitation link</label>
+				<input id="invitation-link" type="text" readonly autofocus value={ link } class="field" x-ref="invitationLink"/>
 				<div class="flex flex-wrap gap-2 justify-self-start">
 					<button type="button" class="btn btn-primary" x-show="supported" x-cloak x-on:click="shareInvitation">Share invitation</button>
 					<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>

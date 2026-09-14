@@ -9,15 +9,12 @@ import "camplist/internal/auth"
 // reusable list is still available.
 templ ReviewPage(session packing.PackingSession, list packing.PackingList, available bool, recoverable bool, entry packing.ReviewEntry, categories []packing.CategoryOption, message string, csrfToken string) {
 	@Layout("Review your trip", csrfToken) {
-		<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
-			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-				<h1>Make the next trip easier</h1>
-				<p class="text-muted max-w-[60ch]">Review { session.List.Name }. Observations stay with this trip; only selected changes affect your next one.</p>
-			</div>
-			<div class="flex flex-wrap items-center gap-2">
-				<a class="btn btn-secondary" href={ "/trips/" + session.ID }>Back to packing</a>
-			</div>
-		</div>
+		@PageHead(PageHeading{
+			Title:     "Make the next trip easier",
+			Meta:      "Review " + session.List.Name + ". Observations stay with this trip; only selected changes affect your next one.",
+			BackHref:  "/trips/" + session.ID,
+			BackLabel: "Back to packing",
+		})
 		if message != "" {
 			<p class="error" role="alert">{ message }</p>
 		}
@@ -74,20 +71,48 @@ templ ReviewForm(session packing.PackingSession, revision string, available bool
 			<input type="hidden" name="revision" value={ revision }/>
 		}
 		@Select("review-item", "itemId", "Existing gear (optional)", reviewItemOptions(session), entry.ItemID)
-		<label class="block my-3 text-sm font-bold">Name of new or missing gear <input name="name" maxlength="200" value={ entry.Name } class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-field border border-sand-300 bg-white font-normal"/></label>
-		<div class="grid gap-1 my-3 max-w-[34rem]">
-			<label for="review-category" class="text-sm font-bold">Category</label>
+		<div class="my-3 max-w-[34rem]">
+			@Field(TextField{
+				ID:    "review-name",
+				Name:  "name",
+				Label: "Name of new or missing gear",
+				Value: entry.Name,
+				Attrs: templ.Attributes{"maxlength": "200"},
+			})
+		</div>
+		<div class="my-3 max-w-[34rem]">
+			<label for="review-category" class="label">Category</label>
 			@CategoryPicker("review-category", "review-category-options", entry.Category, "Pick or type one", categories)
 		</div>
 		<fieldset class="min-w-0 mb-4">
-			<legend class="mb-2 text-sm font-bold">Observations (choose at least one)</legend>
-			<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="forgotten" value="true" checked?={ entry.Forgotten } class="min-h-8 align-middle"/>Forgotten</label>
-			<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="unused" value="true" checked?={ entry.Unused } class="min-h-8 align-middle"/>Unused</label>
-			<label class="flex items-center gap-2 mt-3 mb-2"><input type="checkbox" name="needsAttention" value="true" checked?={ entry.NeedsAttention } class="min-h-8 align-middle"/>Needs repair or replacement</label>
+			<legend class="label mb-2">Observations (choose at least one)</legend>
+			<div class="flex flex-wrap gap-2">
+				@Chip("forgotten", "true", "Forgotten", entry.Forgotten, false)
+				@Chip("unused", "true", "Unused", entry.Unused, false)
+				@Chip("needsAttention", "true", "Needs repair or replacement", entry.NeedsAttention, false)
+			</div>
 		</fieldset>
-		<label class="block my-3 text-sm font-bold">Notes <textarea name="note" maxlength="2000" class="block w-full max-w-[34rem] mt-1 min-h-22 px-3 py-2 rounded-field border border-sand-300 bg-white font-normal">{ entry.Note }</textarea></label>
+		<div class="my-3 max-w-[34rem]">
+			@Field(TextField{
+				ID:        "review-note",
+				Name:      "note",
+				Label:     "Notes",
+				Value:     entry.Note,
+				Multiline: true,
+				Attrs:     templ.Attributes{"maxlength": "2000"},
+			})
+		</div>
 		@Select("review-action", "action", "Proposed change", reviewActionOptions, string(entry.Action))
-		<label class="block my-3 text-sm font-bold">Preparation task (when selected) <input name="task" maxlength="200" value={ entry.Task } placeholder="Replace gas canister" class="block w-full max-w-[34rem] mt-1 min-h-11 p-2 rounded-field border border-sand-300 bg-white font-normal"/></label>
+		<div class="my-3 max-w-[34rem]">
+			@Field(TextField{
+				ID:          "review-task",
+				Name:        "task",
+				Label:       "Preparation task (when selected)",
+				Value:       entry.Task,
+				Placeholder: "Replace gas canister",
+				Attrs:       templ.Attributes{"maxlength": "200"},
+			})
+		</div>
 		<p class="text-muted mb-3">Saving keeps the observation with this trip. A proposed change reaches your reusable list only when you apply it. Unused safety equipment may still be essential; nothing is removed automatically.</p>
 		// The error sits by the buttons, where a phone user who just tapped one is looking.
 		if message != "" {

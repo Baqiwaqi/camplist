@@ -143,7 +143,7 @@ templ ListPreparation(list packing.PackingList, csrfToken string, editing bool, 
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			<input type="hidden" name="editing" x-bind:value="editing"/>
 			<label class="sr-only" for="new-task">New preparation task</label>
-			<input id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus?={ focus == "new-task" } class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+			<input id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus?={ focus == "new-task" } class="field"/>
 			<div class="max-sm:order-last max-sm:w-48">
 				@ScopeSelect("scope", "new-task-scope", "", false, true)
 			</div>
@@ -401,7 +401,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="done" value={ strconv.FormatBool(task.Done) }/>
 			<input type="hidden" name="editing" x-bind:value="editing"/>
 			<label class="sr-only" for={ "task-" + task.ID }>Task name</label>
-			<input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" autofocus?={ focus == "task-"+task.ID } class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+			<input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" autofocus?={ focus == "task-"+task.ID } class="field"/>
 			<div class="max-sm:order-last max-sm:w-48">
 				@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false, true)
 			</div>
@@ -416,7 +416,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 // for stays folded behind a toggle that opens by itself when the form comes
 // back with a scope other than shared.
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
-	<h2 class="mb-3">Add an item</h2>
+	@SectionHead("Add an item", "")
 	<div class="card">
 		@AddItemForm(form, csrfToken, false)
 		{ children... }
@@ -448,7 +448,7 @@ templ AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) {
 				name="name"
 				placeholder="Like a headlamp"
 				value={ form.Name }
-				class="col-span-2 sm:col-span-1 min-w-0 min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				class="field col-span-2 sm:col-span-1"
 				if form.NameHasError() {
 					aria-invalid="true"
 				}
@@ -478,23 +478,17 @@ templ AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) {
 templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 	<input type="hidden" name="revision" value={ form.Revision }/>
 	<div class={ "grid", templ.KV("gap-3 mb-3", stacked), templ.KV("gap-4 mb-4 sm:grid-cols-[1fr_1fr]", !stacked) }>
-		<div class="grid gap-1">
-			<label for={ "item-name-" + suffix } class="text-sm font-bold">Name</label>
-			<input
-				type="text"
-				id={ "item-name-" + suffix }
-				name="name"
-				placeholder="Headlamp"
-				value={ form.Name }
-				autofocus
-				class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
-				if form.NameHasError() {
-					aria-invalid="true"
-				}
-			/>
-		</div>
-		<div class="grid gap-1">
-			<label for={ "item-category-" + suffix } class="text-sm font-bold">Category</label>
+		@Field(TextField{
+			ID:          "item-name-" + suffix,
+			Name:        "name",
+			Label:       "Name",
+			Value:       form.Name,
+			Placeholder: "Headlamp",
+			Invalid:     form.NameHasError(),
+			Attrs:       templ.Attributes{"autofocus": true},
+		})
+		<div class="min-w-0">
+			<label for={ "item-category-" + suffix } class="label">Category</label>
 			@CategoryPicker("item-category-"+suffix, "item-category-"+suffix+"-options", form.Category, "Pick or type one", form.Categories)
 		</div>
 		@ScopeSelect("scope", "item-scope-"+suffix, form.Scope, false, false)

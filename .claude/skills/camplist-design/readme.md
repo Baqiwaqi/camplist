@@ -41,7 +41,46 @@ The system should make you want to go. Three levers: **ember** (one orange "go" 
 
 The product has no icons: no icon font, no SVGs, no PNGs, no unicode glyphs, no emoji. Every action is a text label. Keep it that way; if an icon set becomes necessary, prefer a thin-stroke set (e.g. Lucide from CDN) and flag it as an addition. **Logo:** `assets/logo.svg` (mark + wordmark), `assets/logomark.svg` (pine), `assets/logomark-white.svg` (for pine/dark grounds). A minimal tent silhouette with a door cut-out on a ground line — flat pine, no gradients. Wordmark is bold system-ui, never a custom face. Minimum mark size 22px (header); 56px on the login card. See `guidelines/brand-name.html`.
 
-## Components
+## Shared component set (what ships)
+
+The app's own components live in `internal/views/components.templ` with their
+classes in `assets/css/tailwind.css`; the React kit below is reference only.
+Reach for one of these rather than pasting class strings or adding a one-off:
+
+- **PageHead** (`PageHeading{Title, Meta, BackHref, BackLabel}`, actions as
+  children) — the way back on a child page, the title, one meta line, actions
+  at natural width. No eyebrow, no full-width action bars.
+- **SectionHead(title, count)** with at most one text action as children, then
+  one white sheet of hairline rows.
+- **Field(TextField{…})** — the one input and textarea: `.label`, `.field`,
+  `.hint`. Every text control in the app is `.field`, so it matches the select
+  trigger beside it.
+- **One popup** (`.popup` + `.option`) behind all three dropdowns: `Menu` /
+  `PageMenu` (`static/menu.js`), `Select` / `SelectField` / `ScopeSelect`
+  (`static/select.js`) and `CategoryPicker` (`static/category-picker.js`).
+  Option states are hover/active (`data-active`), selected
+  (`aria-selected`, pine with a tick), `.option-danger` and `.option-new`.
+  A row that carries a control of its own puts it in `.option-action` beside
+  the option, never inside it — see the picker note below.
+- **Tabs** — `TabLinks` switches pages as plain links (no script needed);
+  `TabGroup` + `TabPanel` switch panels in place with the sliding marker in
+  `static/tabs.js`. Without scripts the `TabGroup` strip stays hidden and its
+  panels stay stacked.
+- **Dialog(id, sheet, attrs)** — one modal: centred, or rising from the bottom
+  edge on phones with `sheet`. The confirm dialog is its centred variant.
+- **ToastStack / Toast(id, danger, attrs)** — messages at the bottom edge: ink
+  for a confirmation, red for a failure (the request error toast).
+- **Switch(name, label, checked, attrs)** for a yes/no setting and
+  **Chip(name, value, label, checked, single)** for a pill multi-select; both
+  keep a real checkbox or radio as the submitted field.
+- **ProgressBar** and **ErrorBanner** as before.
+
+A combobox row may not hold a button inside its option: ARIA forbids
+interactive descendants there, so screen readers never expose them. The
+category picker's popup is therefore a `role="grid"` whose rows pair the
+category cell with its Edit cell; left and right arrows move between them.
+
+## React kit inventory (reference)
 
 Inventory taken from `static/style.css` (`.card`, `.item-row`, `.muted`, `.error`, `header/nav`) and the native controls the templates use. All in `components/core/`:
 

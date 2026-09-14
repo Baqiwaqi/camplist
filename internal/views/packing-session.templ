@@ -76,7 +76,15 @@ templ TripRenameForm(session packing.PackingSession, csrfToken string) {
 		class="card mt-8 flex flex-wrap items-end gap-3"
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
-		<div class="grid gap-1 grow basis-56"><label for="rename-trip" class="text-sm font-bold">Trip name</label><input id="rename-trip" name="name" value={ session.DisplayName() } required maxlength="200" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
+		<div class="grow basis-56">
+			@Field(TextField{
+				ID:    "rename-trip",
+				Name:  "name",
+				Label: "Trip name",
+				Value: session.DisplayName(),
+				Attrs: templ.Attributes{"required": true, "maxlength": "200"},
+			})
+		</div>
 		<button class="btn btn-secondary">Rename trip</button>
 	</form>
 }
@@ -267,9 +275,14 @@ templ TripEntryForm(session packing.PackingSession, categories []packing.Categor
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			@TripEntryOperation(false)
 			<div class="grid gap-3 sm:grid-cols-2">
-				<div class="grid gap-1"><label for="entry-name" class="text-sm font-bold">Name</label><input id="entry-name" name="name" required maxlength="200" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-				<div class="grid gap-1">
-					<label for="entry-category" class="text-sm font-bold">Category</label>
+				@Field(TextField{
+					ID:    "entry-name",
+					Name:  "name",
+					Label: "Name",
+					Attrs: templ.Attributes{"required": true, "maxlength": "200"},
+				})
+				<div class="min-w-0">
+					<label for="entry-category" class="label">Category</label>
 					@CategoryPicker("entry-category", "trip-categories", "", "Pick or type one", categories)
 				</div>
 			</div>
@@ -277,7 +290,7 @@ templ TripEntryForm(session packing.PackingSession, categories []packing.Categor
 				@SelectField("entry-kind", "kind", "Type", false, entryKindOptions, "")
 				@ScopeSelect("scope", "entry-scope", "", true, false)
 			</div>
-			<label class="flex items-center gap-2"><input type="checkbox" name="saveForFuture" value="true"/>Also save for future trips (requires packing list edit access)</label>
+			@Switch("saveForFuture", "Also save for future trips (requires packing list edit access)", false, nil)
 			<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto"><button class="btn btn-primary">Add</button></div>
 		</form>
 		@FutureSaveSlot(session, nil, csrfToken, false)

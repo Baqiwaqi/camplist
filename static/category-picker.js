@@ -6,9 +6,10 @@
 // offers the existing one first. The text input stays the real form field, so
 // picking an option only fills it in. Options are read from the picker's
 // datalist each time, which lets the offline scripts add categories to it.
-// Remembered custom categories (data-custom) get a small menu: Rename opens
-// the layout's category dialog and Remove posts straight away; both answer
-// with a categories-changed event that updates every picker on the page.
+// Remembered custom categories (data-custom) carry an Edit button in their own
+// grid cell beside the option: left and right arrows move to it, and it opens
+// the layout's category dialog, which renames or removes the category and
+// answers with a categories-changed event that updates every picker on the page.
 // Registered before Alpine starts so every picker shares one definition.
 const categoryKey = value => value.trim().toLowerCase()
 
@@ -75,6 +76,9 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('categoryPicker', () => ({
     open: false,
     active: -1,
+    // Which cell of the active row the keyboard is on: 0 the category itself,
+    // 1 its Edit button. Only a remembered category has a second cell.
+    column: 0,
     query: '',
     // Opening the picker shows every option; typing narrows them down.
     filtering: false,
@@ -87,8 +91,6 @@ document.addEventListener('alpine:init', () => {
     detach() {
       this.$refs.input.removeAttribute('list')
     },
-    // The category whose rename/remove menu is open.
-    managing: null,
     options() {
       return Array.from(this.$root.querySelector('datalist').options, option => ({ value: option.value, custom: 'custom' in option.dataset }))
     },
@@ -115,8 +117,17 @@ document.addEventListener('alpine:init', () => {
     optionID(index) {
       return `${this.$refs.input.id}-option-${index}`
     },
+    actionID(index) {
+      return `${this.$refs.input.id}-action-${index}`
+    },
     activeID() {
-      return this.open && this.active >= 0 ? this.optionID(this.active) : null
+      if (!this.open || this.active < 0) return null
+      return this.column === 1 ? this.actionID(this.active) : this.optionID(this.active)
+    },
+    // The row the pointer is over becomes the active one, on the cell it is on.
+    point(index, column) {
+      this.active = index
+      this.column = column
     },
     show() {
       if (this.open) return
@@ -127,28 +138,21 @@ document.addEventListener('alpine:init', () => {
     close() {
       this.open = false
       this.active = -1
-      this.managing = null
+      this.column = 0
     },
+    // Edit hands the category to the layout's dialog, which renames or removes
+    // it. The picker closes first, so the dialog is not covered by the popup.
     manage(value) {
-      this.managing = this.managing === value ? null : value
-      if (this.managing === null) this.$refs.input.focus()
-    },
-    rename(value) {
       this.close()
       renamedFrom = this.$refs.input
       window.dispatchEvent(new CustomEvent('category-rename', { detail: { name: value, input: this.$refs.input } }))
     },
-    remove(value) {
-      this.close()
-      this.$refs.input.focus()
-      window.dispatchEvent(new CustomEvent('category-remove', { detail: { name: value } }))
-    },
     filter() {
-      this.managing = null
       this.show()
       this.query = this.$refs.input.value
       this.filtering = true
       this.active = -1
+      this.column = 0
     },
     move(step) {
       if (!this.open) {
@@ -158,7 +162,18 @@ document.addEventListener('alpine:init', () => {
       const count = this.matches().length
       if (!count) return
       this.active = this.active === -1 && step < 0 ? count - 1 : (this.active + step + count) % count
+      this.column = 0
       this.$nextTick(() => document.getElementById(this.optionID(this.active))?.scrollIntoView({ block: 'nearest' }))
+    },
+    // Right and left move between the category and its Edit button. A row
+    // without one leaves the caret to the field, as a plain text input does.
+    across(event, step) {
+      const item = this.open && this.matches()[this.active]
+      if (!item || !item.custom) return
+      const column = this.column + step
+      if (column < 0 || column > 1) return
+      event.preventDefault()
+      this.column = column
     },
     pick(item) {
       this.$refs.input.value = item.value
@@ -166,12 +181,14 @@ document.addEventListener('alpine:init', () => {
       this.close()
       this.$refs.input.focus()
     },
-    // Enter picks the highlighted option instead of submitting the form.
+    // Enter picks the highlighted option, or presses its Edit button, instead
+    // of submitting the form.
     enter(event) {
       const item = this.open && this.matches()[this.active]
       if (!item) return
       event.preventDefault()
-      this.pick(item)
+      if (this.column === 1) this.manage(item.value)
+      else this.pick(item)
     },
     escape(event) {
       if (!this.open) return
@@ -193,9 +210,9 @@ document.addEventListener('alpine:init', () => {
     },
   }))
 
-  // The rename form in views.CategoryDialog, and the remove form beside it.
-  // A failure stays inside the dialog because the modal covers the error
-  // toast; closing it puts focus back in the picker that opened it.
+  // The rename form in views.CategoryDialog, and the remove form behind its
+  // Remove button. A failure stays inside the dialog because the modal covers
+  // the error toast; closing it puts focus back in the picker that opened it.
   Alpine.data('categoryDialog', () => ({
     from: '',
     to: '',
@@ -224,13 +241,16 @@ document.addEventListener('alpine:init', () => {
     failed(xhr) {
       const plain = (xhr.getResponseHeader('Content-Type') || '').startsWith('text/plain')
       const text = (xhr.responseText || '').trim()
-      this.error = xhr.status < 500 && plain && text ? text : 'The category did not rename. Try again or reload the page.'
+      this.error = xhr.status < 500 && plain && text ? text : 'The category did not change. Try again or reload the page.'
     },
     lost() {
       this.error = 'Connection lost. Reconnect and try again.'
     },
-    remove(name) {
-      this.$refs.removeName.value = name
+    // Forgetting a category only stops the pickers offering it; the items
+    // already in it keep their category, so it needs no confirmation.
+    removeCategory() {
+      this.error = ''
+      this.$refs.removeName.value = this.from
       this.$refs.removeForm.requestSubmit()
     },
   }))

@@ -46,10 +46,22 @@ The teaching-only phase is complete. Default to **implementing requested changes
   rule in `assets/css/tailwind.css`; never `hx-disabled-elt`, which drops
   keyboard focus. Swapped content keeps focus via stable ids or `autofocus`,
   and live regions (`role="status"`) stay outside swapped elements.
+- Shared components live in `internal/views/components.templ`: `PageHead`
+  (back link, title, one meta line, actions as children) and `SectionHead`
+  (title with count, at most one text action); `Field(TextField{...})` for
+  every input and textarea; `Dialog(id, sheet, attrs)` for every modal (the
+  confirm dialog is its centred variant, `sheet` rises from the bottom on
+  phones); `ToastStack`/`Toast` at the bottom edge, ink for a confirmation and
+  red for a failure; `Switch` for a yes/no setting and `Chip` for a pill
+  multi-select, both keeping a real checkbox or radio as the submitted field;
+  `TabLinks` (page switch, plain links, no script) and `TabGroup`/`TabPanel`
+  (panels in place, sliding marker in `static/tabs.js`, strip hidden and
+  panels stacked without scripts). Use these instead of pasting class strings
+  or adding a one-off.
 - Dropdowns are Pines UI style components on Alpine sharing one popup style
-  (`.popup`, `.option`, `.option-danger`, `.popup-separator`); never add a
-  bare `<select>` or a one-off popover. Menus: `views.Menu(label)` (compact,
-  for card rows) and `views.PageMenu(label)` (page-head size) with `MenuLink`,
+  (`.popup`, `.option`, `.option-danger`, `.option-new`, `.option-action`,
+  `.popup-separator`); never add a bare `<select>` or a one-off popover.
+  Menus: `views.Menu(label)` (compact, for card rows) and `views.PageMenu(label)` (page-head size) with `MenuLink`,
   `MenuButton` and `MenuSeparator` children (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
   `static/menu.js`, loaded before Alpine; it flips the popup right
@@ -71,10 +83,14 @@ The teaching-only phase is complete. Default to **implementing requested changes
   categories (one `item-categories` doc per user partition). Call
   `rememberCategory` after saving an item. Categories compare trimmed and
   case-insensitively; never rewrite the category of a replayable operation.
-  Remembered custom options carry `data-custom` and can be renamed (items on
-  lists the actor owns only, never started trips) or removed under
-  `/categories`; results reach every picker via the `categories-changed`
-  HX-Trigger (header values must stay ASCII).
+  Remembered custom options carry `data-custom` and an Edit button that opens
+  `views.CategoryDialog` to rename (items on lists the actor owns only, never
+  started trips) or remove them; `/categories` does the same without scripts.
+  Results reach every picker via the `categories-changed` HX-Trigger (header
+  values must stay ASCII). The picker's popup is a `role="grid"`, not a
+  listbox: ARIA forbids interactive descendants inside an option, so the Edit
+  button is its own `role="gridcell"` beside the category and left/right
+  arrows move between them.
 - Bulk add (`internal/web/bulk.go`): Add several and Add from a list are
   pages without scripts and panels loaded into the list page's `#bulk-add`
   dialog (`.dialog-sheet`, a bottom sheet below 721px). A finished add answers
@@ -113,10 +129,12 @@ The teaching-only phase is complete. Default to **implementing requested changes
   headings, links, focus ring and checkboxes, and `@layer components` keeps the
   display type roles (`.t-*`) and the classes that carry state, pseudo elements
   or runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
-  `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`, `.error`,
-  `.dialog`, `.category-more`, `.sync-status`, the `drop-*`/toast transitions,
-  and the `.muted`/`.tag` the offline scripts set) plus rules for elements the
-  offline scripts create without classes. Utilities are generated from
+  `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`,
+  `.field`/`.label`/`.hint`, `.page-head`/`.section-head`/`.back-link`,
+  `.tabs`/`.tab`, `.switch`, `.chip`, `.error`, `.toast`, `.dialog`,
+  `.sync-status`, the `drop-*`/toast transitions, and the `.muted`/`.tag` the
+  offline scripts set) plus rules for elements the offline scripts create
+  without classes. Utilities are generated from
   `internal/views` and `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)
@@ -127,9 +145,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   logo assets, and a React click-through kit for reference only). Invoke
   `/camplist-design` for brand context before designing new UI.
 - Runtime: tokens live in the `@theme` block of `assets/css/tailwind.css`;
-  logomarks live in `static/`. Views combine utilities (fields, page and card
-  heads are utility strings) with the component classes listed under Build /
-  run; the React components are not shipped.
+  logomarks live in `static/`. Views combine utilities with the shared templ
+  components and the component classes listed under Build / run; the React
+  components are not shipped. A page head is a back link, a title, one meta
+  line and actions at natural width; a section is a title with its count and
+  at most one text action, then one white sheet of hairline rows.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
   classes such as `.error`, `.card` and `.item-row` at runtime, so keep those

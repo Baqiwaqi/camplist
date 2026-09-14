@@ -174,6 +174,71 @@
     @apply font-display font-extrabold text-[2rem] leading-[1.05] tracking-display mb-2 wrap-anywhere;
   }
 
+  /* ---------- page and section heads ---------- */
+
+  /* A child page starts with the way back, in meta type so it never competes
+     with the title. */
+  .back-link {
+    @apply inline-flex items-center min-h-11 -mt-2 -mb-1 text-meta font-semibold text-muted no-underline;
+  }
+
+  .back-link:hover {
+    @apply text-ink-900 opacity-100;
+  }
+
+  /* Title on the left, actions at their natural width on the right; they drop
+     under the title on phones rather than stretching into full-width bars. */
+  .page-head {
+    @apply flex flex-wrap justify-between items-start gap-x-4 gap-y-3 mb-6;
+  }
+
+  .page-head-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  /* One meta line under the title: dates, counts, what this page is for. */
+  .page-meta {
+    @apply text-muted max-w-[60ch];
+  }
+
+  /* A section title with its count, and at most one text action. */
+  .section-head {
+    @apply flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3;
+  }
+
+  .section-count {
+    @apply text-meta font-semibold text-muted;
+  }
+
+  /* ---------- fields ---------- */
+
+  /* One shape for every text input and textarea, so a field always matches the
+     select trigger beside it. */
+  .field {
+    @apply block w-full min-h-11 py-2 px-3 rounded-field border border-sand-300 bg-white text-ink-900 font-normal placeholder:text-muted;
+  }
+
+  .field:focus-visible {
+    @apply border-pine-700 outline-offset-0;
+  }
+
+  .field[aria-invalid="true"] {
+    @apply border-red-300;
+  }
+
+  /* A textarea needs more than one line to start with. */
+  .field-multiline {
+    @apply min-h-22;
+  }
+
+  .label {
+    @apply block text-meta font-bold mb-1 wrap-anywhere;
+  }
+
+  .hint {
+    @apply mt-1 text-meta text-muted;
+  }
+
   /* ---------- cards and rows ---------- */
 
   .card {
@@ -382,6 +447,90 @@
     transform: rotate(45deg);
   }
 
+  /* ---------- tabs (views.Tabs, static/tabs.js) ---------- */
+
+  /* A segmented control on a sand track. The selected tab is a white pill: a
+     marker that slides between tabs, or the tab's own background when no
+     script has placed the marker yet. */
+  .tabs {
+    @apply relative grid grid-flow-col auto-cols-fr p-1 rounded-full bg-sand-100;
+  }
+
+  .tab {
+    @apply relative z-1 flex items-center justify-center gap-2 min-h-10 px-3 rounded-full font-bold text-muted text-center no-underline cursor-pointer;
+    transition: color var(--duration-colour) ease;
+  }
+
+  .tab:hover {
+    @apply text-ink-900 opacity-100;
+  }
+
+  .tab[aria-selected="true"],
+  .tab[aria-current="page"] {
+    @apply text-ink-900;
+  }
+
+  /* Without the sliding marker the selected tab carries the pill itself, which
+     is what a no-script page and the first paint before Alpine show. */
+  .tabs:not(.tabs-marked) :is(.tab[aria-selected="true"], .tab[aria-current="page"]) {
+    @apply bg-white border border-sand-300;
+  }
+
+  .tab-marker {
+    @apply absolute z-0 top-1 bottom-1 left-1 rounded-full bg-white border border-sand-300;
+    transition: left var(--duration-tab) ease, width var(--duration-tab) ease;
+  }
+
+  .tab-count {
+    @apply text-caption font-semibold text-muted;
+  }
+
+  /* ---------- switch and chips ---------- */
+
+  /* A yes/no setting. The checkbox stays the submitted field; the switch is
+     its label, so a click on either toggles it and no-script forms still post. */
+  .switch {
+    @apply relative flex-none inline-block w-11 h-6 rounded-full bg-sand-300 cursor-pointer;
+    transition: background-color var(--duration-switch) ease;
+  }
+
+  .switch::after {
+    content: "";
+    @apply absolute left-0.5 top-0.5 size-5 rounded-full bg-white;
+    transition: transform var(--duration-switch) ease;
+  }
+
+  .switch-field:checked + .switch {
+    @apply bg-pine-700;
+  }
+
+  .switch-field:checked + .switch::after {
+    transform: translateX(20px);
+  }
+
+  .switch-field:focus-visible + .switch {
+    @apply outline-2 outline-pine-700 outline-offset-2;
+  }
+
+  /* Multi-select as pills. The input is visually hidden inside the label, so
+     the chip is a real checkbox to a screen reader and to a form. */
+  .chip {
+    @apply inline-flex items-center gap-2 min-h-10 py-1 px-4 rounded-full border border-sand-300 bg-white font-semibold cursor-pointer;
+    transition: background-color var(--duration-colour) ease, border-color var(--duration-colour) ease;
+  }
+
+  .chip:hover {
+    @apply bg-sand-50;
+  }
+
+  .chip:has(.chip-field:checked) {
+    @apply bg-pine-100 border-pine-700 text-pine-900;
+  }
+
+  .chip:has(.chip-field:focus-visible) {
+    @apply outline-2 outline-pine-700 outline-offset-2;
+  }
+
   /* ---------- dropdown menu (views.Menu, static/menu.js) ---------- */
 
   .menu {
@@ -473,11 +622,11 @@
     @apply top-auto bottom-full mt-0 mb-1.5;
   }
 
-  /* ---------- popup (menu and select) ---------- */
+  /* ---------- popup (menu, select and category picker) ---------- */
 
-  /* One popup for every dropdown, after the Pines UI dropdown and select: a
-     white sheet on a sand border that scrolls past 288px. Each trigger's own
-     class above places it. */
+  /* One popup for every dropdown, after the Pines UI dropdown, select and
+     combobox: a white sheet on a sand border that scrolls past 288px. Each
+     trigger's own class above places it. */
   .popup {
     @apply absolute z-5 max-h-72 overflow-y-auto overscroll-contain p-1 bg-white border border-sand-300 rounded-card;
   }
@@ -516,6 +665,22 @@
     @apply text-red-700;
   }
 
+  /* Naming a category the list does not have yet: an offer, not a choice. */
+  .option-new {
+    @apply text-pine-700;
+  }
+
+  /* A trailing control on an option's row, such as the category picker's Edit.
+     It sits in its own grid cell, never inside the option itself. */
+  .option-action {
+    @apply flex-none mr-1 min-h-8 px-3 rounded-full bg-sand-100 text-meta font-bold text-ink-900 cursor-pointer;
+  }
+
+  .option-action:hover,
+  .option-action[data-active="true"] {
+    @apply bg-sand-300;
+  }
+
   .popup-separator {
     @apply h-px my-1 bg-sand-100;
   }
@@ -528,7 +693,7 @@
     @apply opacity-60 transition-opacity;
   }
 
-  /* ---------- error banner and toast ---------- */
+  /* ---------- error banner ---------- */
 
   /* The only semantic colour: a solid red block with a display heading.
      The offline shell sets this class on its message paragraph. */
@@ -562,24 +727,55 @@
     @apply text-inherit;
   }
 
-  /* Failed background requests surface as a toast near the thumb. */
-  .error-toast {
-    @apply fixed left-1/2 bottom-4 w-[min(calc(100%-2rem),calc(900px-2rem))] m-0 z-10;
-    /* transform rather than translate: the toast keyframes animate transform */
-    transform: translateX(-50%);
+  /* ---------- toast ---------- */
+
+  /* Toasts stack at the bottom edge, near the thumb. The stack spans the page
+     so a toast can centre in it; only the toasts themselves take presses, so
+     an empty stack never covers the page. */
+  .toast-stack {
+    @apply fixed inset-x-0 bottom-4 z-10 grid justify-items-center gap-2 px-4 pointer-events-none;
   }
 
-  .error-toast > div {
-    @apply flex-auto;
+  /* Ink for a confirmation, red for a failure. */
+  .toast {
+    @apply pointer-events-auto flex items-start gap-3 w-[min(100%,calc(900px-2rem))] m-0 py-3 px-4 rounded-card bg-ink-900 text-white;
   }
 
-  .error-dismiss {
+  .toast-danger {
+    @apply bg-red-700;
+  }
+
+  /* A failure carries the error banner's mark, so the two read as one thing. */
+  .toast-danger::before {
+    content: "!" / "";
+    @apply inline-flex flex-none items-center justify-center size-6 rounded-full bg-white text-red-700 font-extrabold text-[15px] leading-none;
+  }
+
+  .toast > div {
+    @apply flex-auto min-w-0;
+  }
+
+  .toast-title {
+    @apply font-display font-extrabold text-xl leading-[1.05] tracking-display mb-[2px];
+  }
+
+  .toast p {
+    @apply m-0 text-sm;
+  }
+
+  .toast a {
+    @apply text-inherit;
+  }
+
+  .toast-dismiss {
     @apply flex-none text-inherit;
   }
 
-  /* ---------- confirm dialog ---------- */
+  /* ---------- dialog ---------- */
 
-  /* m-auto restores the centring Preflight's margin reset takes from <dialog>. */
+  /* One modal: centred by default, and .dialog-sheet below rises from the
+     bottom edge on phones. The confirm dialog is the centred variant.
+     m-auto restores the centring Preflight's margin reset takes from <dialog>. */
   .dialog {
     @apply m-auto w-[min(calc(100%-2rem),24rem)] max-w-lg p-6 border border-sand-200 rounded-card bg-white text-ink-900;
   }
@@ -594,14 +790,24 @@
 
   /* ---------- category picker (views.CategoryPicker) ---------- */
 
-  /* Opens the rename and remove menu of a remembered category. */
-  .category-more {
-    @apply flex-none mr-1 min-h-8 px-3 rounded-full bg-sand-100 text-meta font-bold text-ink-900 cursor-pointer;
+  /* The combobox popup hangs under the input, as wide as it. */
+  .picker-popup {
+    @apply inset-x-0 top-[calc(100%+6px)];
   }
 
-  .category-more:hover,
-  .category-more[aria-expanded="true"] {
-    @apply bg-sand-300;
+  /* A grid row: the option itself plus, for a remembered category, the Edit
+     cell. The row is a grid so the Edit button is a sibling of the option and
+     never an interactive descendant of it. */
+  .option-row {
+    @apply flex items-center rounded-field;
+  }
+
+  .option-row:has(.option-action[data-active="true"]) {
+    @apply bg-sand-50;
+  }
+
+  .option-row .option {
+    @apply flex-auto min-w-0;
   }
 
   /* A dialog holding a form (bulk add, category rename): centred and wider
@@ -721,14 +927,14 @@
   }
 
   /* The toast slides up when it appears and fades on dismiss. */
-  .error-toast:not([hidden]) {
+  .toast:not([hidden]) {
     animation: toast-in 200ms ease;
   }
 
-  .error-toast.toast-leave {
+  .toast.toast-leave {
     transition: opacity 160ms ease, transform 160ms ease;
     opacity: 0;
-    transform: translate(-50%, 8px);
+    transform: translateY(8px);
   }
 
   .dialog[open] {
@@ -780,12 +986,12 @@
   @keyframes toast-in {
     from {
       opacity: 0;
-      transform: translate(-50%, 8px);
+      transform: translateY(8px);
     }
 
     to {
       opacity: 1;
-      transform: translate(-50%, 0);
+      transform: none;
     }
   }
 

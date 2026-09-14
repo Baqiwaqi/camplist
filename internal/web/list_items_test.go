@@ -55,7 +55,8 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 	}
 	for _, want := range []string{
 		`<form id="add-item"`,
-		`aria-invalid:border-red-300" autofocus>`,
+		`id="item-name-new"`,
+		`" autofocus>`,
 		`<ul hx-swap-oob="beforeend:#list-items"><li class="item-row`,
 		`id="item-` + saved.Items[0].ID + `"`,
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">1 item</p>`,

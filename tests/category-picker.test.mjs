@@ -139,7 +139,7 @@ test('the picker a rename starts from follows the new name, other fields do not'
   const { listeners, factories, datalists } = load([[...defaults, { value: 'Fishnig', custom: true }]], [editing, elsewhere])
   const component = factories.categoryPicker()
   component.$refs = { input: editing }
-  component.rename('Fishnig')
+  component.manage('Fishnig')
   listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, renamedInView: true } })
   assert.equal(editing.value, 'Fishing')
   assert.equal(elsewhere.value, 'Fishnig')
@@ -164,4 +164,88 @@ test('a merge elsewhere keeps the spelling the items in view use', () => {
   const { listeners, datalists } = load([[...defaults, { value: 'fishing', trip: true }]])
   listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true } })
   assert.deepEqual(datalists[0].options.map(option => option.value).slice(3), ['fishing'])
+})
+
+// A remembered category's row has two cells: the category and its Edit
+// button. Right and left move between them, so the button a screen reader now
+// sees is one a keyboard can reach.
+test('right and left move between a remembered category and its Edit button', () => {
+  const input = { id: 'item-category', value: '' }
+  const component = picker([...defaults, { value: 'Fishnig', custom: true }])
+  component.$refs = { input }
+  component.filtering = false
+  const event = { preventDefault() { this.prevented = true } }
+
+  component.active = 3
+  assert.equal(component.activeID(), 'item-category-option-3')
+  component.across(event, 1)
+  assert.equal(event.prevented, true)
+  assert.equal(component.column, 1)
+  assert.equal(component.activeID(), 'item-category-action-3')
+
+  component.across(event, -1)
+  assert.equal(component.column, 0)
+
+  // Past either end of the row the field keeps the key, so the caret moves.
+  const ignored = { preventDefault() { this.prevented = true } }
+  component.across(ignored, -1)
+  assert.equal(ignored.prevented, undefined)
+  assert.equal(component.column, 0)
+})
+
+test('a category with no Edit button leaves the arrow keys to the field', () => {
+  const input = { id: 'item-category', value: '' }
+  const component = picker([...defaults, { value: 'Fishnig', custom: true }])
+  component.$refs = { input }
+  component.filtering = false
+  component.active = 0
+  const event = { preventDefault() { this.prevented = true } }
+  component.across(event, 1)
+  assert.equal(event.prevented, undefined)
+  assert.equal(component.column, 0)
+})
+
+test('Enter on the Edit cell opens the category dialog instead of picking', () => {
+  const input = { id: 'item-category', value: '', focus() {} }
+  const { factories, datalists, dispatched } = load([[...defaults, { value: 'Fishnig', custom: true }]], [input])
+  const component = factories.categoryPicker()
+  component.$root = { querySelector: () => datalists[0] }
+  component.$refs = { input }
+  component.open = true
+  component.filtering = false
+  component.active = 3
+  component.column = 1
+  const event = { preventDefault() { this.prevented = true } }
+  component.enter(event)
+  assert.equal(event.prevented, true)
+  assert.equal(input.value, '')
+  assert.deepEqual(dispatched.map(sent => [sent.type, sent.detail.name]), [['category-rename', 'Fishnig']])
+})
+
+test('pointing at an Edit button leaves Enter picking the category', () => {
+  const input = { id: 'item-category', value: '', focus() {} }
+  const { factories, datalists, dispatched } = load([[...defaults, { value: 'Fishnig', custom: true }]], [input])
+  const component = factories.categoryPicker()
+  component.$root = { querySelector: () => datalists[0] }
+  component.$refs = { input }
+  component.open = true
+  component.filtering = false
+  component.point(3)
+  assert.equal(component.activeID(), 'item-category-option-3')
+  const event = { preventDefault() {} }
+  component.enter(event)
+  assert.equal(input.value, 'Fishnig')
+  assert.deepEqual(dispatched, [])
+})
+
+test('moving between rows returns to the category cell', () => {
+  const input = { id: 'item-category', value: '' }
+  const component = picker([...defaults, { value: 'Fishnig', custom: true }])
+  component.$refs = { input }
+  component.$nextTick = () => {}
+  component.filtering = false
+  component.active = 3
+  component.column = 1
+  component.move(1)
+  assert.equal(component.column, 0)
 })

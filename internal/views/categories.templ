@@ -1,22 +1,19 @@
 package views
 
-// CategoryDialog is the rename form a category picker's menu opens: a bottom
-// sheet on phones and a centred dialog on wide screens. It also holds the
-// remove form the menu's Remove posts. Both answer htmx with HX-Trigger
-// categories-changed (static/category-picker.js) and keep a failure inside the
-// dialog, since the modal covers the error toast. The same forms post without
-// scripts from CategoriesPage. Behaviour lives in
+// CategoryDialog is what a category picker's Edit button opens: the rename
+// form and, beside it, the button that forgets the category. It is a bottom
+// sheet on phones and a centred dialog on wide screens. Both forms answer htmx
+// with HX-Trigger categories-changed (static/category-picker.js) and keep a
+// failure inside the dialog, since the modal covers the error toast. The same
+// forms post without scripts from CategoriesPage. Behaviour lives in
 // Alpine.data("categoryDialog").
 templ CategoryDialog(csrfToken string) {
-	<dialog
-		id="category-dialog"
-		class="dialog dialog-sheet"
-		aria-labelledby="category-dialog-title"
-		x-data="categoryDialog"
-		x-on:category-rename.window="open($event.detail)"
-		x-on:category-remove.window="remove($event.detail.name)"
-		x-on:close="closed()"
-	>
+	@Dialog("category-dialog", true, templ.Attributes{
+		"aria-labelledby":             "category-dialog-title",
+		"x-data":                      "categoryDialog",
+		"x-on:category-rename.window": "open($event.detail)",
+		"x-on:close":                  "closed()",
+	}) {
 		<form
 			method="post"
 			action="/categories/rename"
@@ -33,7 +30,7 @@ templ CategoryDialog(csrfToken string) {
 			<input type="hidden" name="revision" value=""/>
 			<h2 id="category-dialog-title" class="dialog-title wrap-anywhere" x-text="`Rename “${from}”`">Rename category</h2>
 			<p class="text-sm text-muted mb-4">Items on your own lists move to the new name. Lists shared with you and trips you already started keep theirs.</p>
-			<label for="category-new-name" class="block text-sm font-bold mb-1">New name</label>
+			<label for="category-new-name" class="label">New name</label>
 			<input
 				id="category-new-name"
 				name="to"
@@ -43,7 +40,7 @@ templ CategoryDialog(csrfToken string) {
 				x-ref="name"
 				x-model="to"
 				aria-describedby="category-dialog-note"
-				class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"
+				class="field"
 			/>
 			<p id="category-dialog-note" class="min-h-[1.5em] mt-1 text-sm text-muted" aria-live="polite" x-text="note()"></p>
 			<p class="text-sm font-bold text-red-700 mt-1" role="alert" x-show="error" x-text="error"></p>
@@ -52,18 +49,26 @@ templ CategoryDialog(csrfToken string) {
 				<button type="submit" class="btn btn-primary">Rename</button>
 			</div>
 		</form>
+		<p class="mt-4 pt-3 border-t border-sand-100">
+			<button type="button" class="btn btn-link text-red-700" x-on:click="removeCategory()" x-text="`Remove “${from}” from your categories`">Remove from your categories</button>
+		</p>
+		<p class="hint">The items already in it keep their category.</p>
 		<form
 			hidden
 			method="post"
 			action="/categories/remove"
 			hx-post="/categories/remove"
 			hx-swap="none"
+			hx-sync="this:drop"
 			x-ref="removeForm"
+			x-on:htmx:response-error.stop="failed($event.detail.xhr)"
+			x-on:htmx:send-error.stop="lost()"
+			x-on:htmx:after-request="if ($event.detail.successful) $root.close()"
 		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="name" x-ref="removeName"/>
 		</form>
-	</dialog>
+	}
 }
 
 // CategoriesPage lists the camper's remembered custom categories with a
@@ -72,8 +77,10 @@ templ CategoryDialog(csrfToken string) {
 templ CategoriesPage(categories []string, errors []string, csrfToken string) {
 	@Layout("Your categories", csrfToken) {
 		<section class="max-w-[560px]">
-			<h1>Your categories</h1>
-			<p class="text-muted mb-4">Categories you typed yourself. Renaming one moves the items on your own lists to the new name; lists shared with you and trips you already started keep theirs. Removing one only takes it out of your suggestions.</p>
+			@PageHead(PageHeading{
+				Title: "Your categories",
+				Meta:  "Categories you typed yourself. Renaming one moves the items on your own lists to the new name; lists shared with you and trips you already started keep theirs. Removing one only takes it out of your suggestions.",
+			})
 			if len(errors) > 0 {
 				@ErrorBanner(errors)
 			}
@@ -87,10 +94,13 @@ templ CategoriesPage(categories []string, errors []string, csrfToken string) {
 							<form method="post" action="/categories/rename" class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
 								<input type="hidden" name="_csrf" value={ csrfToken }/>
 								<input type="hidden" name="from" value={ category }/>
-								<div class="grid gap-1">
-									<label for={ categoryFieldID(i) } class="text-sm font-bold wrap-anywhere">Rename “{ category }”</label>
-									<input id={ categoryFieldID(i) } name="to" value={ category } required maxlength="100" class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
-								</div>
+								@Field(TextField{
+									ID:    categoryFieldID(i),
+									Name:  "to",
+									Label: "Rename “" + category + "”",
+									Value: category,
+									Attrs: templ.Attributes{"required": true, "maxlength": "100"},
+								})
 								<button type="submit" class="btn btn-primary min-h-11">Rename</button>
 							</form>
 							<form method="post" action="/categories/remove">

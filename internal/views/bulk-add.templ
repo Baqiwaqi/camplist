@@ -18,16 +18,14 @@ templ BulkAddActions(listID string) {
 // focuses the button that opened it, which browsers that do not focus a
 // clicked link would not restore.
 templ BulkAddDialog() {
-	<dialog
-		id="bulk-add"
-		class="dialog dialog-sheet"
-		aria-labelledby="bulk-add-title"
-		x-data="{ opener: null }"
-		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }"
-		x-on:close="opener?.focus(); opener = null"
-	>
+	@Dialog("bulk-add", true, templ.Attributes{
+		"aria-labelledby":      "bulk-add-title",
+		"x-data":               "{ opener: null }",
+		"x-on:htmx:after-swap": "if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }",
+		"x-on:close":           "opener?.focus(); opener = null",
+	}) {
 		<div id="bulk-add-panel"></div>
-	</dialog>
+	}
 }
 
 // ListAddStatus announces the result of a bulk add under the add card. It
@@ -98,12 +96,12 @@ templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csr
 	>
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="revision" value={ form.Revision }/>
-		<div class="grid gap-1">
-			<label for="bulk-category" class="font-bold">Category for lines without a heading</label>
+		<div>
+			<label for="bulk-category" class="label">Category for lines without a heading</label>
 			@CategoryPicker("bulk-category", "bulk-category-options", form.Category, "Optional", form.Categories)
 		</div>
-		<div class="grid gap-1">
-			<label for="bulk-lines" class="font-bold">Items</label>
+		<div>
+			<label for="bulk-lines" class="label">Items</label>
 			<textarea
 				id="bulk-lines"
 				name="lines"
@@ -111,7 +109,7 @@ templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csr
 				required
 				autofocus
 				placeholder={ "Documents:\nPassport\nDriving licence\nPaper map" }
-				class="w-full min-h-40 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				class="field min-h-40"
 				if len(form.Error) > 0 {
 					aria-invalid="true"
 					aria-describedby="bulk-lines-error"

@@ -74,17 +74,17 @@ func TestPreparationSavesSwapTheCardAndSupportNormalForms(t *testing.T) {
 	// Add focuses the new task field again.
 	w = savePreparation(h, list.ID, url.Values{"name": {"Pack pegs"}, "scope": {"shared"}, "revision": {saved.Revision()}}, htmx)
 	saved = current()
-	card(w, saved, "Pack pegs", `id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus`)
+	card(w, saved, "Pack pegs", `id="new-task" name="name" value="" class="field" placeholder="Like buying fuel" autofocus maxlength="200" required`)
 
 	// A rename made in edit mode keeps edit mode and its field.
 	w = savePreparation(h, list.ID, url.Values{"taskId": {"tent"}, "name": {"Repair tent poles"}, "scope": {"shared"}, "action": {"save"}, "done": {"false"}, "editing": {"true"}, "revision": {saved.Revision()}}, htmx)
 	saved = current()
-	card(w, saved, `x-data="{ editing: true }"`, `id="task-tent" name="name" value="Repair tent poles" required maxlength="200" autofocus`)
+	card(w, saved, `x-data="{ editing: true }"`, `id="task-tent" name="name" value="Repair tent poles" class="field" autofocus maxlength="200" required`)
 
 	// Remove focuses the task the button named.
 	w = savePreparation(h, list.ID, url.Values{"taskId": {"tent"}, "name": {"Repair tent poles"}, "action": {"remove"}, "next": {"lamp"}, "editing": {"true"}, "revision": {saved.Revision()}}, htmx)
 	saved = current()
-	body = card(w, saved, `x-data="{ editing: true }"`, `id="task-lamp" name="name" value="Charge lamp" required maxlength="200" autofocus`)
+	body = card(w, saved, `x-data="{ editing: true }"`, `id="task-lamp" name="name" value="Charge lamp" class="field" autofocus maxlength="200" required`)
 	if strings.Contains(body, "Repair tent poles") {
 		t.Error("removed task still rendered")
 	}
@@ -93,7 +93,7 @@ func TestPreparationSavesSwapTheCardAndSupportNormalForms(t *testing.T) {
 	for _, task := range saved.Tasks {
 		w = savePreparation(h, list.ID, url.Values{"taskId": {task.ID}, "name": {task.Name}, "action": {"remove"}, "editing": {"true"}, "revision": {current().Revision()}}, htmx)
 	}
-	card(w, current(), `x-data="{ editing: false }"`, "No tasks yet", `placeholder="Like buying fuel" required maxlength="200" autofocus`)
+	card(w, current(), `x-data="{ editing: false }"`, "No tasks yet", `placeholder="Like buying fuel" autofocus maxlength="200" required`)
 
 	if w := savePreparation(h, list.ID, url.Values{"name": {"Buy fuel"}, "scope": {"shared"}, "revision": {current().Revision()}}, nil); w.Code != 303 || w.Header().Get("Location") != "/packing-lists/"+list.ID {
 		t.Fatalf("no-script fallback: %d %q", w.Code, w.Header().Get("Location"))

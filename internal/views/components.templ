@@ -40,3 +40,248 @@ templ ProgressBar(checked int, total int, label string) {
 		</div>
 	</div>
 }
+
+// PageHeading is the head of a page: the way back on a child page, the title,
+// one meta line, and the page's actions as children. The actions keep their
+// natural width; on phones they wrap under the title instead of stretching
+// into full-width bars.
+type PageHeading struct {
+	Title string
+	// Meta is the one line under the title: what the page is for, or the
+	// facts that identify it.
+	Meta string
+	// BackHref and BackLabel name the parent page. Both empty on a top-level
+	// page, which needs no way back beyond the nav.
+	BackHref  string
+	BackLabel string
+}
+
+templ PageHead(head PageHeading) {
+	if head.BackHref != "" {
+		<a class="back-link" href={ head.BackHref }>{ head.BackLabel }</a>
+	}
+	<div class="page-head">
+		<div class="min-w-0 flex-[1_1_20rem]">
+			<h1>{ head.Title }</h1>
+			if head.Meta != "" {
+				<p class="page-meta">{ head.Meta }</p>
+			}
+		</div>
+		<div class="page-head-actions">
+			{ children... }
+		</div>
+	</div>
+}
+
+// SectionHead names a section: its title with a count, and at most one text
+// action as children. The sheet or cards it introduces follow it.
+templ SectionHead(title string, count string) {
+	<div class="section-head">
+		<div class="flex flex-wrap items-baseline gap-x-2 min-w-0">
+			<h2 class="mb-0">{ title }</h2>
+			if count != "" {
+				<span class="section-count">{ count }</span>
+			}
+		</div>
+		{ children... }
+	</div>
+}
+
+// TextField is one text input or textarea: its label, the control and an
+// optional hint. It replaces the field class string every form used to carry
+// its own copy of. Attrs hold what is specific to the call site, such as
+// required, maxlength, autofocus or the htmx attributes of an inline form.
+type TextField struct {
+	ID          string
+	Name        string
+	Label       string
+	Value       string
+	Placeholder string
+	// Hint sits under the field and names the field for screen readers.
+	Hint string
+	// HideLabel keeps the label for screen readers only, for a field whose
+	// purpose the row around it already shows.
+	HideLabel bool
+	// Multiline renders a textarea instead of an input.
+	Multiline bool
+	// Invalid marks a field the server rejected; the error itself is reported
+	// by the page's error banner.
+	Invalid bool
+	Attrs   templ.Attributes
+}
+
+templ Field(field TextField) {
+	<div class="min-w-0">
+		<label for={ field.ID } class={ "label", templ.KV("sr-only", field.HideLabel) }>{ field.Label }</label>
+		if field.Multiline {
+			<textarea
+				id={ field.ID }
+				name={ field.Name }
+				class="field field-multiline"
+				if field.Placeholder != "" {
+					placeholder={ field.Placeholder }
+				}
+				if field.Hint != "" {
+					aria-describedby={ field.ID + "-hint" }
+				}
+				if field.Invalid {
+					aria-invalid="true"
+				}
+				{ field.Attrs... }
+			>{ field.Value }</textarea>
+		} else {
+			<input
+				type="text"
+				id={ field.ID }
+				name={ field.Name }
+				value={ field.Value }
+				class="field"
+				if field.Placeholder != "" {
+					placeholder={ field.Placeholder }
+				}
+				if field.Hint != "" {
+					aria-describedby={ field.ID + "-hint" }
+				}
+				if field.Invalid {
+					aria-invalid="true"
+				}
+				{ field.Attrs... }
+			/>
+		}
+		if field.Hint != "" {
+			<p id={ field.ID + "-hint" } class="hint">{ field.Hint }</p>
+		}
+	</div>
+}
+
+// Switch is a yes/no setting. The checkbox is the submitted field and the
+// pill is drawn from it, so the setting posts without scripts and reads as a
+// checkbox to a screen reader.
+templ Switch(name string, label string, checked bool, attrs templ.Attributes) {
+	<label class="flex items-center gap-3 min-h-11 cursor-pointer">
+		<input type="checkbox" name={ name } value="true" checked?={ checked } class="switch-field sr-only" { attrs... }/>
+		<span class="switch" aria-hidden="true"></span>
+		<span class="min-w-0">{ label }</span>
+	</label>
+}
+
+// Chip is one choice in a multi-select pill group. The checkbox stays in the
+// form and carries the value; the pill is its label.
+templ Chip(name string, value string, label string, checked bool) {
+	<label class="chip">
+		<input
+			type="checkbox"
+			name={ name }
+			value={ value }
+			checked?={ checked }
+			class="chip-field sr-only"
+		/>
+		{ label }
+	</label>
+}
+
+// Tab is one segment of a tab strip. Count is the number or fraction shown
+// beside the label, such as "6/16"; an empty count shows the label alone.
+type Tab struct {
+	Label string
+	Count string
+	// Href is set on the link variant only: the page this tab leads to.
+	Href string
+	// Current marks the tab for the page being shown, on the link variant.
+	Current bool
+}
+
+// TabLinks is the tab strip that switches pages. It is plain links, so it
+// works without scripts; the selected tab carries the white pill itself.
+templ TabLinks(label string, tabs []Tab) {
+	<nav class="tabs" aria-label={ label }>
+		for _, tab := range tabs {
+			<a
+				class="tab"
+				href={ tab.Href }
+				if tab.Current {
+					aria-current="page"
+				}
+			>
+				{ tab.Label }
+				if tab.Count != "" {
+					<span class="tab-count">{ tab.Count }</span>
+				}
+			</a>
+		}
+	</nav>
+}
+
+// TabGroup is the tab strip that switches panels in place, with a marker that
+// slides to the selected tab (Alpine.data("tabs") in static/tabs.js). Its
+// children are the panels, each wrapped in TabPanel with its own index.
+// Without scripts the strip stays hidden and the panels stay stacked, so the
+// page reads in full. group names the ids the strip and panels share.
+templ TabGroup(group string, label string, tabs []Tab) {
+	<div x-data="tabs">
+		<div class="tabs" role="tablist" aria-label={ label } x-ref="list" x-cloak>
+			<span class="tab-marker" x-bind:style="marker"></span>
+			for i, tab := range tabs {
+				<button
+					type="button"
+					class="tab"
+					role="tab"
+					id={ tabID(group, i) }
+					aria-controls={ tabPanelID(group, i) }
+					aria-selected={ boolAttr(i == 0) }
+					x-bind:aria-selected={ tabIsCurrent(i) }
+					x-bind:tabindex={ tabIsCurrent(i) + " ? 0 : -1" }
+					x-on:click={ "select(" + tabIndex(i) + ")" }
+					x-on:keydown="key($event)"
+				>
+					{ tab.Label }
+					if tab.Count != "" {
+						<span class="tab-count">{ tab.Count }</span>
+					}
+				</button>
+			}
+		</div>
+		{ children... }
+	</div>
+}
+
+// TabPanel is one panel of a TabGroup. index must match the tab's position in
+// the strip.
+templ TabPanel(group string, index int) {
+	<div
+		id={ tabPanelID(group, index) }
+		role="tabpanel"
+		aria-labelledby={ tabID(group, index) }
+		tabindex="0"
+		x-show={ tabIsCurrent(index) }
+	>
+		{ children... }
+	</div>
+}
+
+// Dialog is the app's modal. It is centred by default; sheet makes it rise
+// from the bottom edge on phones and centre from 721px, which is what a form
+// wants on a small screen. attrs carry the state and events of the page that
+// opens it.
+templ Dialog(id string, sheet bool, attrs templ.Attributes) {
+	<dialog id={ id } class={ "dialog", templ.KV("dialog-sheet", sheet) } { attrs... }>
+		{ children... }
+	</dialog>
+}
+
+// ToastStack holds the messages that appear at the bottom edge of a page.
+// Only the toasts in it take presses, so an empty stack covers nothing.
+templ ToastStack() {
+	<div class="toast-stack">
+		{ children... }
+	</div>
+}
+
+// Toast is one message in the stack: ink for a confirmation, red for a
+// failure. It carries its own id and state, because the scripts that show it
+// look it up by id.
+templ Toast(id string, danger bool, attrs templ.Attributes) {
+	<div id={ id } class={ "toast", templ.KV("toast-danger", danger) } { attrs... }>
+		{ children... }
+	</div>
+}

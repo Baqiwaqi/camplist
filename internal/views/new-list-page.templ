@@ -5,8 +5,12 @@ import "camplist/internal/packing"
 templ NewPackingListPage(form packing.CreatePackingListForm, csrfToken string) {
 	@Layout("New list", csrfToken) {
 		<section class="max-w-[560px]">
-			<h1>Start a new list</h1>
-			<p class="text-muted max-w-[60ch] mb-3">Save your regular gear here and reuse it for future trips.</p>
+			@PageHead(PageHeading{
+				Title:     "Start a new list",
+				Meta:      "Save your regular gear here and reuse it for future trips.",
+				BackHref:  "/packing-lists",
+				BackLabel: "Packing lists",
+			})
 			<div class="card">
 				@PackingListForm(form, csrfToken)
 			</div>
@@ -17,9 +21,12 @@ templ NewPackingListPage(form packing.CreatePackingListForm, csrfToken string) {
 templ EditPackingListPage(listName string, form packing.CreatePackingListForm, csrfToken string) {
 	@Layout("Edit list", csrfToken) {
 		<section class="max-w-[560px]">
-			<h1>Edit list</h1>
-			<p class="text-meta text-muted mb-1">Editing { listName }</p>
-			<p class="text-muted max-w-[60ch] mb-3">Change the name or description. Your items and trips stay as they are.</p>
+			@PageHead(PageHeading{
+				Title:     "Edit list",
+				Meta:      "Change the name or description of " + listName + ". Your items and trips stay as they are.",
+				BackHref:  "/packing-lists",
+				BackLabel: "Packing lists",
+			})
 			<div class="card">
 				@PackingListForm(form, csrfToken)
 			</div>
@@ -31,23 +38,11 @@ templ PackingListForm(form packing.CreatePackingListForm, csrfToken string) {
 	<form method="post" action={ form.Action } hx-boost="true">
 		<input type="hidden" name="_csrf" value={ csrfToken }/>
 		<input type="hidden" name="revision" value={ form.Revision }/>
-		<div class="grid gap-1 mb-4">
-			<label for="name" class="text-sm font-bold">Name</label>
-			<input
-				id="name"
-				name="name"
-				type="text"
-				placeholder="Camping"
-				value={ form.Name }
-				class="w-full min-h-11 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
-				if form.NameHasError() {
-					aria-invalid="true"
-				}
-			/>
+		<div class="mb-4">
+			@Field(TextField{ID: "name", Name: "name", Label: "Name", Value: form.Name, Placeholder: "Camping", Invalid: form.NameHasError()})
 		</div>
-		<div class="grid gap-1 mb-4">
-			<label for="description" class="text-sm font-bold">Description</label>
-			<textarea id="description" name="description" placeholder="A short description of your list" class="w-full min-h-22 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0">{ form.Description }</textarea>
+		<div class="mb-4">
+			@Field(TextField{ID: "description", Name: "description", Label: "Description", Value: form.Description, Placeholder: "A short description of your list", Multiline: true})
 		</div>
 		if len(form.Error) > 0 {
 			@ErrorBanner(form.Error)

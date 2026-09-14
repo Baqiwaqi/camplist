@@ -273,3 +273,40 @@ func tripEntryRequest(tripID string) templ.Attributes {
 func categoryFieldID(i int) string {
 	return "category-rename-" + strconv.Itoa(i)
 }
+
+// tabID and tabPanelID name the tab and panel of one segment, so each tab
+// points at its panel and each panel back at its tab.
+func tabID(group string, index int) string {
+	return group + "-tab-" + strconv.Itoa(index)
+}
+
+func tabPanelID(group string, index int) string {
+	return group + "-panel-" + strconv.Itoa(index)
+}
+
+// tabIsCurrent is the Alpine expression that is true while a tab's panel is
+// the one on show.
+func tabIsCurrent(index int) string {
+	return "current === " + strconv.Itoa(index)
+}
+
+// tabIndex renders a tab's position for an Alpine call.
+func tabIndex(index int) string {
+	return strconv.Itoa(index)
+}
+
+// boolAttr renders the server's first paint of an attribute Alpine then binds,
+// so the markup is right before scripts run and without them.
+func boolAttr(value bool) string {
+	return strconv.FormatBool(value)
+}
+
+// confirmDialogAttrs holds the state of the layout's confirm dialog, which
+// answers htmx:confirm for every element carrying hx-confirm.
+func confirmDialogAttrs() templ.Attributes {
+	return templ.Attributes{
+		"x-data":                   "{ question: '', detail: '', action: 'Delete', issue: null }",
+		"x-on:htmx:confirm.window": "if (!$event.detail.question) return; $event.preventDefault(); question = $event.detail.question; detail = $event.detail.elt.dataset.confirmDetail || ''; action = $event.detail.elt.dataset.confirmAction || 'Delete'; issue = $event.detail.issueRequest; $el.showModal()",
+		"x-on:close":               "issue = null",
+	}
+}

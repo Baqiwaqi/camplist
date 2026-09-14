@@ -93,28 +93,32 @@ func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	message := renameMessage(from, result)
-	if err := setCategoriesChanged(w, from, result.Category, message); err != nil {
+	listID := listInView(r)
+	var inView *packing.RenamedList
+	for i := range result.Lists {
+		if result.Lists[i].List.ID == listID {
+			inView = &result.Lists[i]
+		}
+	}
+	if err := setCategoriesChanged(w, from, result.Category, inView != nil, message); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
-	listID := listInView(r)
-	for _, renamed := range result.Lists {
-		if renamed.List.ID != listID {
-			continue
-		}
-		// The page showed an older revision than the one renamed: reload it
-		// rather than advance its revision past changes it never showed.
-		if r.PostForm.Get("revision") != renamed.Replaced {
-			w.Header().Set("HX-Refresh", "true")
-			return
-		}
-		var parts []templ.Component
-		for _, item := range renamed.List.Items {
-			if item.Category == result.Category {
-				parts = append(parts, views.ItemCategoryTag(item, true))
-			}
-		}
-		render(w, r, templ.Join(append(parts, views.ListRevision(renamed.List, true))...))
+	if inView == nil {
+		return
 	}
+	// The page showed an older revision than the one renamed: reload it
+	// rather than advance its revision past changes it never showed.
+	if r.PostForm.Get("revision") != inView.Replaced {
+		w.Header().Set("HX-Refresh", "true")
+		return
+	}
+	var parts []templ.Component
+	for _, item := range inView.List.Items {
+		if item.Category == result.Category {
+			parts = append(parts, views.ItemCategoryTag(item, true))
+		}
+	}
+	render(w, r, templ.Join(append(parts, views.ListRevision(inView.List, true))...))
 }
 
 // RemoveCategory drops a remembered category from the camper's suggestions.
@@ -143,7 +147,7 @@ func (h *handler) RemoveCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	message := "Removed “" + name + "” from your suggestions. Items keep their category."
-	if err := setCategoriesChanged(w, name, "", message); err != nil {
+	if err := setCategoriesChanged(w, name, "", false, message); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
 }
@@ -170,9 +174,10 @@ func categoryError(err error, category, fallback string) (int, string) {
 
 // setCategoriesChanged asks htmx to fire categories-changed, which
 // static/category-picker.js handles: from is replaced by to, or removed when
-// to is empty, and message is shown.
-func setCategoriesChanged(w http.ResponseWriter, from, to, message string) error {
-	detail := map[string]any{"from": from, "to": to, "custom": to != "" && !packing.IsDefaultCategory(to), "message": message}
+// to is empty, and message is shown. renamedInView reports that the items in
+// view no longer use from.
+func setCategoriesChanged(w http.ResponseWriter, from, to string, renamedInView bool, message string) error {
+	detail := map[string]any{"from": from, "to": to, "custom": to != "" && !packing.IsDefaultCategory(to), "renamedInView": renamedInView, "message": message}
 	body, err := json.Marshal(map[string]any{"categories-changed": detail})
 	if err != nil {
 		return err

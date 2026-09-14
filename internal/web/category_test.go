@@ -186,8 +186,8 @@ func categoryRequest(path string, values url.Values, htmx bool, currentURL strin
 
 type categoriesChanged struct {
 	Changed struct {
-		From, To, Message string
-		Custom            bool
+		From, To, Message     string
+		Custom, RenamedInView bool
 	} `json:"categories-changed"`
 }
 
@@ -247,7 +247,7 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 		t.Errorf("HX-Trigger is not ASCII: %q", header)
 	}
 	event := triggered(t, w)
-	if event.Changed.From != "Fishnig" || event.Changed.To != "Fishing" || !event.Changed.Custom || event.Changed.Message != "Renamed “Fishnig” to “Fishing” on 2 items in 1 list." {
+	if event.Changed.From != "Fishnig" || event.Changed.To != "Fishing" || !event.Changed.Custom || !event.Changed.RenamedInView || event.Changed.Message != "Renamed “Fishnig” to “Fishing” on 2 items in 1 list." {
 		t.Errorf("categories-changed = %+v", event.Changed)
 	}
 	saved, err := store.GetPackingList(ctx, own.ID, "user")
@@ -284,7 +284,7 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 	}
 	w = httptest.NewRecorder()
 	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"Fishing"}, "to": {"Angling"}}, true, "http://camplist.test/trips"))
-	if w.Code != 200 || w.Body.Len() != 0 || triggered(t, w).Changed.To != "Angling" {
+	if event := triggered(t, w); w.Code != 200 || w.Body.Len() != 0 || event.Changed.To != "Angling" || event.Changed.RenamedInView {
 		t.Errorf("rename from trips page: %d %q", w.Code, w.Body.String())
 	}
 	w = httptest.NewRecorder()

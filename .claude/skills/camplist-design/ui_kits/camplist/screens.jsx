@@ -61,7 +61,7 @@ function ListFormScreen({ list, go, onSave }) {
       <Field label="Name" id="name" placeholder="Camping" value={name} error={errors.length > 0} onChange={e => setName(e.target.value)} />
       <Field label="Description" id="description" multiline placeholder="A short description of your list" value={desc} onChange={e => setDesc(e.target.value)} />
       {errors.length > 0 && <ErrorBanner errors={errors} style={{ marginBottom: 'var(--space-4)' }} />}
-      <Actions><Button variant="link" onClick={() => go('/')}>Cancel</Button><Button type="submit" style={{ marginLeft: 'auto' }}>{list ? 'Save' : 'Create New'}</Button></Actions>
+      <Actions><Button variant="link" onClick={() => go('/')}>Cancel</Button><Button type="submit" style={{ marginLeft: 'auto' }}>{list ? 'Save' : 'Create list'}</Button></Actions>
     </form></Card>
   </section>;
 }

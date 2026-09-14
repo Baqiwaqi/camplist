@@ -380,24 +380,40 @@ func applicantName(invitation packing.Invitation) string {
 templ JoinPage(link packing.InvitationLink, status string, profile auth.Profile, token string) {
 	<!DOCTYPE html>
 	<html lang="en">
-		<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Join · Camplist</title><link rel="stylesheet" href="/static/tailwind.css"/></head>
+		<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="referrer" content="no-referrer"/><title>Join · Camplist</title><link rel="icon" type="image/svg+xml" href="/static/logomark.svg"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap"/><link rel="stylesheet" href="/static/tailwind.css"/></head>
 		<body>
+			<header class="bg-white border-b border-sand-300">
+				<div class="max-w-[560px] mx-auto p-4">
+					<a class="inline-flex items-center gap-2 font-bold no-underline" href="/">
+						<img src="/static/logomark.svg" alt="" width="22" height="22"/>
+						Camplist
+					</a>
+				</div>
+			</header>
 			<main class="max-w-[560px] mx-auto px-4 py-8">
-				<h1>Join the packing.</h1>
-				<section class="card">
-					<p class="mb-3">Signed in as { profile.Name } · { profile.Email }</p>
-					<p class="text-muted mb-3">Google account: { profile.Subject }</p>
-					<p class="mb-3"><a href={ "/auth/login?switch=1&returnTo=" + url.QueryEscape(link.Path()) }>Use another Google account</a></p>
-					if status=="open" {
-						<p class="mb-3">Request access with this account. The owner must approve you before you can see or change anything.</p>
-						<form method="post" action={ link.Path() }><input type="hidden" name="_csrf" value={ token }/><button class="btn btn-primary">Request access</button></form>
-					} else if status=="pending" {
-						<p role="status" class="mb-3">Your request is waiting for the owner’s approval.</p>
-						<p><a href={ link.Path() }>Check approval</a></p>
-					} else {
-						<p role="status" class="mb-3">This request was approved. The resource is available while your membership remains active.</p><a class="btn btn-primary" href={ "/" + link.Kind + "/" + link.ID }>Open shared resource</a>
+				@PageHead(PageHeading{
+					Title: "Join the packing.",
+					Meta:  "The owner approves each request before you can see or change anything.",
+				})
+				<section class="card" aria-label="Your account">
+					<p class="text-meta text-muted">Signed in as</p>
+					<p class="font-bold wrap-anywhere">{ profile.Name }</p>
+					if profile.Email != "" {
+						<p class="wrap-anywhere">{ profile.Email }</p>
 					}
+					<p class="text-meta text-muted wrap-anywhere mt-1">Google account: { profile.Subject }</p>
+					<p class="text-meta font-semibold mt-3"><a href={ "/auth/login?switch=1&returnTo=" + url.QueryEscape(link.Path()) }>Use another Google account</a></p>
 				</section>
+				if status=="open" {
+					<p class="mb-4">Request access with this account.</p>
+					<form method="post" action={ link.Path() }><input type="hidden" name="_csrf" value={ token }/><button class="btn btn-primary">Request access</button></form>
+				} else if status=="pending" {
+					<p role="status" class="mb-4">Your request is waiting for the owner’s approval.</p>
+					<a class="btn btn-secondary" href={ link.Path() }>Check approval</a>
+				} else {
+					<p role="status" class="mb-4">This request was approved. The resource is available while your membership remains active.</p>
+					<a class="btn btn-primary" href={ "/" + link.Kind + "/" + link.ID }>Open shared resource</a>
+				}
 			</main>
 		</body>
 	</html>

@@ -19,7 +19,7 @@ func NewCreatePackingListForm() CreatePackingListForm {
 	return CreatePackingListForm{
 		Action:           "/packing-lists/new",
 		Initial:          true,
-		SubmitButtonText: "Create New",
+		SubmitButtonText: "Create list",
 	}
 }
 

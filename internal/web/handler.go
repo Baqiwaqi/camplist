@@ -424,6 +424,7 @@ func listItemsChanged(list packing.PackingList) templ.Component {
 	return templ.Join(
 		views.ListSummary(list.Items, true),
 		views.ListEmpty(list.ID, list.Items, true),
+		views.ListBulkActions(list.ID, list.Items, true),
 		views.ListRevision(list, true),
 	)
 }

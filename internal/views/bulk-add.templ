@@ -14,15 +14,17 @@ templ BulkAddActions(listID string) {
 
 // BulkAddDialog holds the bulk add steps on the list page: a bottom sheet on
 // phones and a centred dialog from 721px. It opens when a step is swapped
-// into its panel and closes when a finished add empties the panel; closing
-// returns focus to the button that opened it.
+// into its panel and closes when a finished add empties the panel. Closing
+// returns focus to the button that opened it; when that button was in the
+// empty state, which the add just hid, the same action on the add card takes it.
 templ BulkAddDialog() {
 	<dialog
 		id="bulk-add"
 		class="dialog dialog-sheet"
 		aria-labelledby="bulk-add-title"
-		x-data
-		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { $el.showModal() }"
+		x-data="{ opener: null }"
+		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = document.activeElement; $el.showModal() }"
+		x-on:close="if (opener && !opener.checkVisibility()) [...document.querySelectorAll('#list-bulk-actions a')].find(a => a.getAttribute('href') === opener.getAttribute('href'))?.focus(); opener = null"
 	>
 		<div id="bulk-add-panel"></div>
 	</dialog>
@@ -53,11 +55,20 @@ templ BulkAddPage(list packing.PackingList, title string, csrfToken string, body
 	}
 }
 
-templ bulkAddHeading(title string, page bool) {
+// bulkAddHeading titles a step. focus puts the keyboard on the title when the
+// step has no field to start in, so swapping it into the dialog keeps focus.
+templ bulkAddHeading(title string, page bool, focus bool) {
 	if page {
 		<h1 id="bulk-add-title" class="text-4xl">{ title }</h1>
 	} else {
-		<h2 id="bulk-add-title" class="dialog-title">{ title }</h2>
+		<h2
+			id="bulk-add-title"
+			class="dialog-title focus-visible:outline-none"
+			if focus {
+				tabindex="-1"
+				autofocus
+			}
+		>{ title }</h2>
 	}
 }
 
@@ -80,7 +91,7 @@ templ bulkAddResult(result string) {
 // in ":" starts a category, and the category field fills lines under no
 // heading. result is the summary of an add posted without scripts.
 templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrfToken string, page bool, result string) {
-	@bulkAddHeading("Add several items", page)
+	@bulkAddHeading("Add several items", page, false)
 	<p class="text-muted mb-4 max-w-[48ch]">One item per line. A line ending in a colon starts a category, like “Documents:”. Items already on this list are skipped.</p>
 	@bulkAddResult(result)
 	<form
@@ -128,7 +139,7 @@ templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csr
 // AddFromListSources is the first Add from a list step: the camper's other
 // lists, each opening its items.
 templ AddFromListSources(list packing.PackingList, sources []packing.PackingList, page bool) {
-	@bulkAddHeading("Add from a list", page)
+	@bulkAddHeading("Add from a list", page, firstFilled(sources) < 0)
 	<p class="text-muted mb-4 max-w-[48ch]">Pick a list to copy items from. Later changes to that list don't change this one.</p>
 	if len(sources) == 0 {
 		<p class="mb-4">You have no other lists yet. Make a small one, like Climbing or Documents, to copy from.</p>
@@ -171,7 +182,7 @@ templ AddFromListSources(list packing.PackingList, sources []packing.PackingList
 // but cannot be ticked. The selected item IDs are posted; the server reads
 // the source again and copies what is still there.
 templ AddFromListItems(a AddFromList, csrfToken string, page bool) {
-	@bulkAddHeading("From "+a.Source.Name, page)
+	@bulkAddHeading("From "+a.Source.Name, page, true)
 	<p class="text-muted mb-4">{ a.sourceSummary() }</p>
 	@bulkAddResult(a.Result)
 	if len(a.Errors) > 0 {

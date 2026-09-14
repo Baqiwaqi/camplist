@@ -163,6 +163,9 @@ func shell(title string, bodyAttrs templ.Attributes) templ.Component {
 // menu on phones. nav-inline and nav-menu are hooks for the noscript style in
 // Shell, which shows the inline copy when Alpine cannot run. The body carries
 // the CSRF header, so every htmx request (DELETE included) sends the token.
+// The phone menu panel's id is bound rather than rendered, like views.Menu's:
+// htmx restores the rendered attributes of elements with an id after a boosted
+// swap, which would undo x-show and leave the panel open.
 func Layout(title string, csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -208,7 +211,7 @@ func Layout(title string, csrfToken string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div class=\"nav-menu hidden max-sm:block max-sm:ml-auto\" x-data=\"{ open: false }\" x-on:click.outside=\"open = false\" x-on:keydown.escape.window=\"open = false\"><button type=\"button\" class=\"cursor-pointer font-bold py-2 px-4 -my-2 border border-sand-300 rounded-full bg-white\" aria-controls=\"nav-panel\" x-bind:aria-expanded=\"open\" x-on:click=\"open = !open\" x-text=\"open ? 'Close' : 'Menu'\">Menu</button><div id=\"nav-panel\" class=\"absolute inset-x-0 top-full z-5 bg-white border-b border-sand-300 px-4 pb-2\" x-show=\"open\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" x-transition:leave=\"drop-leave\" x-transition:leave-start=\"drop-end\" x-transition:leave-end=\"drop-start\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div class=\"nav-menu hidden max-sm:block max-sm:ml-auto\" x-data=\"{ open: false }\" x-on:click.outside=\"open = false\" x-on:keydown.escape.window=\"open = false\"><button type=\"button\" class=\"cursor-pointer font-bold py-2 px-4 -my-2 border border-sand-300 rounded-full bg-white\" x-bind:aria-controls=\"'nav-panel'\" x-bind:aria-expanded=\"open\" x-on:click=\"open = !open\" x-text=\"open ? 'Close' : 'Menu'\">Menu</button><div x-bind:id=\"'nav-panel'\" class=\"absolute inset-x-0 top-full z-5 bg-white border-b border-sand-300 px-4 pb-2\" x-show=\"open\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" x-transition:leave=\"drop-leave\" x-transition:leave-start=\"drop-end\" x-transition:leave-end=\"drop-start\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -332,7 +335,7 @@ func NavLink(href string, label string, current bool, panel bool) templ.Componen
 		var templ_7745c5c3_Var12 templ.SafeURL
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 149, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 152, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -355,7 +358,7 @@ func NavLink(href string, label string, current bool, panel bool) templ.Componen
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 153, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 156, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -427,7 +430,7 @@ func AccountMenu(csrfToken string) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 164, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 167, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 			if templ_7745c5c3_Err != nil {
@@ -480,7 +483,7 @@ func AccountLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 175, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 178, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 		if templ_7745c5c3_Err != nil {
@@ -493,7 +496,7 @@ func AccountLinks(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(auth.UserName(ctx))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 178, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/layout.templ`, Line: 181, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {

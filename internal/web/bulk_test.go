@@ -304,7 +304,7 @@ func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
 		handler http.HandlerFunc
 		want    string
 	}{
-		{"/packing-lists/" + weekend.ID + "/add-several", h.AddSeveralPage, `<h2 id="bulk-add-title" class="dialog-title">Add several items</h2>`},
+		{"/packing-lists/" + weekend.ID + "/add-several", h.AddSeveralPage, `<h2 id="bulk-add-title" class="dialog-title focus-visible:outline-none">Add several items</h2>`},
 		{"/packing-lists/" + weekend.ID + "/add-from", h.AddFromListPage, `hx-target="#bulk-add-panel"`},
 		{"/packing-lists/" + weekend.ID + "/add-from/" + climbing.ID, h.AddFromListItemsPage, `hx-post="/packing-lists/` + weekend.ID + `/add-from/` + climbing.ID + `"`},
 	} {
@@ -331,6 +331,7 @@ func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
 		`<ul hx-swap-oob="beforeend:#list-items">`,
 		`id="list-summary"`,
 		`id="list-empty"`,
+		`<div id="list-bulk-actions" class="mt-1 border-t border-sand-100 pt-3" hx-swap-oob="true">`,
 		`id="list-revision" value="` + html.EscapeString(saved.Revision()) + `" hx-swap-oob="true"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -379,13 +380,14 @@ func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
 	for _, want := range []string{
 		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3">`,
 		`<dialog id="bulk-add"`,
+		`<div id="list-bulk-actions" class="mt-1 border-t border-sand-100 pt-3" hidden>`,
 		`<p id="list-add-status" role="status"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("list page missing %q", want)
 		}
 	}
-	// Both actions sit on the add card and in the empty state.
+	// Both actions sit in the empty state; the add card's pair stays hidden until items arrive.
 	if strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-several"`) != 2 || strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-from"`) != 2 {
 		t.Fatalf("bulk add actions: %s", body)
 	}

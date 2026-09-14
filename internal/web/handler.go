@@ -54,9 +54,11 @@ type packingStore interface {
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
 	RememberedCategories(context.Context, string) ([]string, error)
-	RememberCategory(context.Context, string, string) error
+	RememberCategories(context.Context, string, ...string) error
 	RenameCategory(context.Context, string, string, string) (packing.CategoryRename, error)
 	ForgetCategory(context.Context, string, string) error
+	AddItems(context.Context, string, string, []packing.PackingItem) (packing.AddItemsResult, error)
+	CopyItems(context.Context, string, string, string, []string) (packing.AddItemsResult, error)
 }
 
 type handler struct {
@@ -209,7 +211,8 @@ func (h *handler) NewListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Open the new, empty list: its add card offers the ways to fill it.
+	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 }
 
 func (h *handler) EditListHandler(w http.ResponseWriter, r *http.Request) {
@@ -384,6 +387,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		views.AddItemForm(fresh, csrf.Token(r), true),
 		views.ItemsAppended(listID, []packing.PackingItem{added}),
 		listItemsChanged(list),
+		views.ListAddStatus("", true),
 	))
 }
 
@@ -411,7 +415,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, listItemsChanged(list))
+	render(w, r, templ.Join(listItemsChanged(list), views.ListAddStatus("", true)))
 }
 
 // listItemsChanged is the out-of-band update after an item write on the list

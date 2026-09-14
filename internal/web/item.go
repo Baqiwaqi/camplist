@@ -118,7 +118,7 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		item, _ = saved.FindItem(item.ID)
-		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved)))
+		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved), views.ListAddStatus("", true)))
 		return
 	}
 	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)

@@ -46,6 +46,11 @@ stored on the trip, so it moves to the archive for every member. For the
 unresolved observation-submission choice, this release keeps new trip
 observations owner-only. Applying existing observations requires both
 source-trip access and independent destination-template access.
+**Add from a list** follows the same shape: it re-reads the source list with the
+camper's own access and needs edit access to the destination, checked
+separately. A member of a shared list can copy its items into their own lists,
+and a private list's items can be copied into a shared one; only item names,
+categories and who each is for are copied, never memberships or tasks.
 
 Opening a trip prepares an account-specific local copy automatically. Shared
 trips explain that local changes are invisible to others until synchronized.

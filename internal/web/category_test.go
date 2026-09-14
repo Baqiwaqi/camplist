@@ -125,7 +125,7 @@ func TestEditingAnItemRecasesItsCustomCategory(t *testing.T) {
 	if err := store.SavePackingList(ctx, list); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RememberCategory(ctx, "user", "fishing"); err != nil {
+	if err := store.RememberCategories(ctx, "user", "fishing"); err != nil {
 		t.Fatal(err)
 	}
 	rod, net := list.Items[0], list.Items[1]
@@ -234,7 +234,7 @@ func typoFixture(t *testing.T) (context.Context, *packing.Store, handler, packin
 
 func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 	ctx, store, h, own, shared := typoFixture(t)
-	if err := store.RememberCategory(ctx, "user", "Fishnig"); err != nil {
+	if err := store.RememberCategories(ctx, "user", "Fishnig"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -276,7 +276,7 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 
 	// From another page there is nothing to swap; a list page showing an
 	// older revision reloads.
-	if err := store.RememberCategory(ctx, "user", "Tarsp"); err != nil {
+	if err := store.RememberCategories(ctx, "user", "Tarsp"); err != nil {
 		t.Fatal(err)
 	}
 	w = httptest.NewRecorder()
@@ -310,7 +310,7 @@ func itemCategoryNames(t *testing.T, store *packing.Store, listID, userID string
 func TestRenameAndRemoveCategoryWithoutScripts(t *testing.T) {
 	ctx, store, h, own, _ := typoFixture(t)
 	for _, category := range []string{"Fishnig", "Fishing"} {
-		if err := store.RememberCategory(ctx, "user", category); err != nil {
+		if err := store.RememberCategories(ctx, "user", category); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -346,7 +346,7 @@ func TestRenameAndRemoveCategoryWithoutScripts(t *testing.T) {
 
 func TestRemoveCategoryFromPickerKeepsItems(t *testing.T) {
 	ctx, store, h, own, _ := typoFixture(t)
-	if err := store.RememberCategory(ctx, "user", "Fishnig"); err != nil {
+	if err := store.RememberCategories(ctx, "user", "Fishnig"); err != nil {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
@@ -408,7 +408,7 @@ func TestCategoryRoutesRequireCSRF(t *testing.T) {
 
 func TestPickerMarksOnlyRememberedCustomCategories(t *testing.T) {
 	ctx, store, h, own, _ := typoFixture(t)
-	if err := store.RememberCategory(ctx, "user", "Tarps"); err != nil {
+	if err := store.RememberCategories(ctx, "user", "Tarps"); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.ForgetCategory(ctx, "user", "Fishnig"); err != nil {

@@ -334,15 +334,19 @@ func (s *Store) DeletePackingList(ctx context.Context, id, user string) error {
 // AddItem appends item and returns the saved list. Adds do not conflict: when
 // another write lands first the item is added on top of it. replaced is the
 // revision the save replaced, so a caller showing an older revision knows its
-// view of the list is out of date.
+// view of the list is out of date. Like AddItems it rejects invalid items and
+// a list that would exceed MaxListEntries.
 func (s *Store) AddItem(ctx context.Context, id, user string, item PackingItem) (saved PackingList, replaced string, err error) {
-	if !validScope(item.Scope, false) {
+	if !validNewItem(item) {
 		return PackingList{}, "", ErrInvalid
 	}
 	for attempt := 0; attempt < 5; attempt++ {
 		list, err := s.GetPackingList(ctx, id, user)
 		if err != nil {
 			return PackingList{}, "", err
+		}
+		if listFull(list, 1) {
+			return PackingList{}, "", ErrListFull
 		}
 		replaced := list.Revision()
 		list.Items = append(list.Items, item)

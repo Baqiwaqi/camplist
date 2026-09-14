@@ -36,7 +36,12 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 		</section>
 		@ListRevision(list, false)
 		<section class="mt-8">
-			@ListItemForm(form, csrfToken)
+			@ListItemForm(form, csrfToken) {
+				<div class="mt-1 border-t border-sand-100 pt-3">
+					@BulkAddActions(list.ID)
+				</div>
+			}
+			@ListAddStatus("", false)
 		</section>
 		<section class="mt-8">
 			<div class="card">
@@ -51,6 +56,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 		<section class="mt-8">
 			@ListPreparation(list, csrfToken, false, "")
 		</section>
+		@BulkAddDialog()
 	}
 }
 
@@ -82,14 +88,16 @@ templ ListSummary(items []packing.PackingItem, oob bool) {
 // ListEmpty is the empty items text. It stays in the page, hidden while the
 // list has items, so adding the first item or deleting the last can toggle it.
 templ ListEmpty(items []packing.PackingItem, oob bool) {
-	<p
+	<div
 		id="list-empty"
-		class="text-muted mb-3"
+		class="mb-3"
 		hidden?={ len(items) > 0 }
 		if oob {
 			hx-swap-oob="true"
 		}
-	>No items yet. Add your first item above.</p>
+	>
+		<p class="text-muted">No items yet. Add your first item above, paste several at once, or copy items from another list.</p>
+	</div>
 }
 
 // ItemsAppended adds rows to the end of the items list out of band.
@@ -411,6 +419,7 @@ templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<h2 class="mb-3">Add an item</h2>
 	<div class="card">
 		@AddItemForm(form, csrfToken, false)
+		{ children... }
 	</div>
 }
 

@@ -20,6 +20,9 @@ func storeErrorDetails(err error, fallback string) (int, string) {
 	if errors.Is(err, packing.ErrForbidden) {
 		return http.StatusForbidden, "Only the owner can do that."
 	}
+	if errors.Is(err, packing.ErrListFull) {
+		return http.StatusUnprocessableEntity, "A list holds at most 2,000 items and preparation tasks together. Remove some before adding more."
+	}
 	if errors.Is(err, packing.ErrInvalid) {
 		return http.StatusBadRequest, "Please check the submitted values."
 	}

@@ -44,8 +44,8 @@ type fakePackingStore struct {
 func (s *fakePackingStore) RememberedCategories(context.Context, string) ([]string, error) {
 	return s.remembered, nil
 }
-func (s *fakePackingStore) RememberCategory(_ context.Context, _ string, category string) error {
-	s.remembered = append(s.remembered, category)
+func (s *fakePackingStore) RememberCategories(_ context.Context, _ string, categories ...string) error {
+	s.remembered = append(s.remembered, categories...)
 	return nil
 }
 

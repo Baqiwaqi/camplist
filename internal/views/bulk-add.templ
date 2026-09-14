@@ -1,0 +1,239 @@
+package views
+
+import "camplist/internal/packing"
+
+// BulkAddActions are the two ways to add many items at once. With scripts
+// each loads its first step into the list page's BulkAddDialog; without, the
+// links open the same step as a page of its own.
+templ BulkAddActions(listID string) {
+	<div class="flex flex-wrap items-center gap-2">
+		<a class="btn btn-secondary btn-sm" href={ templ.SafeURL(addSeveralPath(listID)) } { bulkAddLoad(addSeveralPath(listID))... }>Add several</a>
+		<a class="btn btn-secondary btn-sm" href={ templ.SafeURL(addFromListPath(listID)) } { bulkAddLoad(addFromListPath(listID))... }>Add from a list</a>
+	</div>
+}
+
+// BulkAddDialog holds the bulk add steps on the list page: a bottom sheet on
+// phones and a centred dialog from 721px. It opens when a step is swapped
+// into its panel and closes when a finished add empties the panel. Closing
+// focuses the button that opened it, which browsers that do not focus a
+// clicked link would not restore.
+templ BulkAddDialog() {
+	<dialog
+		id="bulk-add"
+		class="dialog dialog-sheet"
+		aria-labelledby="bulk-add-title"
+		x-data="{ opener: null }"
+		x-on:htmx:after-swap="if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }"
+		x-on:close="opener?.focus(); opener = null"
+	>
+		<div id="bulk-add-panel"></div>
+	</dialog>
+}
+
+// ListAddStatus announces the result of a bulk add under the add card. It
+// stays in the page and only its text is swapped, so screen readers read it.
+templ ListAddStatus(message string, oob bool) {
+	<p
+		id="list-add-status"
+		role="status"
+		class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden"
+		if oob {
+			hx-swap-oob="innerHTML"
+		}
+	>{ message }</p>
+}
+
+// BulkAddPage is a bulk add step as its own page, used without scripts.
+templ BulkAddPage(list packing.PackingList, title string, csrfToken string, body templ.Component) {
+	@Layout(title, csrfToken) {
+		<section class="max-w-[560px]">
+			<a class="inline-block mb-3 text-meta font-bold" href={ templ.SafeURL("/packing-lists/" + list.ID) }>Back to { list.Name }</a>
+			<div class="card p-4 sm:p-6">
+				@body
+			</div>
+		</section>
+	}
+}
+
+// bulkAddHeading titles a step. focus puts the keyboard on the title when the
+// step has no field to start in, so swapping it into the dialog keeps focus.
+templ bulkAddHeading(title string, page bool, focus bool) {
+	if page {
+		<h1 id="bulk-add-title">{ title }</h1>
+	} else {
+		<h2
+			id="bulk-add-title"
+			class="dialog-title focus-visible:outline-none"
+			if focus {
+				tabindex="-1"
+				autofocus
+			}
+		>{ title }</h2>
+	}
+}
+
+// bulkAddCancel closes the dialog, or leads back to the list on a page.
+templ bulkAddCancel(listID string, page bool) {
+	if page {
+		<a class="btn btn-secondary" href={ templ.SafeURL("/packing-lists/" + listID) }>Back to list</a>
+	} else {
+		<button type="button" class="btn btn-secondary" x-on:click="$el.closest('dialog').close()">Cancel</button>
+	}
+}
+
+// AddSeveralPanel is the Add several form: one item per line, a line ending
+// in ":" starts a category, and the category field fills lines under no
+// heading. The category comes first so its popup opens over the text box,
+// inside the dialog.
+templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrfToken string, page bool) {
+	@bulkAddHeading("Add several items", page, false)
+	<p class="text-muted mb-4 max-w-[48ch]">One item per line. A line ending in a colon starts a category, like “Documents:”. Items already on this list are skipped.</p>
+	<form
+		class="grid gap-4"
+		method="post"
+		action={ templ.SafeURL(form.Action) }
+		if !page {
+			{ bulkAddPost(form.Action)... }
+		}
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<input type="hidden" name="revision" value={ form.Revision }/>
+		<div class="grid gap-1">
+			<label for="bulk-category" class="font-bold">Category for lines without a heading</label>
+			@CategoryPicker("bulk-category", "bulk-category-options", form.Category, "Optional", form.Categories)
+		</div>
+		<div class="grid gap-1">
+			<label for="bulk-lines" class="font-bold">Items</label>
+			<textarea
+				id="bulk-lines"
+				name="lines"
+				rows="8"
+				required
+				autofocus
+				placeholder={ "Documents:\nPassport\nDriving licence\nPaper map" }
+				class="w-full min-h-40 rounded-field border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				if len(form.Error) > 0 {
+					aria-invalid="true"
+					aria-describedby="bulk-lines-error"
+				}
+			>{ form.Lines }</textarea>
+		</div>
+		if len(form.Error) > 0 {
+			<div id="bulk-lines-error">
+				@ErrorBanner(form.Error)
+			</div>
+		}
+		<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
+			@bulkAddCancel(list.ID, page)
+			<button type="submit" class="btn btn-primary">Add items</button>
+		</div>
+	</form>
+}
+
+// AddFromListSources is the first Add from a list step: the camper's other
+// lists, each opening its items.
+templ AddFromListSources(list packing.PackingList, sources []packing.PackingList, page bool) {
+	@bulkAddHeading("Add from a list", page, firstFilled(sources) < 0)
+	<p class="text-muted mb-4 max-w-[48ch]">Pick a list to copy items from. Later changes to that list don't change this one.</p>
+	if len(sources) == 0 {
+		<p class="mb-4">You have no other lists yet. Make a small one, like Climbing or Documents, to copy from.</p>
+	} else {
+		<ul class="mb-4 rounded-card border border-sand-200 bg-white">
+			for i, source := range sources {
+				<li class="border-b border-sand-100 last:border-b-0">
+					if len(source.Items) == 0 {
+						<div class="flex min-h-12 items-center justify-between gap-3 px-4 py-2 text-muted">
+							<span class="min-w-0 break-words">{ source.Name }</span>
+							<span class="text-meta whitespace-nowrap">No items</span>
+						</div>
+					} else {
+						<a
+							class="flex min-h-12 items-center justify-between gap-3 px-4 py-2 no-underline text-ink-900 hover:bg-sand-50 focus-visible:outline-offset-[-2px]"
+							href={ templ.SafeURL(addFromSourcePath(list.ID, source.ID)) }
+							autofocus?={ i == firstFilled(sources) }
+							if !page {
+								{ bulkAddLoad(addFromSourcePath(list.ID, source.ID))... }
+							}
+						>
+							<span class="min-w-0 break-words font-bold">{ source.Name }</span>
+							<span class="text-meta text-muted whitespace-nowrap">{ itemCount(len(source.Items)) }</span>
+						</a>
+					}
+				</li>
+			}
+		</ul>
+	}
+	<div class="flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
+		if len(sources) == 0 {
+			<a class="btn btn-secondary" href="/packing-lists/new">New list</a>
+		}
+		@bulkAddCancel(list.ID, page)
+	</div>
+}
+
+// AddFromListItems is the second Add from a list step: the source's items by
+// category, all ticked except those already on this list, which stay visible
+// but cannot be ticked. The selected item IDs are posted; the server reads
+// the source again and copies what is still there.
+templ AddFromListItems(a AddFromList, csrfToken string, page bool) {
+	@bulkAddHeading("From "+a.Source.Name, page, true)
+	<p class="text-muted mb-4">{ a.sourceSummary() }</p>
+	if len(a.Errors) > 0 {
+		<div class="mb-4">
+			@ErrorBanner(a.Errors)
+		</div>
+	}
+	<form
+		method="post"
+		action={ templ.SafeURL(addFromSourcePath(a.List.ID, a.Source.ID)) }
+		x-data={ "{ count: " + itoa(a.tickedCount()) + " }" }
+		x-on:change="count = $el.querySelectorAll('input[name=item]:checked').length"
+		if !page {
+			{ bulkAddPost(addFromSourcePath(a.List.ID, a.Source.ID))... }
+		}
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<input type="hidden" name="revision" value={ a.List.Revision() }/>
+		if a.addable() == 0 {
+			<p class="mb-4">Everything on { a.Source.Name } is already on this list.</p>
+		}
+		<div class="grid gap-3">
+			for i, group := range groupByCategory(a.Source.Items) {
+				<div role="group" aria-labelledby={ "copy-group-" + itoa(i) } class="rounded-card border border-sand-200 bg-white">
+					<h3 id={ "copy-group-" + itoa(i) } class="m-0 px-4 pt-3 pb-2 font-sans text-base font-bold">{ groupName(group) }</h3>
+					<ul>
+						for _, item := range group.Items {
+							<li class="border-t border-sand-100">
+								<label class={ "flex min-h-12 items-center gap-3 px-4 py-2", templ.KV("cursor-pointer", !a.alreadyOnList(item)), templ.KV("text-muted", a.alreadyOnList(item)) }>
+									<input
+										type="checkbox"
+										name="item"
+										value={ item.ID }
+										checked?={ a.ticked(item) }
+										disabled?={ a.alreadyOnList(item) }
+									/>
+									<span class="min-w-0 flex-1 break-words">{ item.Name }</span>
+									if a.alreadyOnList(item) {
+										<span class="text-meta whitespace-nowrap">Already on this list</span>
+									}
+								</label>
+							</li>
+						}
+					</ul>
+				</div>
+			}
+		</div>
+		<div class="mt-4 flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto">
+			<a
+				class="btn btn-secondary"
+				href={ templ.SafeURL(addFromListPath(a.List.ID)) }
+				if !page {
+					{ bulkAddLoad(addFromListPath(a.List.ID))... }
+				}
+			>Back</a>
+			if a.addable() > 0 {
+				<button type="submit" class="btn btn-primary" x-text="count === 1 ? 'Add 1 item' : 'Add ' + count + ' items'">{ addItemsLabel(a.tickedCount()) }</button>
+			}
+		</div>
+	</form>
+}

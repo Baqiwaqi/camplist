@@ -178,22 +178,39 @@ func (s *Store) RememberedCategories(ctx context.Context, userID string) ([]stri
 	return doc.Categories, err
 }
 
-// RememberCategory records a custom category for userID. Defaults and blanks
-// change nothing; a category already remembered in another capitalisation
-// takes the spelling just submitted.
-func (s *Store) RememberCategory(ctx context.Context, userID, category string) error {
-	category = strings.TrimSpace(category)
-	if userID == "" || category == "" || len(category) > maxCategoryLength || IsDefaultCategory(category) {
+// RememberCategories records custom categories for userID in one merge, so a
+// bulk add costs a single read and write. Defaults and blanks change nothing;
+// a category already remembered in another capitalisation takes the spelling
+// just submitted.
+func (s *Store) RememberCategories(ctx context.Context, userID string, categories ...string) error {
+	wanted := []string{}
+	seen := map[string]bool{}
+	for _, category := range categories {
+		category = strings.TrimSpace(category)
+		if category == "" || len(category) > maxCategoryLength || IsDefaultCategory(category) || seen[categoryKey(category)] {
+			continue
+		}
+		seen[categoryKey(category)] = true
+		wanted = append(wanted, category)
+	}
+	if userID == "" || len(wanted) == 0 {
 		return nil
 	}
 	return s.changeCategories(ctx, userID, func(categories []string) ([]string, bool) {
-		switch i := indexCategory(categories, category); {
-		case i < 0:
-			categories = append(categories, category)
-		case categories[i] == category:
+		changed := false
+		for _, category := range wanted {
+			switch i := indexCategory(categories, category); {
+			case i < 0:
+				categories = append(categories, category)
+				changed = true
+			case categories[i] == category:
+			default:
+				categories[i] = category
+				changed = true
+			}
+		}
+		if !changed {
 			return categories, false
-		default:
-			categories[i] = category
 		}
 		if extra := len(categories) - maxRemembered; extra > 0 {
 			categories = categories[extra:]

@@ -53,7 +53,7 @@ func TestRememberedCategoriesSeedFromOwnListsUntilOneIsSaved(t *testing.T) {
 	}
 
 	for _, category := range []string{" Tarps ", "Tarps", "Kitchen and cooking", "", "FISHING"} {
-		if err := store.RememberCategory(ctx, "camper", category); err != nil {
+		if err := store.RememberCategories(ctx, "camper", category); err != nil {
 			t.Fatalf("remember %q: %v", category, err)
 		}
 	}
@@ -121,7 +121,7 @@ func renameFixture(t *testing.T) (context.Context, *packing.Store, []packing.Pac
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.RememberCategory(ctx, "camper", "Fishnig"); err != nil {
+	if err := store.RememberCategories(ctx, "camper", "Fishnig"); err != nil {
 		t.Fatal(err)
 	}
 	return ctx, store, []packing.PackingList{lake, river, dry}, shared, trip
@@ -142,7 +142,7 @@ func itemCategories(t *testing.T, store *packing.Store, listID, userID string) [
 
 func TestRenameCategoryFixesOwnListsOnly(t *testing.T) {
 	ctx, store, own, shared, trip := renameFixture(t)
-	if err := store.RememberCategory(ctx, "camper", "Tarps"); err != nil {
+	if err := store.RememberCategories(ctx, "camper", "Tarps"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -186,7 +186,7 @@ func TestRenameCategoryFixesOwnListsOnly(t *testing.T) {
 
 func TestRenameCategoryMergesIntoExistingCategory(t *testing.T) {
 	ctx, store, own, _, _ := renameFixture(t)
-	if err := store.RememberCategory(ctx, "camper", "Fishing"); err != nil {
+	if err := store.RememberCategories(ctx, "camper", "Fishing"); err != nil {
 		t.Fatal(err)
 	}
 	result, err := store.RenameCategory(ctx, "camper", "Fishnig", " FISHING")
@@ -204,7 +204,7 @@ func TestRenameCategoryMergesIntoExistingCategory(t *testing.T) {
 	}
 
 	// Renaming into a default adopts its spelling and forgets the custom one.
-	if err := store.RememberCategory(ctx, "camper", "Shleter"); err != nil {
+	if err := store.RememberCategories(ctx, "camper", "Shleter"); err != nil {
 		t.Fatal(err)
 	}
 	result, err = store.RenameCategory(ctx, "camper", "Shleter", "shelter")
@@ -284,7 +284,7 @@ func TestRenameCategoryUnifiesCaseVariantsOfTheMergedCategory(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, category := range []string{"Fishnig", "Fishing"} {
-		if err := store.RememberCategory(ctx, "camper", category); err != nil {
+		if err := store.RememberCategories(ctx, "camper", category); err != nil {
 			t.Fatal(err)
 		}
 	}

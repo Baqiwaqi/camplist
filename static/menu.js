@@ -1,6 +1,7 @@
-// Dropdown behaviour for views.Menu (internal/views/menu.templ): open and
-// close, arrow-key movement between items, focus back on the trigger, and
-// which side of the trigger the popup opens toward.
+// Dropdown behaviour for views.Menu (internal/views/menu.templ), after the
+// Pines UI dropdown menu: open and close, arrow-key movement between items,
+// focus back on the trigger, and which side of the trigger the popup opens
+// toward so it stays on screen.
 // Registered before Alpine starts so every menu shares one definition.
 document.addEventListener('alpine:init', () => {
   Alpine.data('menu', () => ({
@@ -8,6 +9,8 @@ document.addEventListener('alpine:init', () => {
     // The popup lines up with the trigger's right edge and grows left. A
     // trigger near the left edge (a phone card row) flips it to grow right.
     alignStart: false,
+    // The popup opens below the trigger unless only the space above fits it.
+    up: false,
     toggle() {
       this.open ? this.close() : this.show()
     },
@@ -15,7 +18,7 @@ document.addEventListener('alpine:init', () => {
       this.open = true
       this.$nextTick(() => {
         this.place()
-        if (index !== undefined) this.focus(index)
+        if (index !== undefined) queueMicrotask(() => this.focus(index))
       })
     },
     place() {
@@ -26,6 +29,9 @@ document.addEventListener('alpine:init', () => {
       const overflowsLeft = trigger.right - width < gutter
       const fitsRight = trigger.left + width <= viewport - gutter
       this.alignStart = overflowsLeft && (fitsRight || trigger.left < viewport - trigger.right)
+      const height = this.$refs.popup.offsetHeight
+      const below = document.documentElement.clientHeight - trigger.bottom
+      this.up = height + gutter > below && trigger.top > below
     },
     close(returnFocus = true) {
       if (!this.open) return

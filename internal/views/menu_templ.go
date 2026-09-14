@@ -8,9 +8,10 @@ package views
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// Menu is a dropdown built the way Base UI structures its Menu: a trigger,
-// a popup with role="menu", and items that are links or actions. Behaviour
-// lives in static/menu.js (Alpine.data("menu")). The popup is server
+// Menu is the app's dropdown menu, a Pines UI style dropdown built the way
+// Base UI structures its Menu: a trigger, a popup with role="menu", and items
+// that are links or actions. Behaviour lives in static/menu.js
+// (Alpine.data("menu")), which keeps the popup inside the viewport. The popup is server
 // rendered, so without JavaScript the items show inline instead. This
 // compact size sits in card rows next to a small button.
 func Menu(label string) templ.Component {
@@ -159,13 +160,13 @@ func menu(label string, trigger string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 41, Col: 10}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 42, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</button><div class=\"menu-popup\" x-bind:class=\"{ 'menu-popup-start': alignStart }\" role=\"menu\" x-ref=\"popup\" x-bind:id=\"$id('menu')\" x-show=\"open\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" x-transition:leave=\"drop-leave\" x-transition:leave-start=\"drop-end\" x-transition:leave-end=\"drop-start\" x-on:keydown.arrow-down.prevent=\"move(1)\" x-on:keydown.arrow-up.prevent=\"move(-1)\" x-on:keydown.home.prevent=\"focus(0)\" x-on:keydown.end.prevent=\"focus(-1)\" x-on:click=\"if ($event.target.closest('[role=menuitem]')) close(false)\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</button><div class=\"popup menu-popup\" x-bind:class=\"{ 'menu-popup-start': alignStart, 'menu-popup-up': up }\" role=\"menu\" x-ref=\"popup\" x-bind:id=\"$id('menu')\" x-show=\"open\" x-cloak x-transition:enter=\"drop-enter\" x-transition:enter-start=\"drop-start\" x-transition:enter-end=\"drop-end\" x-transition:leave=\"drop-leave\" x-transition:leave-start=\"drop-end\" x-transition:leave-end=\"drop-start\" x-on:keydown.arrow-down.prevent=\"move(1)\" x-on:keydown.arrow-up.prevent=\"move(-1)\" x-on:keydown.home.prevent=\"focus(0)\" x-on:keydown.end.prevent=\"focus(-1)\" x-on:click=\"if ($event.target.closest('[role=menuitem]')) close(false)\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -203,14 +204,14 @@ func MenuLink(href string, label string) templ.Component {
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a class=\"menu-item\" role=\"menuitem\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a class=\"option\" role=\"menuitem\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 templ.SafeURL
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 69, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 70, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -223,7 +224,7 @@ func MenuLink(href string, label string) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 69, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 70, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -260,7 +261,7 @@ func MenuButton(label string, danger bool, attrs templ.Attributes) templ.Compone
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var13 = []any{"menu-item", templ.KV("menu-item-danger", danger)}
+		var templ_7745c5c3_Var13 = []any{"option", templ.KV("option-danger", danger)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -293,7 +294,7 @@ func MenuButton(label string, danger bool, attrs templ.Attributes) templ.Compone
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 75, Col: 119}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/menu.templ`, Line: 76, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -328,7 +329,7 @@ func MenuSeparator() templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"menu-separator\" role=\"separator\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"popup-separator\" role=\"separator\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

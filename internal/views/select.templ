@@ -14,11 +14,22 @@ type SelectOption struct {
 // swap and a re-rendered error all keep the choice; without JavaScript the
 // layout's noscript style shows the native control instead. The popup toggles
 // the hidden attribute rather than x-show: htmx settles style and class on
-// same-id elements after a swap, which would undo an inline display.
+// same-id elements after a swap, which would undo an inline display. Select
+// is the stacked field of a standalone form, with room above and below.
 templ Select(id string, name string, label string, options []SelectOption, selected string) {
-	<div class="my-3 max-w-[34rem]" x-data="select" x-on:click.outside="close(false)" x-on:focusout="leave($event)">
-		<label id={ id + "-label" } for={ id } class="block text-sm font-bold" x-on:click.prevent="$refs.trigger.focus()">{ label }</label>
-		<select id={ id } name={ name } x-ref="native" tabindex="-1" class="select-native w-full mt-1 min-h-11 p-2 rounded-sm border border-sand-300 bg-white">
+	@selectField(id, name, label, false, "my-3 max-w-[34rem]", options, selected)
+}
+
+// SelectField is the same control without outer spacing, for form grids and
+// inline rows. hideLabel keeps the label for screen readers only.
+templ SelectField(id string, name string, label string, hideLabel bool, options []SelectOption, selected string) {
+	@selectField(id, name, label, hideLabel, "min-w-44", options, selected)
+}
+
+templ selectField(id string, name string, label string, hideLabel bool, class string, options []SelectOption, selected string) {
+	<div class={ "grid gap-1", class } x-data="select" x-on:click.outside="close(false)" x-on:focusout="leave($event)">
+		<label id={ id + "-label" } for={ id } class={ "block text-sm font-bold", templ.KV("sr-only", hideLabel) } x-on:click.prevent="$refs.trigger.focus()">{ label }</label>
+		<select id={ id } name={ name } x-ref="native" tabindex="-1" class="select-native w-full min-h-11 px-2 py-2 rounded-sm border border-sand-300 bg-white font-normal">
 			for _, option := range options {
 				<option value={ option.Value } selected?={ option.Value == selected }>{ option.Label }</option>
 			}
@@ -33,6 +44,7 @@ templ Select(id string, name string, label string, options []SelectOption, selec
 				aria-haspopup="listbox"
 				aria-labelledby={ id + "-label" }
 				aria-controls={ id + "-listbox" }
+				aria-expanded="false"
 				x-bind:aria-expanded="open"
 				x-bind:aria-activedescendant={ "open ? '" + id + "-option-' + active : null" }
 				x-on:click="toggle()"
@@ -45,7 +57,7 @@ templ Select(id string, name string, label string, options []SelectOption, selec
 				x-ref="listbox"
 				role="listbox"
 				aria-labelledby={ id + "-label" }
-				class="select-popup"
+				class="popup select-popup"
 				x-bind:class="up && 'select-popup-up'"
 				hidden
 				x-bind:hidden="!open"
@@ -55,7 +67,8 @@ templ Select(id string, name string, label string, options []SelectOption, selec
 					<li
 						id={ id + "-option-" + strconv.Itoa(i) }
 						role="option"
-						class="select-option"
+						class="option"
+						aria-selected={ strconv.FormatBool(option.Value == selected) }
 						x-bind:aria-selected={ "selected === " + strconv.Itoa(i) }
 						x-bind:data-active={ "active === " + strconv.Itoa(i) }
 						x-on:mousemove={ "active = " + strconv.Itoa(i) }
@@ -77,4 +90,28 @@ func selectedLabel(options []SelectOption, selected string) string {
 		return options[0].Label
 	}
 	return ""
+}
+
+// entryKindOptions are the kinds of thing a trip entry adds.
+var entryKindOptions = []SelectOption{
+	{Value: "", Label: "Packing item"},
+	{Value: "task", Label: "Before departure task"},
+}
+
+// scopeOptions lists who an item or task is for. personal adds "Just for
+// me", which trip entries offer and reusable lists do not.
+func scopeOptions(personal bool) []SelectOption {
+	options := []SelectOption{{Value: "shared", Label: "Shared"}}
+	if personal {
+		options = append(options, SelectOption{Value: "mine", Label: "Just for me"})
+	}
+	return append(options, SelectOption{Value: "person", Label: "For each person"})
+}
+
+// scopeValue treats an unset scope as shared, the first option.
+func scopeValue(scope string) string {
+	if scope == "" {
+		return "shared"
+	}
+	return scope
 }

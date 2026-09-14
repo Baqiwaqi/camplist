@@ -46,19 +46,24 @@ The teaching-only phase is complete. Default to **implementing requested changes
   rule in `assets/css/tailwind.css`; never `hx-disabled-elt`, which drops
   keyboard focus. Swapped content keeps focus via stable ids or `autofocus`,
   and live regions (`role="status"`) stay outside swapped elements.
-- Reusable dropdown: `views.Menu(label)` (compact, for card rows) and
-  `views.PageMenu(label)` (page-head size) with `MenuLink`, `MenuButton` and
-  `MenuSeparator` children follow Base UI's Menu anatomy (trigger, popup with
+- Dropdowns are Pines UI style components on Alpine sharing one popup style
+  (`.popup`, `.option`, `.option-danger`, `.popup-separator`); never add a
+  bare `<select>` or a one-off popover. Menus: `views.Menu(label)` (compact,
+  for card rows) and `views.PageMenu(label)` (page-head size) with `MenuLink`,
+  `MenuButton` and `MenuSeparator` children (trigger, popup with
   `role="menu"`, items). Their behaviour is one `Alpine.data("menu")` in
-  `static/menu.js`, loaded before Alpine; it also flips the popup to open
-  rightward (`.menu-popup-start`) when it would cross the left edge. Build
-  destructive items with the `confirmDelete` helper so the confirm dialog stays
-  consistent; `confirmDeleteCard` removes a card in place (the handler branches
-  on `HX-Target`).
-- Form dropdown: `views.Select` (Pines UI style listbox, `static/select.js`)
-  keeps a hidden native `<select>` as the submitted field and no-JS fallback.
-  Inside htmx-swapped content toggle Alpine state with `hidden`, not `x-show`:
-  htmx settles `style`/`class` on same-id elements and undoes inline display.
+  `static/menu.js`, loaded before Alpine; it flips the popup right
+  (`.menu-popup-start`) or up (`.menu-popup-up`) to stay on screen. Build
+  destructive items with the `confirmDelete` helper so the confirm dialog stays consistent;
+  `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
+- Form dropdowns: `views.Select` (stacked field) or `views.SelectField`
+  (grids and inline rows; `ScopeSelect` wraps it) render a listbox
+  (`static/select.js`) over a hidden native `<select>`, which is the submitted
+  field, the no-JS fallback and the source of the shown value after an htmx
+  swap, error re-render or form reset. Toggle their popup with `hidden`, not
+  `x-show`: htmx settles `style`/`class` on same-id elements. The offline shell
+  copies the trip entry selects; `TestOfflineShellSelectsMatchSelectField`
+  keeps the copy in sync.
 - Item categories: every category field is `views.CategoryPicker` (combobox in
   `static/category-picker.js`; the text input posts `category`, options come
   from its datalist). Build options with `handler.categorySuggestions`:
@@ -96,10 +101,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `@layer base` re-adds body colour, headings, links, focus ring and checkboxes,
   and `@layer components` keeps the classes that carry state, pseudo elements or
   runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
-  `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.error`, `.dialog`, `.sync-status`, the
-  `drop-*`/toast transitions, and the `.muted`/`.tag` the offline scripts set)
-  plus rules for elements the offline scripts create without classes. Utilities
-  are generated from `internal/views` and `static/offline` only.
+  `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`, `.error`,
+  `.dialog`, `.sync-status`, the `drop-*`/toast transitions, and the
+  `.muted`/`.tag` the offline scripts set) plus rules for elements the offline
+  scripts create without classes. Utilities are generated from `internal/views`
+  and `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)
 

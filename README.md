@@ -41,7 +41,7 @@ The Go server renders HTML using templ. HTMX adds form navigation and actions su
 | `internal/auth/` | Google OAuth/OpenID Connect login and cookie-based sessions |
 | `internal/views/` | templ page templates and generated Go code |
 | `internal/db.go` | Cosmos DB client setup |
-| `static/` | Built stylesheet, logo marks, the dropdown menu and category picker behaviour, and the bundled htmx and Alpine.js scripts |
+| `static/` | Built stylesheet, logo marks, the dropdown menu, select and category picker behaviour, and the bundled htmx and Alpine.js scripts |
 | `assets/css/tailwind.css` | Tailwind input: design tokens, base styles, and component classes |
 | `.claude/skills/camplist-design/` | Design system: tokens, guidelines, logo assets, and a click-through UI kit |
 

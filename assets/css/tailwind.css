@@ -354,8 +354,9 @@
     @apply bg-pine-500 border-pine-500;
   }
 
+  /* The menu popup hangs below the trigger's right edge. */
   .menu-popup {
-    @apply absolute top-[calc(100%+6px)] right-0 z-5 min-w-44 grid p-1 bg-white border border-sand-300 rounded-card;
+    @apply top-[calc(100%+6px)] right-0 grid content-start min-w-44 max-w-[calc(100vw-1rem)];
   }
 
   /* Set by static/menu.js when right alignment would push the popup past the
@@ -364,33 +365,17 @@
     @apply left-0 right-auto;
   }
 
-  .menu-item {
-    @apply block w-full py-2 px-3 rounded-lg font-bold text-ink-900 text-left no-underline whitespace-nowrap cursor-pointer;
+  /* Set by static/menu.js when the popup does not fit below the trigger but
+     has more room above it. */
+  .menu-popup-up {
+    @apply top-auto bottom-[calc(100%+6px)];
   }
 
-  .menu-item:hover,
-  .menu-item:focus-visible {
-    @apply bg-sand-50 opacity-100;
+  .menu-popup .option {
+    @apply whitespace-nowrap;
   }
 
-  .menu-item:focus-visible {
-    @apply -outline-offset-2;
-  }
-
-  /* The popup is white even inside a pine card, so the ring stays pine. */
-  .menu-popup :focus-visible {
-    @apply outline-pine-700;
-  }
-
-  .menu-item-danger {
-    @apply text-red-700;
-  }
-
-  .menu-separator {
-    @apply h-px my-1 bg-sand-100;
-  }
-
-  /* ---------- select (views.Select) ---------- */
+  /* ---------- select (views.Select, static/select.js) ---------- */
 
   /* The native select is the no-JS fallback and the submitted field; the
      layout's noscript style shows it and hides the trigger. */
@@ -398,14 +383,16 @@
     display: none;
   }
 
+  /* A field with a caret: shaped like the text fields beside it. */
   .select-trigger {
-    @apply flex items-center justify-between gap-2 w-full mt-1 min-h-11 py-2 pl-2 pr-8 rounded-sm border border-sand-300 bg-white text-left cursor-pointer relative;
+    @apply relative flex items-center justify-between gap-2 w-full min-h-11 py-2 pl-3 pr-9 rounded-[10px] border border-sand-300 bg-white text-left font-normal cursor-pointer;
   }
 
-  /* A plain caret drawn from borders, like the native control's. */
+  /* A plain caret drawn from borders, like the native control's; it turns
+     over while the list is open. */
   .select-trigger::after {
     content: "";
-    @apply absolute right-3 top-1/2 size-2 border-r-2 border-b-2 border-ink-900;
+    @apply absolute right-3.5 top-1/2 size-2 border-r-2 border-b-2 border-ink-900 transition-transform;
     transform: translateY(-70%) rotate(45deg);
   }
 
@@ -413,24 +400,65 @@
     @apply border-pine-700;
   }
 
+  .select-trigger[aria-expanded="true"]::after {
+    transform: translateY(-30%) rotate(225deg);
+  }
+
+  /* The listbox is as wide as its trigger and opens below it, or above when
+     static/select.js finds no room below. */
   .select-popup {
-    @apply absolute inset-x-0 top-full z-5 mt-1 max-h-64 overflow-y-auto overscroll-contain p-1 bg-white border border-sand-300 rounded-card;
+    @apply inset-x-0 top-full mt-1.5;
   }
 
   .select-popup-up {
-    @apply top-auto bottom-full mt-0 mb-1;
+    @apply top-auto bottom-full mt-0 mb-1.5;
   }
 
-  .select-option {
-    @apply py-2 px-3 rounded-lg text-ink-900 cursor-pointer wrap-anywhere;
+  /* ---------- popup (menu and select) ---------- */
+
+  /* One popup for every dropdown, after the Pines UI dropdown and select: a
+     white sheet on a sand border that scrolls past 288px. Each trigger's own
+     class above places it. */
+  .popup {
+    @apply absolute z-5 max-h-72 overflow-y-auto overscroll-contain p-1 bg-white border border-sand-300 rounded-card;
   }
 
-  .select-option[data-active="true"] {
-    @apply bg-sand-50;
+  .option {
+    @apply relative flex items-center gap-2 w-full min-h-10 py-2 px-3 rounded-[10px] font-semibold text-ink-900 text-left no-underline cursor-pointer wrap-anywhere;
   }
 
-  .select-option[aria-selected="true"] {
-    @apply font-bold text-pine-700;
+  .option:hover,
+  .option:focus-visible,
+  .option[data-active="true"] {
+    @apply bg-sand-50 opacity-100;
+  }
+
+  .option:focus-visible {
+    @apply -outline-offset-2;
+  }
+
+  /* The popup is white even inside a pine card, so the ring stays pine. */
+  .popup :focus-visible {
+    @apply outline-pine-700;
+  }
+
+  /* The chosen option is pine and bold, with a tick drawn from borders. */
+  .option[aria-selected="true"] {
+    @apply pr-9 font-bold text-pine-700;
+  }
+
+  .option[aria-selected="true"]::after {
+    content: "";
+    @apply absolute right-3.5 top-1/2 w-1.5 h-3 border-r-2 border-b-2 border-pine-700;
+    transform: translateY(-65%) rotate(45deg);
+  }
+
+  .option-danger {
+    @apply text-red-700;
+  }
+
+  .popup-separator {
+    @apply h-px my-1 bg-sand-100;
   }
 
   /* ---------- trip cards (static/trip-cards.js) ---------- */

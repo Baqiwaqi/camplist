@@ -161,7 +161,7 @@ templ AccountMenu(csrfToken string) {
 			@MenuSeparator()
 			<form method="post" action="/auth/signout" data-signout class="contents">
 				<input type="hidden" name="_csrf" value={ csrfToken }/>
-				<button type="submit" class="menu-item" role="menuitem">Sign out</button>
+				<button type="submit" class="option" role="menuitem">Sign out</button>
 			</form>
 		}
 	</div>

@@ -1249,15 +1249,19 @@ func TripEntryForm(session packing.PackingSession, categories []string, csrfToke
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div></div><div class=\"grid gap-3 sm:grid-cols-2\"><div class=\"grid gap-1\"><label for=\"entry-kind\" class=\"text-sm font-bold\">Type</label><select id=\"entry-kind\" name=\"kind\" class=\"w-full min-h-11 rounded-sm border border-sand-300 bg-white px-2 py-2 font-normal\"><option value=\"\">Packing item</option><option value=\"task\">Before departure task</option></select></div><div class=\"grid gap-1\"><label for=\"entry-scope\" class=\"text-sm font-bold\">Who is this for?</label>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, "</div></div><div class=\"grid gap-3 sm:grid-cols-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = ScopeSelect("scope", "entry-scope", "", true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = SelectField("entry-kind", "kind", "Type", false, entryKindOptions, "").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div></div><label class=\"flex items-center gap-2\"><input type=\"checkbox\" name=\"saveForFuture\" value=\"true\">Also save for future trips (requires packing list edit access)</label><div class=\"flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto\"><button class=\"btn btn-primary\">Add</button></div></form>")
+		templ_7745c5c3_Err = ScopeSelect("scope", "entry-scope", "", true, false).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "</div><label class=\"flex items-center gap-2\"><input type=\"checkbox\" name=\"saveForFuture\" value=\"true\">Also save for future trips (requires packing list edit access)</label><div class=\"flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto\"><button class=\"btn btn-primary\">Add</button></div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1302,7 +1306,7 @@ func TripEntryOperation(oob bool) templ.Component {
 		var templ_7745c5c3_Var56 string
 		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(uuid.NewString())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 293, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 290, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var56)
 		if templ_7745c5c3_Err != nil {
@@ -1358,7 +1362,7 @@ func TripCategories(categories []string) templ.Component {
 			var templ_7745c5c3_Var58 string
 			templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.ResolveAttributeValue(option)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 300, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 297, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var58)
 			if templ_7745c5c3_Err != nil {
@@ -1600,7 +1604,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var64 string
 		templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinStringErrs(op.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 358, Col: 13}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 355, Col: 13}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var64))
 		if templ_7745c5c3_Err != nil {
@@ -1613,7 +1617,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var65 templ.SafeURL
 		templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID + "/entries")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 361, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 358, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 		if templ_7745c5c3_Err != nil {
@@ -1636,7 +1640,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var66 string
 		templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var66)
 		if templ_7745c5c3_Err != nil {
@@ -1649,7 +1653,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var67 string
 		templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.ResolveAttributeValue(op.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 110}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 110}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var67)
 		if templ_7745c5c3_Err != nil {
@@ -1662,7 +1666,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var68 string
 		templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(op.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 162}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 162}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 		if templ_7745c5c3_Err != nil {
@@ -1675,7 +1679,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var69 string
 		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.ResolveAttributeValue(op.Category)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 222}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 222}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var69)
 		if templ_7745c5c3_Err != nil {
@@ -1688,7 +1692,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var70 string
 		templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.ResolveAttributeValue(op.Scope)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 276}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 276}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var70)
 		if templ_7745c5c3_Err != nil {
@@ -1701,7 +1705,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var71 string
 		templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(op.Kind)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 366, Col: 328}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 363, Col: 328}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
 		if templ_7745c5c3_Err != nil {
@@ -1714,7 +1718,7 @@ func FutureSaveRetry(session packing.PackingSession, op packing.PackingOperation
 		var templ_7745c5c3_Var72 templ.SafeURL
 		templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinURLErrs("/trips/" + session.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 370, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-session.templ`, Line: 367, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
 		if templ_7745c5c3_Err != nil {

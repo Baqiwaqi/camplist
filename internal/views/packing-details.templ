@@ -138,7 +138,7 @@ templ ListPreparation(list packing.PackingList, csrfToken string, editing bool, 
 			<label class="sr-only" for="new-task">New preparation task</label>
 			<input id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus?={ focus == "new-task" } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
 			<div class="max-sm:order-last max-sm:w-48">
-				<label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)
+				@ScopeSelect("scope", "new-task-scope", "", false, true)
 			</div>
 			<button class="btn btn-secondary min-h-11">Add task</button>
 		</form>
@@ -396,7 +396,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<label class="sr-only" for={ "task-" + task.ID }>Task name</label>
 			<input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" autofocus?={ focus == "task-"+task.ID } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
 			<div class="max-sm:order-last max-sm:w-48">
-				<label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
+				@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false, true)
 			</div>
 			<button class="btn btn-secondary btn-sm min-h-11">Save</button>
 			<button type="button" class="btn btn-danger btn-sm max-sm:order-last justify-self-end sm:min-h-11" { removeTaskAttrs(list, next)... }>Remove</button>
@@ -458,8 +458,7 @@ templ AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) {
 		<details class="mt-1" open?={ form.Scope != "" && form.Scope != "shared" }>
 			<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Who it's for</summary>
 			<div class="grid gap-1 pb-1 sm:max-w-80">
-				<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
-				@ScopeSelect("scope", "item-scope-new", form.Scope, false)
+				@ScopeSelect("scope", "item-scope-new", form.Scope, false, false)
 			</div>
 		</details>
 	</form>
@@ -490,10 +489,7 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 			<label for={ "item-category-" + suffix } class="text-sm font-bold">Category</label>
 			@CategoryPicker("item-category-"+suffix, "item-category-"+suffix+"-options", form.Category, "Pick or type one", form.Categories)
 		</div>
-		<div class="grid gap-1">
-			<label for={ "item-scope-" + suffix } class="text-sm font-bold">Who is this for?</label>
-			@ScopeSelect("scope", "item-scope-"+suffix, form.Scope, false)
-		</div>
+		@ScopeSelect("scope", "item-scope-"+suffix, form.Scope, false, false)
 	</div>
 }
 
@@ -596,12 +592,9 @@ templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTo
 	}
 }
 
-templ ScopeSelect(name string, id string, scope string, personal bool) {
-	<select name={ name } id={ id } aria-label="Who is this for?" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-2 py-2 font-normal">
-		<option value="shared" selected?={ scope=="" || scope=="shared" }>Shared</option>
-		if personal {
-			<option value="mine" selected?={ scope=="mine" }>Just for me</option>
-		}
-		<option value="person" selected?={ scope=="person" }>For each person</option>
-	</select>
+// ScopeSelect is the "Who is this for?" field on item, task and trip entry
+// forms. personal adds "Just for me", which only a trip offers; hideLabel
+// keeps the label for screen readers in compact rows.
+templ ScopeSelect(name string, id string, scope string, personal bool, hideLabel bool) {
+	@SelectField(id, name, "Who is this for?", hideLabel, scopeOptions(personal), scopeValue(scope))
 }

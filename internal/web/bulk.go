@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 
@@ -73,7 +74,11 @@ func (h *handler) AddSeveralHandler(w http.ResponseWriter, r *http.Request) {
 	result, err := h.packingStore.AddItems(r.Context(), list.ID, userID, items)
 	if err != nil {
 		log.Printf("add several items: %v", err)
-		_, message := storeErrorDetails(err, "Adding the items failed")
+		status, message := storeErrorDetails(err, "Adding the items failed")
+		if status != http.StatusBadRequest && status != http.StatusUnprocessableEntity {
+			http.Error(w, message, status)
+			return
+		}
 		form.Error = []string{message}
 		h.renderAddSeveral(w, r, list, form, "")
 		return
@@ -179,11 +184,6 @@ func (h *handler) AddFromListHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderAddFromList(w, r, step)
 		return
 	}
-	if len(selected) > packing.MaxItemsPerAdd {
-		step.Errors = []string{"Add at most 100 items at a time. Untick some and add the rest afterwards."}
-		h.renderAddFromList(w, r, step)
-		return
-	}
 	result, err := h.packingStore.CopyItems(r.Context(), list.ID, source.ID, userID, selected)
 	if err != nil {
 		log.Printf("copy items: %v", err)
@@ -192,8 +192,10 @@ func (h *handler) AddFromListHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, message, status)
 			return
 		}
-		if status == http.StatusBadRequest {
+		if errors.Is(err, packing.ErrItemsGone) {
 			message = "Those items are no longer on " + source.Name + "."
+		} else if status == http.StatusBadRequest {
+			message = "Some of those items cannot be copied. Check their names and categories on " + source.Name + "."
 		}
 		step.Errors = []string{message}
 		h.renderAddFromList(w, r, step)

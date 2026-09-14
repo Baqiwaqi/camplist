@@ -199,7 +199,7 @@ func TestCopyItemsNeedsReadOnTheSourceAndEditOnTheDestination(t *testing.T) {
 	if _, err := store.CopyItems(ctx, source.ID, source.ID, "owner", []string{passport.ID}); !errors.Is(err, packing.ErrInvalid) {
 		t.Fatalf("copy into the same list: %v", err)
 	}
-	if _, err := store.CopyItems(ctx, destination.ID, source.ID, "owner", []string{"gone"}); !errors.Is(err, packing.ErrInvalid) {
+	if _, err := store.CopyItems(ctx, destination.ID, source.ID, "owner", []string{"gone"}); !errors.Is(err, packing.ErrItemsGone) {
 		t.Fatalf("copy with nothing selected: %v", err)
 	}
 	if saved, _ := store.GetPackingList(ctx, destination.ID, "owner"); len(saved.Items) != 0 {

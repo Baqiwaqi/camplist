@@ -287,6 +287,51 @@ func TestAddFromListNeedsEditAccessToTheDestination(t *testing.T) {
 	}
 }
 
+func TestAddFromListCopiesMoreThanOnePasteAndStopsAtTheListLimit(t *testing.T) {
+	source := packing.NewList("camper", "Weekend camping", "")
+	var ids []string
+	for i := 0; i < packing.MaxItemsPerAdd+50; i++ {
+		item := packing.NewItem(fmt.Sprintf("Item %d", i), "")
+		source.Items = append(source.Items, item)
+		ids = append(ids, item.ID)
+	}
+	list := packing.NewList("camper", "Crag day", "")
+	full := packing.NewList("camper", "Expedition", "")
+	for i := 0; i < packing.MaxListEntries-10; i++ {
+		full.Items = append(full.Items, packing.NewItem(fmt.Sprintf("Kit %d", i), ""))
+	}
+	store := bulkStore(t, source, list, full)
+	h := handler{packingStore: store}
+
+	if w := addFrom(h, "camper", list.ID, source.ID, ids...); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "Added 150 items from Weekend camping.") {
+		t.Fatalf("copy of 150 items: %d %s", w.Code, w.Body.String())
+	}
+	if got := savedNames(t, store, list.ID, "camper"); len(got) != packing.MaxItemsPerAdd+50 {
+		t.Fatalf("copied %d items", len(got))
+	}
+	w := addFrom(h, "camper", full.ID, source.ID, ids...)
+	if body := html.UnescapeString(w.Body.String()); w.Code != http.StatusOK || !strings.Contains(body, "A list holds at most 2,000 items and preparation tasks together.") {
+		t.Fatalf("copy past the list limit: %d %s", w.Code, body)
+	}
+	if got := savedNames(t, store, full.ID, "camper"); len(got) != packing.MaxListEntries-10 {
+		t.Fatalf("a copy past the limit saved %d items", len(got))
+	}
+}
+
+func TestAddFromListExplainsWhyItemsCannotBeCopied(t *testing.T) {
+	source := packing.NewList("camper", "Old list", "")
+	source.Items = []packing.PackingItem{packing.NewItem(strings.Repeat("a", packing.MaxItemNameLength+1), "")}
+	list := packing.NewList("camper", "Weekend", "")
+	h := handler{packingStore: bulkStore(t, source, list)}
+
+	if body := addFrom(h, "camper", list.ID, source.ID, source.Items[0].ID).Body.String(); !strings.Contains(body, "Some of those items cannot be copied.") || strings.Contains(body, "no longer on") {
+		t.Fatalf("invalid source item: %s", body)
+	}
+	if body := addFrom(h, "camper", list.ID, source.ID, "gone").Body.String(); !strings.Contains(body, "Those items are no longer on Old list.") {
+		t.Fatalf("missing selection: %s", body)
+	}
+}
+
 func htmxRequest(r *http.Request) *http.Request {
 	r.Header.Set("HX-Request", "true")
 	return r

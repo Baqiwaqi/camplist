@@ -3,6 +3,7 @@ package packing
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -18,12 +19,16 @@ const (
 	MaxItemNameLength = 200
 	// MaxCategoryLength matches the limit on trip entries and remembered categories.
 	MaxCategoryLength = maxCategoryLength
-	// MaxItemsPerAdd bounds one Add several paste or Add from a list selection.
+	// MaxItemsPerAdd bounds one Add several paste. Add from a list copies are
+	// bounded only by MaxListEntries.
 	MaxItemsPerAdd = 100
 )
 
 // ErrListFull reports an add that would take a list past MaxListEntries.
 var ErrListFull = errors.New("the list has reached its item limit")
+
+// ErrItemsGone reports a copy whose selected items are no longer on the source.
+var ErrItemsGone = fmt.Errorf("the selected items are no longer on the source list: %w", ErrInvalid)
 
 // AddItemsResult reports what a bulk add wrote. List is the saved list, or the
 // current one when nothing was added. Replaced is the revision the write
@@ -54,7 +59,14 @@ func listFull(list PackingList, adding int) bool {
 // Invalid names, categories or scopes, more than MaxItemsPerAdd items, or a
 // list that would exceed MaxListEntries reject the whole add.
 func (s *Store) AddItems(ctx context.Context, listID, actor string, items []PackingItem) (AddItemsResult, error) {
-	if len(items) == 0 || len(items) > MaxItemsPerAdd {
+	if len(items) > MaxItemsPerAdd {
+		return AddItemsResult{}, ErrInvalid
+	}
+	return s.addItems(ctx, listID, actor, items)
+}
+
+func (s *Store) addItems(ctx context.Context, listID, actor string, items []PackingItem) (AddItemsResult, error) {
+	if len(items) == 0 {
 		return AddItemsResult{}, ErrInvalid
 	}
 	for _, item := range items {
@@ -130,7 +142,9 @@ func (s *Store) AddItems(ctx context.Context, listID, actor string, items []Pack
 // a destination list the actor can edit, as new items with fresh IDs. The
 // source is re-read here, so only its current items are copied, in its order;
 // IDs no longer on the source are ignored. Later edits to either list do not
-// reach the other. Preparation tasks are not copied.
+// reach the other. Preparation tasks are not copied. A copy is not bounded by
+// MaxItemsPerAdd, only by MaxListEntries; ErrItemsGone reports a selection
+// with none of its items left on the source.
 func (s *Store) CopyItems(ctx context.Context, destinationID, sourceID, actor string, itemIDs []string) (AddItemsResult, error) {
 	if sourceID == destinationID {
 		return AddItemsResult{}, ErrInvalid
@@ -150,9 +164,9 @@ func (s *Store) CopyItems(ctx context.Context, destinationID, sourceID, actor st
 		}
 	}
 	if len(items) == 0 {
-		return AddItemsResult{}, ErrInvalid
+		return AddItemsResult{}, ErrItemsGone
 	}
-	return s.AddItems(ctx, destinationID, actor, items)
+	return s.addItems(ctx, destinationID, actor, items)
 }
 
 // ItemLine is one item read from pasted text.

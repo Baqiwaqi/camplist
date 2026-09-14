@@ -97,8 +97,8 @@ templ CategoryPicker(id string, optionsID string, value string, placeholder stri
 					</span>
 					<template x-if="managing === item.value">
 						<span role="menu" x-bind:aria-label="`${item.value} category`" class="grid mx-1 mb-1 p-1 bg-white border border-sand-300 rounded-card" x-on:click.stop x-init="$nextTick(() => $el.querySelector('button').focus({ preventScroll: true }))">
-							<button type="button" role="menuitem" class="menu-item" x-on:click="rename(item.value)">Rename…</button>
-							<button type="button" role="menuitem" class="menu-item menu-item-danger" x-on:click="remove(item.value)">Remove</button>
+							<button type="button" role="menuitem" class="option" x-on:click="rename(item.value)">Rename…</button>
+							<button type="button" role="menuitem" class="option option-danger" x-on:click="remove(item.value)">Remove</button>
 						</span>
 					</template>
 				</li>

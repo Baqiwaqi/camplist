@@ -9,10 +9,10 @@ package views
 // Alpine.data("categoryDialog").
 templ CategoryDialog(csrfToken string) {
 	@Dialog("category-dialog", true, templ.Attributes{
-		"aria-labelledby":              "category-dialog-title",
-		"x-data":                       "categoryDialog",
-		"x-on:category-rename.window":  "open($event.detail)",
-		"x-on:close":                   "closed()",
+		"aria-labelledby":             "category-dialog-title",
+		"x-data":                      "categoryDialog",
+		"x-on:category-rename.window": "open($event.detail)",
+		"x-on:close":                  "closed()",
 	}) {
 		<form
 			method="post"

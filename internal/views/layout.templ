@@ -116,10 +116,10 @@ templ Layout(title string, csrfToken string) {
 templ RequestErrorToast() {
 	@ToastStack() {
 		@Toast("request-error", true, templ.Attributes{
-			"role":                        "alert",
-			"hidden":                      true,
-			"x-data":                      "requestError",
-			"x-bind:class":                "{ 'toast-leave': leaving }",
+			"role":                            "alert",
+			"hidden":                          true,
+			"x-data":                          "requestError",
+			"x-bind:class":                    "{ 'toast-leave': leaving }",
 			"x-on:htmx:before-request.window": "reset()",
 			"x-on:htmx:response-error.window": "failed($event.detail.xhr)",
 			"x-on:htmx:send-error.window":     "lost()",

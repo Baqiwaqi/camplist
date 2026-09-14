@@ -53,7 +53,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   confirm dialog is its centred variant, `sheet` rises from the bottom on
   phones); `ToastStack`/`Toast` at the bottom edge, ink for a confirmation and
   red for a failure; `Switch` for a yes/no setting and `Chip` for a pill
-  multi-select, both keeping a real checkbox or radio as the submitted field;
+  multi-select, both keeping a real checkbox as the submitted field;
   `TabLinks` (page switch, plain links, no script) and `TabGroup`/`TabPanel`
   (panels in place, sliding marker in `static/tabs.js`, strip hidden and
   panels stacked without scripts). Use these instead of pasting class strings

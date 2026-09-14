@@ -513,7 +513,7 @@
   }
 
   /* Multi-select as pills. The input is visually hidden inside the label, so
-     the chip is a real checkbox or radio to a screen reader and to a form. */
+     the chip is a real checkbox to a screen reader and to a form. */
   .chip {
     @apply inline-flex items-center gap-2 min-h-10 py-1 px-4 rounded-full border border-sand-300 bg-white font-semibold cursor-pointer;
     transition: background-color var(--duration-colour) ease, border-color var(--duration-colour) ease;

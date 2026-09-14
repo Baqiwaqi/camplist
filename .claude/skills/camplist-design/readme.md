@@ -71,8 +71,8 @@ Reach for one of these rather than pasting class strings or adding a one-off:
 - **ToastStack / Toast(id, danger, attrs)** — messages at the bottom edge: ink
   for a confirmation, red for a failure (the request error toast).
 - **Switch(name, label, checked, attrs)** for a yes/no setting and
-  **Chip(name, value, label, checked, single)** for a pill multi-select; both
-  keep a real checkbox or radio as the submitted field.
+  **Chip(name, value, label, checked)** for a pill multi-select; both keep a
+  real checkbox as the submitted field.
 - **ProgressBar** and **ErrorBanner** as before.
 
 A combobox row may not hold a button inside its option: ARIA forbids

@@ -19,10 +19,10 @@ templ BulkAddActions(listID string) {
 // clicked link would not restore.
 templ BulkAddDialog() {
 	@Dialog("bulk-add", true, templ.Attributes{
-		"aria-labelledby": "bulk-add-title",
-		"x-data":          "{ opener: null }",
+		"aria-labelledby":      "bulk-add-title",
+		"x-data":               "{ opener: null }",
 		"x-on:htmx:after-swap": "if ($event.detail.target.id !== 'bulk-add-panel') return; if ($event.detail.target.childElementCount === 0) { $el.close() } else if (!$el.open) { opener = $event.detail.requestConfig?.elt; $el.showModal() }",
-		"x-on:close": "opener?.focus(); opener = null",
+		"x-on:close":           "opener?.focus(); opener = null",
 	}) {
 		<div id="bulk-add-panel"></div>
 	}

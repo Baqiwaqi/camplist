@@ -135,6 +135,9 @@ func TestSharedSyncPreservesOtherMembersAndAcknowledgesMatchingIntent(t *testing
 	if matching.List.Items[0].Revision != 1 || matching.List.Items[0].ChangedBy != first.List.Items[0].ChangedBy {
 		t.Fatal("matching intent rewrote attribution")
 	}
+	if matching.List.Items[0].ChangedByID != "owner" {
+		t.Fatalf("attribution account = %q, want owner", matching.List.Items[0].ChangedByID)
+	}
 	stove := packing.PackingOperation{ID: "stove", ItemID: list.Items[1].ID, Checked: true, ExpectedRevision: 0}
 	both, err := store.SyncSessionItem(ctx, trip.ID, "guest", stove)
 	if err != nil || !both.List.Items[0].Checked || !both.List.Items[1].Checked {

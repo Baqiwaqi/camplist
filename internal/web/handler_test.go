@@ -92,7 +92,7 @@ func TestInvalidEditAndItemFormsRemainUsable(t *testing.T) {
 		})
 	}
 }
-func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
+func TestSetItemReturnsSavedRowAndSupportsNormalForms(t *testing.T) {
 	for _, htmx := range []bool{true, false} {
 		t.Run(fmt.Sprint(htmx), func(t *testing.T) {
 			list := packing.NewList("user", "Camping", "")
@@ -110,13 +110,14 @@ func TestSetItemReturnsSavedChecklistAndSupportsNormalForms(t *testing.T) {
 				t.Fatal("item not packed")
 			}
 			if htmx {
-				for _, want := range []string{`id="packing-checklist"`, "1 of 1 items packed", "Unpack", `value="false"`, `<p id="packing-progress-status" hx-swap-oob="innerHTML">1 of 1 items packed</p>`} {
-					if !strings.Contains(w.Body.String(), want) {
+				body := w.Body.String()
+				for _, want := range []string{`id="pack-` + list.Items[0].ID + `"`, "Unpack", `value="false"`, `id="packing-progress"`, `hx-swap-oob="true"`, "1 of 1 items packed", `<p id="packing-progress-status" hx-swap-oob="innerHTML">1 of 1 items packed</p>`} {
+					if !strings.Contains(body, want) {
 						t.Errorf("missing %q", want)
 					}
 				}
-				if strings.Contains(w.Body.String(), "<html") || w.Header().Get("HX-Refresh") != "" {
-					t.Error("returned full navigation instead of fragment")
+				if strings.Contains(body, "<html") || strings.Contains(body, `id="packing-checklist"`) || strings.Contains(body, "<form") || w.Header().Get("HX-Refresh") != "" {
+					t.Errorf("returned more than the row and progress:\n%s", body)
 				}
 			} else if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/trips/"+session.ID {
 				t.Error("normal form missing redirect")

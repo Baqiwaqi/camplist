@@ -28,7 +28,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   intercepts `htmx:confirm`, and `data-confirm-action` / `data-confirm-detail`
   on the triggering element supply the label and explanation. Packing updates and the
   list page's item and preparation controls return fragments; other mutations
-  may redirect or refresh. The list page holds its ETag once in
+  may redirect or refresh. Trip page forms keep the focused form in place and swap
+  only what changed by id (`hx-swap-oob` / `hx-select-oob`); once
+  `static/offline/session.mjs` mounts it owns the checklist and cancels server
+  swaps into it. The list page holds its ETag once in
   `#list-revision`: `static/revision.js` sends it as the `revision` field or
   `X-Camplist-Revision` header of every htmx request there, so a fragment save
   must swap `views.ListRevision(list, true)` out of band with the revision
@@ -94,9 +97,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
   and `@layer components` keeps the classes that carry state, pseudo elements or
   runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.error`, `.dialog`, `.sync-status`, the
-  `drop-*`/toast transitions) plus rules for elements the offline scripts create
-  without classes. Utilities are generated from `internal/views` and
-  `static/offline` only.
+  `drop-*`/toast transitions, and the `.muted`/`.tag` the offline scripts set)
+  plus rules for elements the offline scripts create without classes. Utilities
+  are generated from `internal/views` and `static/offline` only.
 - `go test ./...` and `go vet ./...`
 - `go run ./cmd/web` (requires database, Google OAuth, session, and CSRF env vars; see README.md)
 

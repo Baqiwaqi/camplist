@@ -14,6 +14,7 @@ func NewPackingSession(list PackingList) PackingSession {
 		list.Tasks[i].Done = false
 		list.Tasks[i].Revision = 0
 		list.Tasks[i].ChangedBy = ""
+		list.Tasks[i].ChangedByID = ""
 	}
 	list.AppliedReviews = append([]string{}, list.AppliedReviews...)
 	list.Changes = append([]string{}, list.Changes...)

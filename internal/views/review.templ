@@ -132,17 +132,18 @@ templ reviewSaveStatus(text string) {
 	<p id="review-save-status" role="status" class="text-sm text-muted mt-3 empty:mt-0">{ text }</p>
 }
 
-// reviewChange describes a proposed change in words, for the apply checkbox.
+// reviewChange describes a proposed change as a sentence, for the apply
+// checkbox and the applied confirmation.
 func reviewChange(observation packing.ReviewEntry) string {
 	switch observation.Action {
 	case packing.ReviewAdd:
-		return "Add " + observation.Name + " to future lists"
+		return "Add " + observation.Name + " to the list"
 	case packing.ReviewRemove:
-		return "Remove " + observation.Name + " from future lists"
+		return "Remove " + observation.Name + " from the list"
 	case packing.ReviewTask:
-		return "Preparation task: " + observation.Task
+		return "Add the preparation task " + observation.Task
 	}
-	return string(observation.Action)
+	return "Keep " + observation.Name + " as an observation"
 }
 
 // TripObservations lists this trip's observations with the apply form. spaced
@@ -184,7 +185,7 @@ templ TripObservations(session packing.PackingSession, list packing.PackingList,
 					</p>
 					if observation.Action != packing.ReviewObserve {
 						if slices.Contains(list.AppliedReviews, session.ID + ":" + observation.ID) {
-							<p class="mb-3">{ reviewChange(observation) }: applied to future trips.</p>
+							<p class="mb-3">{ reviewChange(observation) }. Applied to future trips.</p>
 						} else if available {
 							<label class="flex items-center gap-2 mt-3 mb-2">
 								<input type="checkbox" name="selected" value={ observation.ID } class="min-h-8 align-middle"/>

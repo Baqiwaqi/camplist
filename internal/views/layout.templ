@@ -2,6 +2,11 @@ package views
 
 import "camplist/internal/auth"
 
+// DocumentTitle is the page title. htmx also applies it from a fragment response.
+templ DocumentTitle(title string) {
+	<title>{ title } – Camplist</title>
+}
+
 // Shell is the document frame shared by every page: head, fonts, scripts, body.
 templ Shell(title string) {
 	@shell(title, nil) {
@@ -21,7 +26,7 @@ templ shell(title string, bodyAttrs templ.Attributes) {
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<meta name="theme-color" content="#2f5d3a"/>
 			<meta name="htmx-config" content='{"historyCacheSize":0,"refreshOnHistoryMiss":true}'/>
-			<title>{ title } – Camplist</title>
+			@DocumentTitle(title)
 			<link rel="icon" type="image/svg+xml" href="/static/logomark.svg"/>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>

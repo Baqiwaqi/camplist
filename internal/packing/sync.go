@@ -116,6 +116,7 @@ func (s *Store) SyncSessionItem(ctx context.Context, sessionID, user string, op 
 			item.Revision++
 			item.UpdatedAt = time.Now().UTC()
 			item.ChangedBy = session.participantName(user)
+			item.ChangedByID = user
 		}
 		session.Operations[key] = op
 		return true, nil

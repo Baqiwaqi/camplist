@@ -59,6 +59,7 @@ type PackingItem struct {
 	AssigneeName   string     `json:"assigneeName,omitempty"`
 	SourceRevision string     `json:"-"`
 	ChangedBy      string     `json:"changedBy,omitempty"`
+	ChangedByID    string     `json:"changedById,omitempty"`
 	Revision       int64      `json:"revision"`
 	ID             string     `json:"id"`
 	Name           string     `json:"name"`

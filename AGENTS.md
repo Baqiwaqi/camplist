@@ -135,6 +135,10 @@ The teaching-only phase is complete. Default to **implementing requested changes
   memberships, invitations, receipts or review metadata into packing pages/APIs.
 - Preserve item revisions and operation IDs through offline retries. A reconnect
   is not a successful sync. Shared conflicts need an explicit user decision.
+- A deleted or no-longer-accessible trip goes through `OfflinePacking.gone`
+  (`static/offline/packing.mjs`): the copy is dropped unless it holds unsynced
+  work, which keeps a sticky `gone` marker until a successful refresh. The Trips
+  overview asks `reconcile` before showing any copy the server did not list.
 - Sharing behavior and limits: `docs/shared-lists-implementation.md`.
 
 ## Maintaining this file

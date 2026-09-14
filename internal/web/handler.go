@@ -423,7 +423,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 func listItemsChanged(list packing.PackingList) templ.Component {
 	return templ.Join(
 		views.ListSummary(list.Items, true),
-		views.ListEmpty(list.ID, list.Items, true),
+		views.ListEmpty(list.Items, true),
 		views.ListRevision(list, true),
 	)
 }

@@ -457,7 +457,7 @@ func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
 	h.ListDetailsPage(w, sharingRequest("GET", "/packing-lists/"+lists[0].ID, "camper", map[string]string{"id": lists[0].ID}, nil))
 	body := w.Body.String()
 	for _, want := range []string{
-		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3">`,
+		`<div id="list-empty" class="mb-3">`,
 		`<dialog id="bulk-add"`,
 		`<p id="list-add-status" role="status"`,
 	} {

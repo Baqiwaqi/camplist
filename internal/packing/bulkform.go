@@ -12,12 +12,12 @@ const maxPasteLength = 32000
 // AddSeveralForm is the Add several form: pasted lines, an optional category
 // for lines under no heading, and the list revision the page showed.
 type AddSeveralForm struct {
-	Action     string   `schema:"-"`
-	Revision   string   `schema:"revision"`
-	Lines      string   `schema:"lines"`
-	Category   string   `schema:"category"`
+	Action     string           `schema:"-"`
+	Revision   string           `schema:"revision"`
+	Lines      string           `schema:"lines"`
+	Category   string           `schema:"category"`
 	Categories []CategoryOption `schema:"-"`
-	Error      []string `schema:"-"`
+	Error      []string         `schema:"-"`
 }
 
 func NewAddSeveralForm(list PackingList) AddSeveralForm {

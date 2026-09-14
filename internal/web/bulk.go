@@ -36,13 +36,11 @@ func (h *handler) bulkList(w http.ResponseWriter, r *http.Request) (string, pack
 // AddSeveralPage shows the Add several form: the dialog's content for htmx,
 // otherwise a page of its own.
 func (h *handler) AddSeveralPage(w http.ResponseWriter, r *http.Request) {
-	userID, list, ok := h.bulkList(w, r)
+	_, list, ok := h.bulkList(w, r)
 	if !ok {
 		return
 	}
-	form := packing.NewAddSeveralForm(list)
-	form.Categories = h.categorySuggestions(r.Context(), userID, list.Items)
-	h.renderAddSeveral(w, r, list, form)
+	h.renderAddSeveral(w, r, list, packing.NewAddSeveralForm(list))
 }
 
 // AddSeveralHandler adds one item per pasted line. Names already on the list
@@ -64,7 +62,6 @@ func (h *handler) AddSeveralHandler(w http.ResponseWriter, r *http.Request) {
 		malformedRequest(w)
 		return
 	}
-	form.Categories = h.categorySuggestions(r.Context(), userID, list.Items)
 	items, errs := form.Items()
 	if len(errs) > 0 {
 		form.Error = errs
@@ -92,6 +89,7 @@ func (h *handler) AddSeveralHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) renderAddSeveral(w http.ResponseWriter, r *http.Request, list packing.PackingList, form packing.AddSeveralForm) {
+	form.Categories = h.categorySuggestions(r.Context(), auth.Subject(r.Context()), list.Items)
 	if isHTMX(r) {
 		render(w, r, views.AddSeveralPanel(list, form, csrf.Token(r), false))
 		return

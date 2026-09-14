@@ -45,7 +45,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 		</section>
 		<section class="mt-8">
 			<div class="card">
-				@ListEmpty(list.ID, list.Items, false)
+				@ListEmpty(list.Items, false)
 				<ul id="list-items" class="columns-[17rem] gap-x-8" data-empty-focus="item-name-new">
 					for _, item := range list.Items {
 						@ItemRow(list.ID, item)
@@ -87,10 +87,10 @@ templ ListSummary(items []packing.PackingItem, oob bool) {
 
 // ListEmpty is the empty items text. It stays in the page, hidden while the
 // list has items, so adding the first item or deleting the last can toggle it.
-templ ListEmpty(listID string, items []packing.PackingItem, oob bool) {
+templ ListEmpty(items []packing.PackingItem, oob bool) {
 	<div
 		id="list-empty"
-		class="mb-3 grid justify-items-start gap-3"
+		class="mb-3"
 		hidden?={ len(items) > 0 }
 		if oob {
 			hx-swap-oob="true"

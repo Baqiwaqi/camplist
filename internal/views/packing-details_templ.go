@@ -194,7 +194,7 @@ func PackingDetails(name string, list packing.PackingList, form packing.CreateIt
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ListEmpty(list.ID, list.Items, false).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ListEmpty(list.Items, false).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -344,7 +344,7 @@ func ListSummary(items []packing.PackingItem, oob bool) templ.Component {
 
 // ListEmpty is the empty items text. It stays in the page, hidden while the
 // list has items, so adding the first item or deleting the last can toggle it.
-func ListEmpty(listID string, items []packing.PackingItem, oob bool) templ.Component {
+func ListEmpty(items []packing.PackingItem, oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -365,7 +365,7 @@ func ListEmpty(listID string, items []packing.PackingItem, oob bool) templ.Compo
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div id=\"list-empty\" class=\"mb-3 grid justify-items-start gap-3\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div id=\"list-empty\" class=\"mb-3\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

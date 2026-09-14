@@ -2,11 +2,24 @@ package views
 
 import "camplist/internal/packing"
 
-templ NewPackingListPage(name string, heading string, form packing.CreatePackingListForm, csrfToken string) {
-	@Layout(name, csrfToken) {
+templ NewPackingListPage(form packing.CreatePackingListForm, csrfToken string) {
+	@Layout("New list", csrfToken) {
 		<section class="max-w-[560px]">
-			<h1>{ heading }</h1>
+			<h1>Start a new list</h1>
 			<p class="text-muted max-w-[60ch] mb-3">Save your regular gear here and reuse it for future trips.</p>
+			<div class="card">
+				@PackingListForm(form, csrfToken)
+			</div>
+		</section>
+	}
+}
+
+templ EditPackingListPage(listName string, form packing.CreatePackingListForm, csrfToken string) {
+	@Layout("Edit list", csrfToken) {
+		<section class="max-w-[560px]">
+			<h1>Edit list</h1>
+			<p class="text-meta text-muted mb-1">Editing { listName }</p>
+			<p class="text-muted max-w-[60ch] mb-3">Change the name or description. Your items and trips stay as they are.</p>
 			<div class="card">
 				@PackingListForm(form, csrfToken)
 			</div>

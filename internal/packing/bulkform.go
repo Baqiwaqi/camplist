@@ -16,7 +16,7 @@ type AddSeveralForm struct {
 	Revision   string   `schema:"revision"`
 	Lines      string   `schema:"lines"`
 	Category   string   `schema:"category"`
-	Categories []string `schema:"-"`
+	Categories []CategoryOption `schema:"-"`
 	Error      []string `schema:"-"`
 }
 

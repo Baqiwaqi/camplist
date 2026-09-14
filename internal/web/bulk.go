@@ -9,6 +9,7 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/views"
 
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
@@ -226,9 +227,25 @@ func (h *handler) rememberCategories(ctx context.Context, userID string, items [
 	}
 }
 
-// renderBulkAdded answers a bulk add from the list page's dialog: an empty
-// panel, which closes the dialog, the new rows and the summary.
+// renderBulkAdded answers a bulk add from the list page's dialog. Everything
+// in the answer is out of band, so the dialog's panel is left empty, which
+// closes it: the summary, the new rows, and the item count, empty state and
+// revision the write made. When another write landed after the revision the
+// page showed, the page is out of date around the new rows, so it reloads
+// instead, as a single add does.
 func (h *handler) renderBulkAdded(w http.ResponseWriter, r *http.Request, submitted string, result packing.AddItemsResult, summary string) {
-	// TODO(bulk-add): append rows in place once the list page in-place work lands.
-	w.Header().Set("HX-Refresh", "true")
+	if len(result.Added) > 0 && result.Replaced != submitted {
+		w.Header().Set("HX-Refresh", "true")
+		return
+	}
+	parts := []templ.Component{views.ListAddStatus(summary, true)}
+	if len(result.Added) > 0 {
+		added := make([]packing.PackingItem, 0, len(result.Added))
+		for _, item := range result.Added {
+			saved, _ := result.List.FindItem(item.ID)
+			added = append(added, saved)
+		}
+		parts = append(parts, views.ItemsAppended(result.List.ID, added), listItemsChanged(result.List))
+	}
+	render(w, r, templ.Join(parts...))
 }

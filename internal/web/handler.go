@@ -387,6 +387,7 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		views.AddItemForm(fresh, csrf.Token(r), true),
 		views.ItemsAppended(listID, []packing.PackingItem{added}),
 		listItemsChanged(list),
+		views.ListAddStatus("", true),
 	))
 }
 
@@ -422,7 +423,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 func listItemsChanged(list packing.PackingList) templ.Component {
 	return templ.Join(
 		views.ListSummary(list.Items, true),
-		views.ListEmpty(list.Items, true),
+		views.ListEmpty(list.ID, list.Items, true),
 		views.ListRevision(list, true),
 	)
 }

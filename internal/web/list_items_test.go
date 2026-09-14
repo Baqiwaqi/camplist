@@ -59,7 +59,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 		`<ul hx-swap-oob="beforeend:#list-items"><li class="item-row`,
 		`id="item-` + saved.Items[0].ID + `"`,
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">1 item</p>`,
-		`<p id="list-empty" class="text-muted mb-3" hidden hx-swap-oob="true">`,
+		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3" hidden hx-swap-oob="true">`,
 		`<option value="Night hike" data-custom data-used>`,
 	} {
 		if !strings.Contains(body, want) {
@@ -144,7 +144,7 @@ func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 	}
 	for _, want := range []string{
 		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">No items yet</p>`,
-		`<p id="list-empty" class="text-muted mb-3" hx-swap-oob="true">No items yet.`,
+		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3" hx-swap-oob="true"><p class="text-muted">No items yet.`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("delete response missing %q", want)

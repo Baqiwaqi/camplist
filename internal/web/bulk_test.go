@@ -286,3 +286,107 @@ func TestAddFromListNeedsEditAccessToTheDestination(t *testing.T) {
 		t.Fatalf("rejected copies saved %v", got)
 	}
 }
+
+func htmxRequest(r *http.Request) *http.Request {
+	r.Header.Set("HX-Request", "true")
+	return r
+}
+
+func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
+	ctx := context.Background()
+	store, climbing, weekend := sharedSource(t)
+	h := handler{packingStore: store}
+	page, _ := store.GetPackingList(ctx, weekend.ID, "member")
+
+	// The dialog steps are fragments.
+	for _, get := range []struct {
+		path    string
+		handler http.HandlerFunc
+		want    string
+	}{
+		{"/packing-lists/" + weekend.ID + "/add-several", h.AddSeveralPage, `<h2 id="bulk-add-title" class="dialog-title">Add several items</h2>`},
+		{"/packing-lists/" + weekend.ID + "/add-from", h.AddFromListPage, `hx-target="#bulk-add-panel"`},
+		{"/packing-lists/" + weekend.ID + "/add-from/" + climbing.ID, h.AddFromListItemsPage, `hx-post="/packing-lists/` + weekend.ID + `/add-from/` + climbing.ID + `"`},
+	} {
+		w := httptest.NewRecorder()
+		get.handler(w, htmxRequest(sharingRequest("GET", get.path, "member", map[string]string{"id": weekend.ID, "sourceId": climbing.ID}, nil)))
+		if body := w.Body.String(); strings.Contains(body, "<html") || !strings.Contains(body, get.want) {
+			t.Errorf("%s: %.400s", get.path, body)
+		}
+	}
+
+	// A rejected paste comes back into the dialog.
+	w := httptest.NewRecorder()
+	h.AddSeveralHandler(w, htmxRequest(sharingRequest("POST", "/", "member", map[string]string{"id": weekend.ID}, url.Values{"lines": {" "}, "revision": {page.Revision()}})))
+	if body := w.Body.String(); strings.Contains(body, "<html") || !strings.Contains(body, "Type or paste at least one item") || strings.Contains(body, "hx-swap-oob") {
+		t.Fatalf("rejected paste: %s", body)
+	}
+
+	w = httptest.NewRecorder()
+	h.AddSeveralHandler(w, htmxRequest(sharingRequest("POST", "/", "member", map[string]string{"id": weekend.ID}, url.Values{"lines": {"Documents:\nPassport\nchalk bag"}, "revision": {page.Revision()}})))
+	saved, _ := store.GetPackingList(ctx, weekend.ID, "member")
+	body := w.Body.String()
+	for _, want := range []string{
+		`<p id="list-add-status" role="status" class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden" hx-swap-oob="innerHTML">Added 1 item to Documents. Skipped 1 already on this list: chalk bag.</p>`,
+		`<ul hx-swap-oob="beforeend:#list-items">`,
+		`id="list-summary"`,
+		`id="list-empty"`,
+		`id="list-revision" value="` + html.EscapeString(saved.Revision()) + `" hx-swap-oob="true"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("add several response missing %q in %s", want, body)
+		}
+	}
+	// Everything is out of band, which leaves the dialog's panel empty and closes it.
+	if strings.Contains(body, "<html") || strings.Count(body, "Passport") != 1 || w.Header().Get("HX-Refresh") != "" {
+		t.Fatalf("add several response: %s", body)
+	}
+
+	// Nothing new: only the summary changes.
+	w = httptest.NewRecorder()
+	h.AddSeveralHandler(w, htmxRequest(sharingRequest("POST", "/", "member", map[string]string{"id": weekend.ID}, url.Values{"lines": {"Passport"}, "revision": {saved.Revision()}})))
+	if body := w.Body.String(); !strings.Contains(body, "Added 0 items. Skipped 1") || strings.Contains(body, "list-items") || strings.Contains(body, "list-revision") {
+		t.Fatalf("skipped everything: %s", body)
+	}
+
+	// Copying on top of a revision the page did not show reloads the page.
+	w = httptest.NewRecorder()
+	h.AddFromListHandler(w, htmxRequest(sharingRequest("POST", "/", "member", map[string]string{"id": weekend.ID, "sourceId": climbing.ID}, url.Values{"item": {climbing.Items[2].ID}, "revision": {page.Revision()}})))
+	if w.Header().Get("HX-Refresh") != "true" {
+		t.Fatalf("stale page was not reloaded: %v %s", w.Header(), w.Body.String())
+	}
+	saved, _ = store.GetPackingList(ctx, weekend.ID, "member")
+	w = httptest.NewRecorder()
+	h.AddFromListHandler(w, htmxRequest(sharingRequest("POST", "/", "member", map[string]string{"id": weekend.ID, "sourceId": climbing.ID}, url.Values{"item": {climbing.Items[0].ID}, "revision": {saved.Revision()}})))
+	if body := w.Body.String(); !strings.Contains(body, "Added 1 item from Climbing.") || !strings.Contains(body, "Climbing shoes") || w.Header().Get("HX-Refresh") != "" {
+		t.Fatalf("copy in place: %s", body)
+	}
+}
+
+func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
+	store := bulkStore(t)
+	h := handler{packingStore: store}
+	w := httptest.NewRecorder()
+	h.NewListHandler(w, sharingRequest("POST", "/packing-lists/new", "camper", nil, url.Values{"name": {"Climbing"}}))
+	lists, _ := store.GetPackingLists(context.Background(), "camper")
+	if w.Code != http.StatusSeeOther || len(lists) != 1 || w.Header().Get("Location") != "/packing-lists/"+lists[0].ID {
+		t.Fatalf("new list: %d %q", w.Code, w.Header().Get("Location"))
+	}
+
+	w = httptest.NewRecorder()
+	h.ListDetailsPage(w, sharingRequest("GET", "/packing-lists/"+lists[0].ID, "camper", map[string]string{"id": lists[0].ID}, nil))
+	body := w.Body.String()
+	for _, want := range []string{
+		`<div id="list-empty" class="mb-3 grid justify-items-start gap-3">`,
+		`<dialog id="bulk-add"`,
+		`<p id="list-add-status" role="status"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("list page missing %q", want)
+		}
+	}
+	// Both actions sit on the add card and in the empty state.
+	if strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-several"`) != 2 || strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-from"`) != 2 {
+		t.Fatalf("bulk add actions: %s", body)
+	}
+}

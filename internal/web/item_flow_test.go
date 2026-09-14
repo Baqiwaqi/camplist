@@ -117,9 +117,9 @@ func TestEditItemThroughRouter(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("fallback edit page: %d", res.StatusCode)
 	}
-	headersMatch := regexp.MustCompile(`hx-headers="([^"]+)"`).FindStringSubmatch(row)
+	headersMatch := regexp.MustCompile(`hx-headers="([^"]+)"`).FindStringSubmatch(fragment)
 	if headersMatch == nil {
-		t.Fatal("missing row headers")
+		t.Fatal("missing delete headers in the edit row")
 	}
 	var headers map[string]string
 	if err := json.Unmarshal([]byte(html.UnescapeString(headersMatch[1])), &headers); err != nil {

@@ -380,12 +380,10 @@ func (h *handler) AddItemHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("HX-Refresh", "true")
 		return
 	}
-	added, _ := list.FindItem(item.ID)
 	fresh := packing.NewCreateItemForm(listID)
 	fresh.Categories = h.categorySuggestions(ctx, userID, list.Items)
 	render(w, r, templ.Join(
 		views.AddItemForm(fresh, csrf.Token(r), true),
-		views.ItemsAppended(listID, []packing.PackingItem{added}),
 		listItemsChanged(list),
 		views.ListAddStatus("", true),
 	))
@@ -418,12 +416,14 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 	render(w, r, templ.Join(listItemsChanged(list), views.ListAddStatus("", true)))
 }
 
-// listItemsChanged is the out-of-band update after an item write on the list
-// page: the item count, empty text and the revision the write made.
+// listItemsChanged is the out-of-band update after a write that changes the
+// list page's gear: the counts, the gear in its category groups and the
+// revision the write made.
 func listItemsChanged(list packing.PackingList) templ.Component {
 	return templ.Join(
 		views.ListSummary(list.Items, true),
-		views.ListEmpty(list.Items, true),
+		views.GearCount(list.Items),
+		views.ListGear(list, "", true),
 		views.ListRevision(list, true),
 	)
 }

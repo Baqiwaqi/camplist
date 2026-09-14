@@ -153,7 +153,11 @@ The teaching-only phase is complete. Default to **implementing requested changes
   trip cards open through one title link with `.card-link` (it covers the
   card); keep the More menu after that link in the markup so it stays above
   the cover without a z-index. A trip card's tags sit in its `data-card-tags`
-  row, where `account.mjs` adds "Available offline".
+  row, where `account.mjs` adds "Available offline". Gear on a list page is
+  one sheet grouped by category (`groupByCategory`), each group head with its
+  count; a resting row is the name, tags and one ghost Edit, and Delete lives
+  in the edit row. Item saves there swap all of `#list-items` (`ListGear`),
+  since they can regroup it.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
   classes such as `.error`, `.card` and `.item-row` at runtime, so keep those

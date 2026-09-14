@@ -252,17 +252,19 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := w.Body.String()
+	// The renamed items regroup under the new name.
 	for _, want := range []string{
-		`id="item-category-tag-` + saved.Items[0].ID + `"`,
-		`id="item-category-tag-` + saved.Items[2].ID + `"`,
-		`hx-swap-oob="true">Fishing</span>`,
+		`<div id="list-items"`,
+		`Fishing <span class="font-semibold text-muted">2</span></h3>`,
+		`id="item-` + saved.Items[0].ID + `"`,
+		`id="item-` + saved.Items[2].ID + `"`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("rename response missing %q in %s", want, body)
 		}
 	}
-	if strings.Contains(body, saved.Items[1].ID) {
-		t.Error("rename response swaps an item it did not change")
+	if strings.Contains(body, "Fishnig") {
+		t.Error("rename response still shows the old name")
 	}
 	if got := listRevision(t, body); got != saved.Revision() {
 		t.Errorf("list revision %q, want %q", got, saved.Revision())

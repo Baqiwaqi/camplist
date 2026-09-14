@@ -72,7 +72,7 @@ func TestInvalidEditAndItemFormsRemainUsable(t *testing.T) {
 		handler          http.HandlerFunc
 	}{
 		{"edit", "/packing-lists/" + list.ID + "/edit", "Save", h.EditListHandler},
-		{"item", "/packing-lists/" + list.ID + "/add-item", "Add Item", h.AddItemHandler},
+		{"item", "/packing-lists/" + list.ID + "/add-item", "Add item", h.AddItemHandler},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			r := packingRequest(test.path, url.Values{"name": {"  "}, "category": {"Shelter"}, "description": {"Weekend"}})

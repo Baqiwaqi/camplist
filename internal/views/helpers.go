@@ -23,7 +23,49 @@ func itemSummary(items []packing.PackingItem) string {
 	}
 }
 
-// categories returns the distinct categories in order of first use, at most limit.
+// listSummary is the meta line of a list page, e.g. "16 items in 7
+// categories". Items without a category are counted but name no category.
+func listSummary(items []packing.PackingItem) string {
+	summary := itemSummary(items)
+	switch n := len(categories(items, 0)); n {
+	case 0:
+		return summary
+	case 1:
+		return summary + " in 1 category"
+	default:
+		return summary + " in " + strconv.Itoa(n) + " categories"
+	}
+}
+
+// gearCount is the count beside the Gear section's title, e.g. "16 items".
+func gearCount(items []packing.PackingItem) string {
+	if len(items) == 1 {
+		return "1 item"
+	}
+	return strconv.Itoa(len(items)) + " items"
+}
+
+// sharedLabel is the tag of a shared list. Only the owner sees who the members
+// are, so the owner reads their name or number; everyone else reads "Shared".
+func sharedLabel(list packing.PackingList, actor string) string {
+	if !list.IsShared() {
+		return ""
+	}
+	if list.UserID == actor {
+		if n := len(list.Sharing.Members); n > 1 {
+			return "Shared with " + strconv.Itoa(n) + " people"
+		}
+		for _, member := range list.Sharing.Members {
+			if member.Name != "" {
+				return "Shared with " + member.Name
+			}
+		}
+	}
+	return "Shared"
+}
+
+// categories returns the distinct categories in order of first use, at most
+// limit, or all of them when limit is 0.
 func categories(items []packing.PackingItem, limit int) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -45,8 +87,9 @@ type itemGroup struct {
 	Items []packing.PackingItem
 }
 
-// groupByCategory groups items by category in order of first use. Items without
-// a category come last and are labelled "Other" only when other groups exist.
+// groupByCategory groups items by category in order of first use, for the
+// list page's gear and the add-from-list picker. Items without a category come
+// last and are labelled "Other" only when other groups exist.
 func groupByCategory(items []packing.PackingItem) []itemGroup {
 	index := map[string]int{}
 	var groups []itemGroup

@@ -75,6 +75,13 @@ The teaching-only phase is complete. Default to **implementing requested changes
   lists the actor owns only, never started trips) or removed under
   `/categories`; results reach every picker via the `categories-changed`
   HX-Trigger (header values must stay ASCII).
+- Bulk add (`internal/web/bulk.go`): Add several and Add from a list are
+  pages without scripts and panels loaded into the list page's `#bulk-add`
+  dialog (`.dialog-sheet`, a bottom sheet below 721px). A finished add answers
+  only out-of-band parts, which empties the panel and closes the dialog.
+  `Store.AddItems` skips names already on the list (trimmed,
+  case-insensitive); it and `AddItem` enforce the limits in
+  `internal/packing/bulk.go` (2,000 items plus tasks per list).
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and

@@ -106,7 +106,7 @@ The teaching-only phase is complete. Default to **implementing requested changes
   and `@layer components` keeps the classes that carry state, pseudo elements or
   runtime toggles (`.btn-*`, `.card`/`.card-brand`, `.item-row`, `.pack-row`,
   `.tick`, `.progress-*`, `.menu-*`, `.select-*`, `.popup`/`.option`, `.error`,
-  `.dialog`, `.sync-status`, the `drop-*`/toast transitions, and the
+  `.dialog`, `.category-more`, `.status-toast`, `.sync-status`, the `drop-*`/toast transitions, and the
   `.muted`/`.tag` the offline scripts set) plus rules for elements the offline
   scripts create without classes. Utilities are generated from `internal/views`
   and `static/offline` only.

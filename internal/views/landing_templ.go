@@ -39,7 +39,7 @@ func PublicHeader(showDemo bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if showDemo {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a class=\"btn btn-accent max-sm:hidden\" href=\"/demo\">Try a demo list</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a class=\"btn btn-go max-sm:hidden\" href=\"/demo\">Try a demo list</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -122,7 +122,7 @@ func Landing() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " <main class=\"max-w-[1148px] mx-auto px-4 md:px-6 flex flex-col gap-12 md:gap-24 pt-8 md:pt-18 pb-8 md:pb-20\"><section class=\"grid items-center gap-6 md:grid-cols-[1.1fr_1fr] md:gap-x-16 md:gap-y-8\"><div><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">Packing lists for campers</p><h1 class=\"text-[clamp(2.5rem,1.75rem+3.5vw,4rem)] mb-4\">Pack once. Go every weekend.</h1><p class=\"text-xl md:max-w-[34ch] mb-6 text-pretty\">Build your camping list one time. Start a session for each trip and check things off as you pack. Your list stays untouched.</p><div class=\"flex flex-wrap items-center gap-2 mb-3 max-md:*:flex-auto\"><a class=\"btn btn-accent btn-lg\" href=\"/demo\">Try a demo list</a> <a class=\"btn btn-secondary btn-lg max-sm:hidden\" href=\"/auth/login\">Sign in with Google</a></div><p class=\"text-muted text-sm max-md:text-center\">Free. No list caps. Works in any browser.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " <main class=\"max-w-[1148px] mx-auto px-4 md:px-6 flex flex-col gap-12 md:gap-24 pt-8 md:pt-18 pb-8 md:pb-20\"><section class=\"grid items-center gap-6 md:grid-cols-[1.1fr_1fr] md:gap-x-16 md:gap-y-8\"><div><h1 class=\"text-[clamp(2.5rem,1.75rem+3.5vw,4rem)] mb-4\">Pack once. Go every weekend.</h1><p class=\"text-xl md:max-w-[34ch] mb-6 text-pretty\">Build your camping list one time. Start a session for each trip and check things off as you pack. Your list stays untouched.</p><div class=\"flex flex-wrap items-center gap-2 mb-3 max-md:*:flex-auto\"><a class=\"btn btn-go btn-lg\" href=\"/demo\">Try a demo list</a> <a class=\"btn btn-secondary btn-lg max-sm:hidden\" href=\"/auth/login\">Sign in with Google</a></div><p class=\"text-muted text-sm max-md:text-center\">Free. No list caps. Works in any browser.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -130,7 +130,7 @@ func Landing() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</section><section id=\"how\"><div class=\"max-w-[60ch] mb-6 md:mb-8\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">List vs session</p><h2 class=\"text-[clamp(2rem,1.5rem+2vw,2.75rem)] mb-3\">Your list is the template. Each trip is a session.</h2><p class=\"text-lg text-pretty\">Other apps make you rebuild or reset the same list every trip. In Camplist, packing items in a session never changes the list, so next weekend starts clean.</p></div><div class=\"grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]\"><div class=\"card mb-0\"><div class=\"flex justify-between items-baseline gap-3 text-sm\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700\">Your list</p><span class=\"text-muted\">Edit any time</span></div><p class=\"display text-2xl mt-2 mb-3\">Car camping</p><ul>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</section><section id=\"how\"><div class=\"max-w-[60ch] mb-6 md:mb-8\"><h2 class=\"text-[clamp(2rem,1.5rem+2vw,2.75rem)] mb-3\">Your list is the template. Each trip is a session.</h2><p class=\"text-lg text-pretty\">Other apps make you rebuild or reset the same list every trip. In Camplist, packing items in a session never changes the list, so next weekend starts clean.</p></div><div class=\"grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]\"><div class=\"card mb-0\"><div class=\"flex justify-between items-baseline gap-3 text-sm\"><p class=\"font-semibold\">Your list</p><span class=\"text-muted\">Edit any time</span></div><p class=\"display text-2xl mt-2 mb-3\">Car camping</p><ul>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -142,20 +142,20 @@ func Landing() templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 76, Col: 66}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 74, Col: 66}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span> <span class=\"ml-auto inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span> <span class=\"ml-auto tag\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(item.Category)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 77, Col: 169}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 75, Col: 50}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -166,7 +166,7 @@ func Landing() templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</ul><p class=\"text-muted text-sm mt-3\">One list per kind of trip. Reuse it for years.</p></div><div class=\"flex flex-col items-center gap-2 text-sm text-muted text-center\" aria-hidden=\"true\"><span class=\"btn btn-primary cursor-default\">Start session</span> <span>copies the list</span></div><div class=\"card mb-0\"><div class=\"flex justify-between items-baseline gap-3 text-sm\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700\">Session</p><span class=\"text-muted\">Started Oct 3</span></div><p class=\"display text-2xl mt-2 mb-3\">Car camping</p><ul class=\"mb-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</ul><p class=\"text-muted text-sm mt-3\">One list per kind of trip. Reuse it for years.</p></div><div class=\"flex flex-col items-center gap-2 text-sm text-muted text-center\" aria-hidden=\"true\"><span class=\"btn btn-primary cursor-default\">Start session</span> <span>copies the list</span></div><div class=\"card mb-0\"><div class=\"flex justify-between items-baseline gap-3 text-sm\"><p class=\"font-semibold\">Session</p><span class=\"text-muted\">Started Oct 3</span></div><p class=\"display text-2xl mt-2 mb-3\">Car camping</p><ul class=\"mb-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -178,7 +178,7 @@ func Landing() templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 97, Col: 66}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 95, Col: 66}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -197,7 +197,7 @@ func Landing() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></section><section class=\"grid gap-6 md:grid-cols-3\"><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">Free, no list caps</h3><p class=\"text-muted\">Make as many lists and sessions as you have trips. Nothing sits behind a paywall.</p></div><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">Any device</h3><p class=\"text-muted\">Plan on the laptop, check off on your phone by the car. It is a web page, so there is nothing to install.</p></div><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">No spreadsheets</h3><p class=\"text-muted\">Name, category, packed. No gram counts, no gear catalog, no calorie math.</p></div></section><section><div class=\"card card-brand mb-0 flex flex-wrap justify-between items-center gap-8 p-6 md:p-10 max-md:flex-col max-md:items-stretch\"><div><p class=\"display text-[clamp(2rem,1.5rem+2vw,2.75rem)] mb-2\">Where to next?</p><p class=\"text-lg text-pine-100\">Try the demo list. No account needed.</p></div><a class=\"btn btn-accent btn-lg\" href=\"/demo\">Try a demo list</a></div></section></main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></section><section class=\"grid gap-6 md:grid-cols-3\"><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">Free, no list caps</h3><p class=\"text-muted\">Make as many lists and sessions as you have trips. Nothing sits behind a paywall.</p></div><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">Any device</h3><p class=\"text-muted\">Plan on the laptop, check off on your phone by the car. It is a web page, so there is nothing to install.</p></div><div class=\"border-t border-sand-300 pt-4\"><h3 class=\"text-2xl mt-0 mb-2\">No spreadsheets</h3><p class=\"text-muted\">Name, category, packed. No gram counts, no gear catalog, no calorie math.</p></div></section><section><div class=\"card card-brand mb-0 flex flex-wrap justify-between items-center gap-8 p-6 md:p-10 max-md:flex-col max-md:items-stretch\"><div><p class=\"display text-[clamp(2rem,1.5rem+2vw,2.75rem)] mb-2\">Where to next?</p><p class=\"text-lg text-pine-100\">Try the demo list. No account needed.</p></div><a class=\"btn btn-go btn-lg\" href=\"/demo\">Try a demo list</a></div></section></main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -246,13 +246,13 @@ func DemoPreview(items []demoItem) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(demoState(items))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 138, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 136, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><div class=\"card card-brand mb-0\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-pine-100 mb-2\">Packing session</p><p class=\"display text-[1.75rem] mb-4\">Weekend at the lake</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><div class=\"card card-brand mb-0\"><p class=\"text-meta font-semibold text-pine-100 mb-2\">Packing session</p><p class=\"display text-[1.75rem] mb-4\">Weekend at the lake</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -334,7 +334,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue("done ? '" + doneLabel + "' : 'Keep packing'")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 161, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 159, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -348,7 +348,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(doneLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 163, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 161, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -367,7 +367,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(packedCount(items)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 168, Col: 138}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 166, Col: 138}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -380,7 +380,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(items)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 168, Col: 170}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 166, Col: 170}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -393,7 +393,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(len(items)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 175, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 173, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 		if templ_7745c5c3_Err != nil {
@@ -406,7 +406,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(packedCount(items)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 176, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 174, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var18)
 		if templ_7745c5c3_Err != nil {
@@ -419,7 +419,7 @@ func DemoProgress(items []demoItem, doneLabel string) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(progressWidth(packedCount(items), len(items)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 179, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 177, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -480,7 +480,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue("{ packed: packed[" + strconv.Itoa(index) + "] }")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 189, Col: 66}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 187, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 		if templ_7745c5c3_Err != nil {
@@ -493,7 +493,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue("toggle(" + strconv.Itoa(index) + ")")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 190, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 188, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
 		if templ_7745c5c3_Err != nil {
@@ -506,7 +506,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(item.Packed))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 191, Col: 48}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 189, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 		if templ_7745c5c3_Err != nil {
@@ -519,7 +519,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.ResolveAttributeValue("String(packed[" + strconv.Itoa(index) + "])")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 192, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 190, Col: 69}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 		if templ_7745c5c3_Err != nil {
@@ -532,7 +532,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.ResolveAttributeValue("Toggle packed status for " + item.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 193, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 191, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var27)
 		if templ_7745c5c3_Err != nil {
@@ -545,7 +545,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 196, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 194, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -556,14 +556,14 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if showTag {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span class=\"inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span class=\"tag\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(item.Category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 198, Col: 155}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 196, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -581,7 +581,7 @@ func DemoRow(index int, item demoItem, showTag bool) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.ResolveAttributeValue("packed[" + strconv.Itoa(index) + "] ? 'Unpack' : 'Pack'")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 200, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 198, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var30)
 		if templ_7745c5c3_Err != nil {
@@ -655,13 +655,13 @@ func DemoPage() templ.Component {
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.ResolveAttributeValue(demoState(demoSessionItems))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 215, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 213, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\"><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2\">Demo session</p><h1>Weekend at the lake</h1><p class=\"text-muted max-w-[60ch]\">Pack a few things to see how a session works. Nothing here is saved. Sign in with Google when you want a list of your own.</p></div><div class=\"flex flex-wrap items-center gap-2 sm:pt-6\"><button type=\"button\" class=\"btn btn-secondary\" x-on:click=\"reset()\">Reset demo</button> <a class=\"btn btn-accent max-sm:flex-auto\" href=\"/auth/login\">Sign in with Google</a></div></div><noscript><p class=\"text-muted mb-3\">The demo needs JavaScript to pack items.</p></noscript><div class=\"card progress-card\" x-bind:class=\"{ 'card-brand': done }\"><p class=\"display mb-3\" x-show=\"done\" x-cloak>All packed. Go!</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\"><div class=\"flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch\"><div class=\"min-w-0 max-sm:flex-none sm:flex-[1_1_320px]\"><h1>Weekend at the lake</h1><p class=\"text-muted max-w-[60ch]\">Pack a few things to see how a session works. Nothing here is saved. Sign in with Google when you want a list of your own.</p></div><div class=\"flex flex-wrap items-center gap-2\"><button type=\"button\" class=\"btn btn-secondary\" x-on:click=\"reset()\">Reset demo</button> <a class=\"btn btn-go max-sm:flex-auto\" href=\"/auth/login\">Sign in with Google</a></div></div><noscript><p class=\"text-muted mb-3\">The demo needs JavaScript to pack items.</p></noscript><div class=\"card progress-card\" x-bind:class=\"{ 'card-brand': done }\"><p class=\"display mb-3\" x-show=\"done\" x-cloak>All packed. Go!</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -674,14 +674,14 @@ func DemoPage() templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for _, group := range groupDemo(demoSessionItems) {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"break-inside-avoid pb-3 last:pb-0\"><p class=\"text-xs font-bold tracking-eyebrow uppercase text-muted pb-1\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<div class=\"break-inside-avoid pb-3 last:pb-0\"><p class=\"text-meta font-bold pb-1\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var34 string
 				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 236, Col: 92}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/landing.templ`, Line: 233, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 				if templ_7745c5c3_Err != nil {

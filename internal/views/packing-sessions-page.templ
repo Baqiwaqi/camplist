@@ -13,11 +13,10 @@ templ PackingSessionsOverviewPage(name string, sessions []packing.PackingSession
 		<section id="trips-overview">
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trips</p>
 					<h1>Trips in progress</h1>
 					<p class="text-muted max-w-[60ch]">Prepare and pack together. Your reusable packing lists stay separate.</p>
 				</div>
-				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+				<div class="flex flex-wrap items-center gap-2">
 					@TripArchiveLink(archivedCount, false)
 				</div>
 			</div>
@@ -78,11 +77,10 @@ templ ArchivedPackingSessionsPage(name string, sessions []packing.PackingSession
 		<section id="trips-archive">
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Trips</p>
 					<h1>Trip archive</h1>
 					<p class="text-muted max-w-[60ch]">Fully packed trips move here automatically after 24 hours. Trips you archive yourself can be restored.</p>
 				</div>
-				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+				<div class="flex flex-wrap items-center gap-2">
 					<a class="btn btn-secondary max-sm:flex-auto" href="/trips">Current trips</a>
 				</div>
 			</div>
@@ -107,11 +105,11 @@ templ PackingSessionCards(sessions []packing.PackingSession, archived bool, csrf
 	for _, s := range sessions {
 		<article class="card" data-saved-trip={ s.ID }>
 			if s.IsShared() {
-				<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
+				<p class="tag mb-2">Shared</p>
 			}
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-4 max-sm:flex-col">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-					<h2><a class="no-underline" href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
+					<h2 class="t-object"><a class="no-underline" href={ "/trips/" + s.ID }>{ s.DisplayName() }</a></h2>
 					if !nameEndsWithStartDate(s) {
 						<p class="text-muted mb-3">Started <time datetime={ s.CreatedAt.Format(time.RFC3339) }>{ s.CreatedAt.Format(startDateLayout) }</time></p>
 					}

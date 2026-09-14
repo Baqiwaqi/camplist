@@ -20,11 +20,10 @@ templ PackingListPage(name string, lists []packing.PackingList, csrfToken string
 		>
 			<div class="flex flex-wrap justify-between items-start gap-4 mb-6 max-sm:flex-col max-sm:items-stretch">
 				<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_320px]">
-					<p class="text-xs font-bold tracking-eyebrow uppercase text-ember-700 mb-2">Your lists</p>
 					<h1>Where to next?</h1>
 					<p class="text-muted max-w-[60ch]">Keep reusable lists for your camping trips. Start a fresh trip each time you go.</p>
 				</div>
-				<div class="flex flex-wrap items-center gap-2 sm:pt-6">
+				<div class="flex flex-wrap items-center gap-2">
 					<a class="btn btn-primary max-sm:flex-auto" href="/packing-lists/new" x-ref="create">Create list</a>
 				</div>
 			</div>
@@ -58,16 +57,16 @@ templ PackingListsEmpty(show bool, oob bool) {
 templ PackingListCard(list packing.PackingList, csrfToken string) {
 	<article id={ PackingListCardID(list.ID) } class="card [&.htmx-request]:opacity-60">
 		if list.IsShared() {
-			<p class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full mb-2">Shared</p>
+			<p class="tag mb-2">Shared</p>
 		}
 		<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
 			<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-				<h2><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
+				<h2 class="t-object"><a class="no-underline" href={ "/packing-lists/" + list.ID }>{ list.Name }</a></h2>
 				if list.Description != "" {
 					<p class="text-muted mb-3">{ list.Description }</p>
 				}
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted">
-					<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ itemSummary(list.Items) }</span>
+					<span class="tag">{ itemSummary(list.Items) }</span>
 					for _, category := range categories(list.Items, 4) {
 						<span>{ category }</span>
 					}

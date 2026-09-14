@@ -1,4 +1,7 @@
 :root{
+--radius-field:10px; /* inputs, select triggers, options */
+--radius-checkbox:6px;
+/* legacy 4px, kept only for the reference React kit */
 --radius-sm:4px;
 --radius-card:12px;
 --border-width:1px;
@@ -6,5 +9,9 @@
 --shadow-none:none;
 --radius-pill:999px;
 --motion-fast:120ms ease; /* @kind other */
+--motion-switch:150ms ease; /* @kind other */
+--motion-popup:160ms ease; /* @kind other */
+--motion-tab:200ms ease; /* @kind other */
+/* all motion is off under prefers-reduced-motion; buttons no longer lift (legacy, reference kit only) */
 --lift-hover:translateY(-1px); /* @kind other */
 }

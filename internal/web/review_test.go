@@ -436,8 +436,8 @@ func TestReviewPageLabelsProposalsAndUsesListboxSelects(t *testing.T) {
 	body := w.Body.String()
 	for _, want := range []string{
 		`<h3 class="mt-0">Chair</h3></div>`,
-		`<h3 class="mt-0">Stove</h3><span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-ink-900 bg-sand-100 px-2 py-0.5 rounded-full">Waiting to be applied</span>`,
-		`<h3 class="mt-0">Matches</h3><span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">Applied</span>`,
+		`<h3 class="mt-0">Stove</h3><span class="tag tag-quiet">Waiting to be applied</span>`,
+		`<h3 class="mt-0">Matches</h3><span class="tag">Applied</span>`,
 		`role="combobox"`, `role="listbox"`, `role="option"`,
 		`<select id="review-item" name="itemId"`, `<select id="review-action" name="action"`,
 		`id="review-save-apply"`,

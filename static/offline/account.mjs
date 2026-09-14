@@ -112,7 +112,7 @@ function label(card,text,colours=''){
 }
 function goneCard(copy){
  const card=document.createElement('article');card.className='card';card.dataset.offlineCopy=copy.id;
- const heading=document.createElement('h2');const link=document.createElement('a');link.className='no-underline';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
+ const heading=document.createElement('h2');heading.className='t-object';const link=document.createElement('a');link.className='no-underline';link.href='/offline#'+encodeURIComponent(copy.id);link.textContent=copy.name;heading.append(link);
  const detail=document.createElement('p');detail.className='muted';detail.textContent='Open it to export your changes from Recovery options.';
  card.append(heading,detail);
  label(card,`${copy.issue==='deleted'?'Deleted online':'Access removed'} · ${copy.unsynced} unsynced change(s)`,'text-red-800 bg-red-100');

@@ -18,5 +18,14 @@
 --leading-tight:1.05;
 --leading-normal:1.5;
 --tracking-display:-0.02em;
+/* type roles on a 1.2 ratio from 16px; display roles are Bricolage 800, -0.02em */
+--size-moment:2.5rem; --leading-moment:1; /* finished trip, landing hero */
+--size-page:2rem; --size-page-wide:2.5rem; --leading-page:1.05; /* h1: 32 phones, 40 from 721px */
+--size-section:1.375rem; --leading-section:1.1; /* h2, dialog titles */
+--size-object:1.1875rem; --leading-object:1.15; /* list and trip names on cards */
+--size-body:1rem; --leading-body:1.5; /* system-ui: row names 600, text 400, buttons 700 */
+--size-meta:0.875rem; --leading-meta:1.45; /* muted: dates, counts, hints; labels 600 ink */
+--size-caption:0.8125rem; --leading-caption:1.35; /* tags, group counts, save status */
+/* legacy: sentence case everywhere, no uppercase tracked labels; kept only for the reference React kit */
 --tracking-eyebrow:0.08em;
 }

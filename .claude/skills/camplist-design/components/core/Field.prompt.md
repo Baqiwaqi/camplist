@@ -5,4 +5,4 @@ Label-over-input form field; the app has exactly two shapes: single-line text an
 <Field label="Description" id="description" multiline placeholder="A short description of your list" />
 ```
 
-Labels are one word, Title Case. Placeholders are examples, not instructions.
+Labels are one word, sentence case. Placeholders are examples, not instructions.

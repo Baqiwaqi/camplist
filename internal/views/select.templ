@@ -29,7 +29,7 @@ templ SelectField(id string, name string, label string, hideLabel bool, options 
 templ selectField(id string, name string, label string, hideLabel bool, class string, options []SelectOption, selected string) {
 	<div class={ "grid gap-1", class } x-data="select" x-on:click.outside="close(false)" x-on:focusout="leave($event)">
 		<label id={ id + "-label" } for={ id } class={ "block text-sm font-bold", templ.KV("sr-only", hideLabel) } x-on:click.prevent="$refs.trigger.focus()">{ label }</label>
-		<select id={ id } name={ name } x-ref="native" tabindex="-1" class="select-native w-full min-h-11 px-2 py-2 rounded-sm border border-sand-300 bg-white font-normal">
+		<select id={ id } name={ name } x-ref="native" tabindex="-1" class="select-native w-full min-h-11 px-2 py-2 rounded-field border border-sand-300 bg-white font-normal">
 			for _, option := range options {
 				<option value={ option.Value } selected?={ option.Value == selected }>{ option.Label }</option>
 			}

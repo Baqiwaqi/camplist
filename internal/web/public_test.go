@@ -39,7 +39,7 @@ func TestHomePageShowsListsToMembers(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.HomePage(w, r)
 	body := w.Body.String()
-	if !strings.Contains(body, "Your lists") || !strings.Contains(body, "Car camping") {
+	if !strings.Contains(body, "Where to next?") || !strings.Contains(body, "Car camping") {
 		t.Error("member did not get the lists page")
 	}
 	if strings.Contains(body, "Try a demo list") {

@@ -54,7 +54,7 @@ type packingStore interface {
 	SetSessionItem(context.Context, string, string, string, bool) (packing.PackingSession, error)
 	DeletePackingSession(context.Context, string, string) error
 	RememberedCategories(context.Context, string) ([]string, error)
-	RememberCategory(context.Context, string, string) error
+	RememberCategories(context.Context, string, ...string) error
 	RenameCategory(context.Context, string, string, string) (packing.CategoryRename, error)
 	ForgetCategory(context.Context, string, string) error
 	AddItems(context.Context, string, string, []packing.PackingItem) (packing.AddItemsResult, error)

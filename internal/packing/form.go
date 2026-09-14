@@ -1,6 +1,9 @@
 package packing
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type CreatePackingListForm struct {
 	Revision         string
@@ -96,8 +99,11 @@ func (f CreateItemForm) ValidateName() []string {
 	}
 
 	var msgs []string
-	if strings.TrimSpace(f.Name) == "" {
+	switch name := strings.TrimSpace(f.Name); {
+	case name == "":
 		msgs = append(msgs, "Name is required")
+	case len(name) > MaxItemNameLength:
+		msgs = append(msgs, fmt.Sprintf("The name is longer than %d characters.", MaxItemNameLength))
 	}
 	return msgs
 }
@@ -111,8 +117,9 @@ func (f CreateItemForm) Validate() []string {
 		return nil
 	}
 
-	var msgs []string
-	msgs = append(msgs, f.ValidateName()...)
-
+	msgs := f.ValidateName()
+	if len(strings.TrimSpace(f.Category)) > MaxCategoryLength {
+		msgs = append(msgs, fmt.Sprintf("The category is longer than %d characters.", MaxCategoryLength))
+	}
 	return msgs
 }

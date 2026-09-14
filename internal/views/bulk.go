@@ -12,13 +12,11 @@ import (
 
 // AddFromList is the state of the Add from a list picker's second step: the
 // destination list, the source list whose items can be copied, and what the
-// camper ticked when the step comes back with an error or a result.
+// camper ticked when the step comes back with an error.
 type AddFromList struct {
 	List, Source packing.PackingList
 	Selected     map[string]bool
 	Errors       []string
-	// Result is the summary of an add, shown when the page posts without scripts.
-	Result string
 }
 
 // onList reports the names already on list, compared as AddItems compares them.
@@ -129,13 +127,4 @@ func firstFilled(lists []packing.PackingList) int {
 		}
 	}
 	return -1
-}
-
-func groupAddable(a AddFromList, group itemGroup) bool {
-	for _, item := range group.Items {
-		if !a.alreadyOnList(item) {
-			return true
-		}
-	}
-	return false
 }

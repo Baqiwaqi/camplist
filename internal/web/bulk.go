@@ -42,7 +42,7 @@ func (h *handler) AddSeveralPage(w http.ResponseWriter, r *http.Request) {
 	}
 	form := packing.NewAddSeveralForm(list)
 	form.Categories = h.categorySuggestions(r.Context(), userID, list.Items)
-	h.renderAddSeveral(w, r, list, form, "")
+	h.renderAddSeveral(w, r, list, form)
 }
 
 // AddSeveralHandler adds one item per pasted line. Names already on the list
@@ -68,7 +68,7 @@ func (h *handler) AddSeveralHandler(w http.ResponseWriter, r *http.Request) {
 	items, errs := form.Items()
 	if len(errs) > 0 {
 		form.Error = errs
-		h.renderAddSeveral(w, r, list, form, "")
+		h.renderAddSeveral(w, r, list, form)
 		return
 	}
 	result, err := h.packingStore.AddItems(r.Context(), list.ID, userID, items)
@@ -80,27 +80,23 @@ func (h *handler) AddSeveralHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		form.Error = []string{message}
-		h.renderAddSeveral(w, r, list, form, "")
+		h.renderAddSeveral(w, r, list, form)
 		return
 	}
-	h.rememberCategories(r.Context(), userID, result.Added)
-	summary := result.Summary("")
-	if isHTMX(r) {
-		h.renderBulkAdded(w, r, form.Revision, result, summary)
+	h.rememberItemCategories(r.Context(), userID, result.Added)
+	if !isHTMX(r) {
+		http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 		return
 	}
-	next := packing.NewAddSeveralForm(result.List)
-	next.Category = form.Category
-	next.Categories = h.categorySuggestions(r.Context(), userID, result.List.Items)
-	h.renderAddSeveral(w, r, result.List, next, summary)
+	h.renderBulkAdded(w, r, form.Revision, result, result.Summary(""))
 }
 
-func (h *handler) renderAddSeveral(w http.ResponseWriter, r *http.Request, list packing.PackingList, form packing.AddSeveralForm, result string) {
+func (h *handler) renderAddSeveral(w http.ResponseWriter, r *http.Request, list packing.PackingList, form packing.AddSeveralForm) {
 	if isHTMX(r) {
-		render(w, r, views.AddSeveralPanel(list, form, csrf.Token(r), false, result))
+		render(w, r, views.AddSeveralPanel(list, form, csrf.Token(r), false))
 		return
 	}
-	render(w, r, views.BulkAddPage(list, "Add several items", csrf.Token(r), views.AddSeveralPanel(list, form, csrf.Token(r), true, result)))
+	render(w, r, views.BulkAddPage(list, "Add several items", csrf.Token(r), views.AddSeveralPanel(list, form, csrf.Token(r), true)))
 }
 
 // AddFromListPage shows the camper's other lists to copy items from.
@@ -201,13 +197,12 @@ func (h *handler) AddFromListHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderAddFromList(w, r, step)
 		return
 	}
-	h.rememberCategories(r.Context(), userID, result.Added)
-	summary := result.Summary("from " + source.Name)
-	if isHTMX(r) {
-		h.renderBulkAdded(w, r, r.PostForm.Get("revision"), result, summary)
+	h.rememberItemCategories(r.Context(), userID, result.Added)
+	if !isHTMX(r) {
+		http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)
 		return
 	}
-	h.renderAddFromList(w, r, views.AddFromList{List: result.List, Source: source, Selected: step.Selected, Result: summary})
+	h.renderBulkAdded(w, r, r.PostForm.Get("revision"), result, result.Summary("from "+source.Name))
 }
 
 func (h *handler) renderAddFromList(w http.ResponseWriter, r *http.Request, step views.AddFromList) {
@@ -218,15 +213,13 @@ func (h *handler) renderAddFromList(w http.ResponseWriter, r *http.Request, step
 	render(w, r, views.BulkAddPage(step.List, "From "+step.Source.Name, csrf.Token(r), views.AddFromListItems(step, csrf.Token(r), true)))
 }
 
-// rememberCategories keeps the custom categories of items just added.
-func (h *handler) rememberCategories(ctx context.Context, userID string, items []packing.PackingItem) {
-	seen := map[string]bool{}
+// rememberItemCategories keeps the custom categories of items just added.
+func (h *handler) rememberItemCategories(ctx context.Context, userID string, items []packing.PackingItem) {
+	categories := make([]string, 0, len(items))
 	for _, item := range items {
-		if item.Category != "" && !seen[item.Category] {
-			seen[item.Category] = true
-			h.rememberCategory(ctx, userID, item.Category)
-		}
+		categories = append(categories, item.Category)
 	}
+	h.rememberCategories(ctx, userID, categories...)
 }
 
 // renderBulkAdded answers a bulk add from the list page's dialog. Everything

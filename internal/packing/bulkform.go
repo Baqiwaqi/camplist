@@ -6,7 +6,7 @@ import (
 )
 
 // maxPasteLength bounds the pasted text before it is parsed: MaxItemsPerAdd
-// full-length names plus room for headings and markers.
+// full-length names plus room for category headings.
 const maxPasteLength = 32000
 
 // AddSeveralForm is the Add several form: pasted lines, an optional category

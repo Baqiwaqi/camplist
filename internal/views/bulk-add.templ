@@ -82,20 +82,13 @@ templ bulkAddCancel(listID string, page bool) {
 	}
 }
 
-templ bulkAddResult(result string) {
-	if result != "" {
-		<p role="status" class="mb-4 rounded-card bg-pine-100 px-4 py-3 text-pine-900">{ result }</p>
-	}
-}
-
 // AddSeveralPanel is the Add several form: one item per line, a line ending
 // in ":" starts a category, and the category field fills lines under no
 // heading. The category comes first so its popup opens over the text box,
-// inside the dialog. result is the summary of an add posted without scripts.
-templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrfToken string, page bool, result string) {
+// inside the dialog.
+templ AddSeveralPanel(list packing.PackingList, form packing.AddSeveralForm, csrfToken string, page bool) {
 	@bulkAddHeading("Add several items", page, false)
 	<p class="text-muted mb-4 max-w-[48ch]">One item per line. A line ending in a colon starts a category, like “Documents:”. Items already on this list are skipped.</p>
-	@bulkAddResult(result)
 	<form
 		class="grid gap-4"
 		method="post"
@@ -186,7 +179,6 @@ templ AddFromListSources(list packing.PackingList, sources []packing.PackingList
 templ AddFromListItems(a AddFromList, csrfToken string, page bool) {
 	@bulkAddHeading("From "+a.Source.Name, page, true)
 	<p class="text-muted mb-4">{ a.sourceSummary() }</p>
-	@bulkAddResult(a.Result)
 	if len(a.Errors) > 0 {
 		<div class="mb-4">
 			@ErrorBanner(a.Errors)
@@ -209,15 +201,7 @@ templ AddFromListItems(a AddFromList, csrfToken string, page bool) {
 		<div class="grid gap-3">
 			for i, group := range groupByCategory(a.Source.Items) {
 				<div role="group" aria-labelledby={ "copy-group-" + itoa(i) } class="rounded-card border border-sand-200 bg-white">
-					<div class="flex flex-wrap items-center justify-between gap-x-3 px-4 pt-3 pb-2">
-						<h3 id={ "copy-group-" + itoa(i) } class="m-0 font-sans text-base font-bold">{ groupName(group) }</h3>
-						if groupAddable(a, group) {
-							<div class="flex gap-4 text-sm" hidden x-bind:hidden="false">
-								<button type="button" class="btn-link font-bold text-pine-700" x-on:click="$el.closest('[role=group]').querySelectorAll('input[name=item]:not(:disabled)').forEach(box => box.checked = true); $dispatch('change')">Select all</button>
-								<button type="button" class="btn-link font-bold text-pine-700" x-on:click="$el.closest('[role=group]').querySelectorAll('input[name=item]:not(:disabled)').forEach(box => box.checked = false); $dispatch('change')">None</button>
-							</div>
-						}
-					</div>
+					<h3 id={ "copy-group-" + itoa(i) } class="m-0 px-4 pt-3 pb-2 font-sans text-base font-bold">{ groupName(group) }</h3>
 					<ul>
 						for _, item := range group.Items {
 							<li class="border-t border-sand-100">

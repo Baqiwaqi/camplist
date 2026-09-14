@@ -177,43 +177,31 @@ type ItemLine struct {
 }
 
 var (
-	listMarker  = regexp.MustCompile(`^(?:[-*+]\s+|\d{1,3}[.)]\s+|\[[ xX✓✔]?\]\s*|[•◦▪‣☐☑☒✓✔]\s*)`)
-	headingHash = regexp.MustCompile(`^#{1,6}\s+`)
-	wordy       = regexp.MustCompile(`[\p{L}\p{N}]`)
+	bullet = regexp.MustCompile(`^[-*]\s+`)
+	wordy  = regexp.MustCompile(`[\p{L}\p{N}]`)
 )
 
-// ParseItemLines reads one item per line from pasted text. Bullets ("- ",
-// "* ", "1."), checkboxes ("[ ]", "[x]", "☐") and Markdown "#" markers are
-// stripped, repeatedly. A line ending in a single ":" (such as "Documents:")
-// or a Markdown heading starts a category for the lines below it; other lines
-// keep an empty Category. Colons inside a name ("Map 1:50,000") stay in the
-// name. Blank lines and lines without letters or digits ("---") are skipped.
+// ParseItemLines reads one item per line from pasted text. A simple leading
+// bullet ("- " or "* ") is stripped; any other marker stays in the name, so
+// "2023. Trip notes" is kept whole. A line ending in a single ":" (such as
+// "Documents:") starts a category for the lines below it; other lines keep an
+// empty Category. Colons inside a name ("Map 1:50,000") stay in the name.
+// Blank lines and lines without letters or digits ("---") are skipped.
 func ParseItemLines(text string) []ItemLine {
 	var lines []ItemLine
 	category := ""
 	for i, raw := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
 		line := strings.TrimSpace(raw)
-		heading := false
-		if loc := headingHash.FindStringIndex(line); loc != nil {
-			heading = true
-			line = line[loc[1]:]
-		}
-		for {
-			loc := listMarker.FindStringIndex(line)
-			if loc == nil {
-				break
-			}
+		if loc := bullet.FindStringIndex(line); loc != nil {
 			line = strings.TrimSpace(line[loc[1]:])
 		}
-		if trimmed, ok := strings.CutSuffix(line, ":"); ok && !strings.Contains(trimmed, ":") {
-			heading = true
-			line = strings.TrimSpace(trimmed)
-		}
-		if !wordy.MatchString(line) {
+		if heading, ok := strings.CutSuffix(line, ":"); ok && !strings.Contains(heading, ":") {
+			if heading = strings.TrimSpace(heading); wordy.MatchString(heading) {
+				category = heading
+			}
 			continue
 		}
-		if heading {
-			category = line
+		if !wordy.MatchString(line) {
 			continue
 		}
 		lines = append(lines, ItemLine{Line: i + 1, Name: line, Category: category})

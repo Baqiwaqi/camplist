@@ -88,7 +88,7 @@ func TestAddItemsRejectsOversizedInput(t *testing.T) {
 	if _, err := store.AddItems(ctx, list.ID, "camper", many[:packing.MaxItemsPerAdd]); err != nil {
 		t.Fatalf("a full paste was rejected: %v", err)
 	}
-	if err := store.AddItem(ctx, list.ID, "camper", packing.NewItem(strings.Repeat("a", packing.MaxItemNameLength+1), "")); !errors.Is(err, packing.ErrInvalid) {
+	if _, _, err := store.AddItem(ctx, list.ID, "camper", packing.NewItem(strings.Repeat("a", packing.MaxItemNameLength+1), "")); !errors.Is(err, packing.ErrInvalid) {
 		t.Fatalf("single add accepted a long name: %v", err)
 	}
 }
@@ -110,7 +110,7 @@ func TestAddsStopAtTheListEntryLimit(t *testing.T) {
 	if got, err := store.AddItems(ctx, list.ID, "camper", []packing.PackingItem{{Name: "Item 1"}, {Name: "One"}}); err != nil || len(got.Added) != 1 {
 		t.Fatalf("bulk add up to the limit: %+v, %v", got, err)
 	}
-	if err := store.AddItem(ctx, list.ID, "camper", packing.NewItem("Two", "")); !errors.Is(err, packing.ErrListFull) {
+	if _, _, err := store.AddItem(ctx, list.ID, "camper", packing.NewItem("Two", "")); !errors.Is(err, packing.ErrListFull) {
 		t.Fatalf("single add past the limit: %v", err)
 	}
 	saved, _ := store.GetPackingList(ctx, list.ID, "camper")
@@ -162,7 +162,7 @@ func TestCopyItemsCopiesSelectedItemsFromASharedSource(t *testing.T) {
 
 	// Later source edits stay on the source.
 	current, _ := store.GetPackingList(ctx, climbing.ID, "owner")
-	if err := store.UpdateItem(ctx, climbing.ID, "owner", packing.PackingItem{ID: pad.ID, Name: "Big crash pad", Category: "Climbing", SourceRevision: current.Revision()}); err != nil {
+	if _, _, err := store.UpdateItem(ctx, climbing.ID, "owner", packing.PackingItem{ID: pad.ID, Name: "Big crash pad", Category: "Climbing", SourceRevision: current.Revision()}); err != nil {
 		t.Fatal(err)
 	}
 	if saved, _ := store.GetPackingList(ctx, weekend.ID, "member"); saved.Items[2].Name != "Crash pad" {
@@ -217,13 +217,13 @@ func TestParseItemLines(t *testing.T) {
 			text: "Climbing:\n- Climbing shoes\n- Chalk bag\n- Crash pad\n\nDocuments:\n- Passport\n- Driving licence\n- Paper map (phone may die)\n",
 			want: []line{{2, "Climbing shoes", "Climbing"}, {3, "Chalk bag", "Climbing"}, {4, "Crash pad", "Climbing"}, {7, "Passport", "Documents"}, {8, "Driving licence", "Documents"}, {9, "Paper map (phone may die)", "Documents"}},
 		},
-		"reminders": {
-			text: "◦ Harness\r\n◦ Belay device\r\n☐ Passport",
-			want: []line{{1, "Harness", ""}, {2, "Belay device", ""}, {3, "Passport", ""}},
+		"bullets": {
+			text: "Clothing:\r\n- Rain jacket\r\n* Fleece\r\n---\r\nSpare socks",
+			want: []line{{2, "Rain jacket", "Clothing"}, {3, "Fleece", "Clothing"}, {5, "Spare socks", "Clothing"}},
 		},
-		"markdown": {
-			text: "## Clothing\n- [ ] Shoes\n- [x] clothes\n* Rain jacket\n---\n1. Chalk\n2) Tape",
-			want: []line{{2, "Shoes", "Clothing"}, {3, "clothes", "Clothing"}, {4, "Rain jacket", "Clothing"}, {6, "Chalk", "Clothing"}, {7, "Tape", "Clothing"}},
+		"other markers stay in the name": {
+			text: "2023. Trip notes\n[x] Passport\n## Clothing\n◦ Harness",
+			want: []line{{1, "2023. Trip notes", ""}, {2, "[x] Passport", ""}, {3, "## Clothing", ""}, {4, "◦ Harness", ""}},
 		},
 		"tricky": {
 			text: "Map 1:50,000\nNote: bring cash\nTime: 10:30:\n1.5L bottle\n-5 bag\n  shoes  \n:\n",

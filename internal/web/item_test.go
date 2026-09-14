@@ -10,6 +10,7 @@ import (
 
 	"camplist/internal/auth"
 	"camplist/internal/packing"
+	"camplist/internal/testsupport"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -141,5 +142,34 @@ func TestValidBoostedEditItemRedirectsSoHtmxPushesTheListURL(t *testing.T) {
 	}
 	if w.Header().Get("HX-Push-Url") != "" {
 		t.Error("successful save suppressed the history entry for the list page")
+	}
+}
+
+// A name or category past the store's limits is a field error inside the add
+// form, not a generic toast.
+func TestAddItemExplainsOverlongNamesAndCategoriesInTheForm(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("user", "Weekend", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+
+	for _, test := range []struct{ name, category, want string }{
+		{strings.Repeat("a", packing.MaxItemNameLength+1), "", "The name is longer than 200 characters."},
+		{"Headlamp", strings.Repeat("c", packing.MaxCategoryLength+1), "The category is longer than 100 characters."},
+	} {
+		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/add-item", url.Values{"name": {test.name}, "category": {test.category}}), list.ID, "")
+		r.Header.Set("HX-Request", "true")
+		w := httptest.NewRecorder()
+		h.AddItemHandler(w, r)
+		if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), test.want) {
+			t.Errorf("%.12q/%.12q: %d, want %q in %.400s", test.name, test.category, w.Code, test.want, w.Body.String())
+		}
+	}
+	saved, err := store.GetPackingList(ctx, list.ID, "user")
+	if err != nil || len(saved.Items) != 0 {
+		t.Fatalf("overlong input saved %+v, %v", saved.Items, err)
 	}
 }

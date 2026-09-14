@@ -58,27 +58,32 @@ func TestAddSeveralReportsWhatItAddedAndSkipped(t *testing.T) {
 	store := bulkStore(t, list)
 	h := handler{packingStore: store}
 
-	lines := "Documents:\n- Passport\n- Driving licence\n- [ ] Paper map\n\nClimbing:\n* Chalk bag\n"
-	w := addSeveral(h, "camper", list.ID, lines, "")
-	body := html.UnescapeString(w.Body.String())
-	if w.Code != http.StatusOK || !strings.Contains(body, "Added 3 items. Skipped 1 already on this list: Passport.") {
-		t.Fatalf("summary: %d %s", w.Code, body)
+	w := httptest.NewRecorder()
+	h.AddSeveralPage(w, sharingRequest("GET", "/packing-lists/"+list.ID+"/add-several", "camper", map[string]string{"id": list.ID}, nil))
+	if body := w.Body.String(); !strings.Contains(body, `<h1 id="bulk-add-title"`) || !strings.Contains(body, `action="/packing-lists/`+list.ID+`/add-several"`) {
+		t.Fatalf("the step without scripts is not the Add several page: %s", body)
 	}
-	if !strings.Contains(body, `<h1 id="bulk-add-title"`) || !strings.Contains(body, `action="/packing-lists/`+list.ID+`/add-several"`) {
-		t.Fatal("the result without scripts is not the Add several page with a fresh form")
+
+	lines := "Documents:\n- Passport\n- Driving licence\n* Paper map\n\nClimbing:\n- Chalk bag\n"
+	// Without scripts a finished add redirects, so a refresh does not repost it.
+	w = addSeveral(h, "camper", list.ID, lines, "")
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-lists/"+list.ID {
+		t.Fatalf("without scripts: %d %q", w.Code, w.Header().Get("Location"))
 	}
 	want := []string{"Passport/Documents", "Driving licence/Documents", "Paper map/Documents", "Chalk bag/Climbing"}
 	if got := savedNames(t, store, list.ID, "camper"); fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Fatalf("saved %v, want %v", got, want)
 	}
 
-	w = addSeveral(h, "camper", list.ID, "tarp\ntent", "shelter")
-	if body := w.Body.String(); !strings.Contains(body, "Added 2 items to Shelter.") {
-		t.Fatalf("category for lines without a heading: %s", body)
+	if w := addSeveral(h, "camper", list.ID, "tarp\ntent", "shelter"); w.Code != http.StatusSeeOther {
+		t.Fatalf("category for lines without a heading: %d", w.Code)
 	}
-	w = addSeveral(h, "camper", list.ID, lines, "")
-	if body := html.UnescapeString(w.Body.String()); !strings.Contains(body, "Added 0 items. Skipped 4 already on this list: Passport, Driving licence, Paper map, Chalk bag.") {
-		t.Fatalf("double submit: %s", body)
+	want = append(want, "tarp/Shelter", "tent/Shelter")
+	if got := savedNames(t, store, list.ID, "camper"); fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Fatalf("saved %v, want %v", got, want)
+	}
+	if w := addSeveral(h, "camper", list.ID, lines, ""); w.Code != http.StatusSeeOther {
+		t.Fatalf("double submit: %d", w.Code)
 	}
 	if got := savedNames(t, store, list.ID, "camper"); len(got) != 6 {
 		t.Fatalf("double submit added items: %v", got)
@@ -164,7 +169,9 @@ func TestBulkAddRequiresTheCSRFToken(t *testing.T) {
 	}))
 	defer srv.Close()
 	jar, _ := cookiejar.New(nil)
-	client := &http.Client{Jar: jar}
+	// A finished add redirects to the list page, which this router does not
+	// serve, so the redirect itself is the answer under test.
+	client := &http.Client{Jar: jar, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 
 	for i, test := range []struct{ path, field, value string }{
 		{"/packing-lists/" + list.ID + "/add-several", "lines", "Tent"},
@@ -197,7 +204,7 @@ func TestBulkAddRequiresTheCSRFToken(t *testing.T) {
 		if got := savedNames(t, store, list.ID, "camper"); len(got) != i {
 			t.Fatalf("%s without a token saved %v", test.path, got)
 		}
-		if status := post(url.Values{test.field: {test.value}, "_csrf": {html.UnescapeString(string(token[1]))}}); status != http.StatusOK {
+		if status := post(url.Values{test.field: {test.value}, "_csrf": {html.UnescapeString(string(token[1]))}}); status != http.StatusSeeOther {
 			t.Errorf("%s with the token: %d", test.path, status)
 		}
 	}
@@ -254,17 +261,16 @@ func TestAddFromListCopiesTickedItemsFromASharedList(t *testing.T) {
 	shoes, pad, clothes := climbing.Items[0].ID, climbing.Items[2].ID, climbing.Items[3].ID
 	// The chalk bag is posted even though its box was disabled; it is skipped.
 	w = addFrom(h, "member", weekend.ID, climbing.ID, shoes, climbing.Items[1].ID, clothes)
-	if body := html.UnescapeString(w.Body.String()); w.Code != http.StatusOK || !strings.Contains(body, "Added 2 items from Climbing. Skipped 1 already on this list: Chalk bag.") {
-		t.Fatalf("copy: %d %s", w.Code, body)
+	if w.Code != http.StatusSeeOther || w.Header().Get("Location") != "/packing-lists/"+weekend.ID {
+		t.Fatalf("copy: %d %q", w.Code, w.Header().Get("Location"))
 	}
 	want := []string{"Chalk bag/Climbing", "Climbing shoes/Climbing", "Clothes/"}
 	if got := savedNames(t, store, weekend.ID, "member"); fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Fatalf("saved %v, want %v", got, want)
 	}
 
-	w = addFrom(h, "member", weekend.ID, climbing.ID, shoes, clothes)
-	if body := w.Body.String(); !strings.Contains(body, "Added 0 items from Climbing. Skipped 2") {
-		t.Fatalf("double submit: %s", body)
+	if w := addFrom(h, "member", weekend.ID, climbing.ID, shoes, clothes); w.Code != http.StatusSeeOther {
+		t.Fatalf("double submit: %d", w.Code)
 	}
 	if got := savedNames(t, store, weekend.ID, "member"); len(got) != 3 {
 		t.Fatalf("double submit added items: %v", got)
@@ -330,7 +336,7 @@ func TestAddFromListCopiesMoreThanOnePasteAndStopsAtTheListLimit(t *testing.T) {
 	store := bulkStore(t, source, list, full)
 	h := handler{packingStore: store}
 
-	if w := addFrom(h, "camper", list.ID, source.ID, ids...); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "Added 150 items from Weekend camping.") {
+	if w := addFrom(h, "camper", list.ID, source.ID, ids...); w.Code != http.StatusSeeOther {
 		t.Fatalf("copy of 150 items: %d %s", w.Code, w.Body.String())
 	}
 	if got := savedNames(t, store, list.ID, "camper"); len(got) != packing.MaxItemsPerAdd+50 {
@@ -462,5 +468,49 @@ func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
 	// Both actions sit in the empty state; the add card's pair stays hidden until items arrive.
 	if strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-several"`) != 2 || strings.Count(body, `href="/packing-lists/`+lists[0].ID+`/add-from"`) != 2 {
 		t.Fatalf("bulk add actions: %s", body)
+	}
+}
+
+// countingDocuments counts the conditional writes a request makes, so a bulk
+// add can be held to one list write plus one remembered-categories write.
+type countingDocuments struct {
+	*testsupport.Documents
+	replaced int
+}
+
+func (d *countingDocuments) ReplaceItem(ctx context.Context, key azcosmos.PartitionKey, id string, body []byte, options *azcosmos.ItemOptions) (azcosmos.ItemResponse, error) {
+	d.replaced++
+	return d.Documents.ReplaceItem(ctx, key, id, body, options)
+}
+
+func TestBulkAddRemembersEveryCategoryInOneWrite(t *testing.T) {
+	ctx := context.Background()
+	docs := &countingDocuments{Documents: testsupport.NewDocuments()}
+	store := packing.NewStore(docs)
+	source := packing.NewList("camper", "Kit", "")
+	var ids []string
+	for i := 0; i < 20; i++ {
+		item := packing.NewItem(fmt.Sprintf("Item %d", i), fmt.Sprintf("Custom %d", i))
+		source.Items = append(source.Items, item)
+		ids = append(ids, item.ID)
+	}
+	list := packing.NewList("camper", "Weekend", "")
+	for _, saved := range []packing.PackingList{source, list} {
+		if err := store.SavePackingList(ctx, saved); err != nil {
+			t.Fatal(err)
+		}
+	}
+	h := handler{packingStore: store}
+
+	docs.replaced = 0
+	if w := addFrom(h, "camper", list.ID, source.ID, ids...); w.Code != http.StatusSeeOther {
+		t.Fatalf("copy: %d %s", w.Code, w.Body.String())
+	}
+	if docs.replaced > 2 {
+		t.Errorf("a copy of 20 categories made %d conditional writes, want the list write plus one category write", docs.replaced)
+	}
+	got, err := store.RememberedCategories(ctx, "camper")
+	if err != nil || len(got) != 20 {
+		t.Fatalf("remembered %q, %v", got, err)
 	}
 }

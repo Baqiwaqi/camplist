@@ -35,8 +35,14 @@ func (h *handler) categorySuggestions(ctx context.Context, userID string, items 
 // rememberCategory keeps a category the camper just saved so their other lists
 // offer it too. The item is already stored, so a failure is only logged.
 func (h *handler) rememberCategory(ctx context.Context, userID, category string) {
-	if err := h.packingStore.RememberCategory(ctx, userID, category); err != nil {
-		log.Printf("remember category: %v", err)
+	h.rememberCategories(ctx, userID, category)
+}
+
+// rememberCategories keeps the categories of a whole add in one store call, so
+// a bulk add does not read and write the document once per category.
+func (h *handler) rememberCategories(ctx context.Context, userID string, categories ...string) {
+	if err := h.packingStore.RememberCategories(ctx, userID, categories...); err != nil {
+		log.Printf("remember categories: %v", err)
 	}
 }
 

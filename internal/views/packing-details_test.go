@@ -130,3 +130,43 @@ func TestListItemFormShowsCategoryPicker(t *testing.T) {
 		t.Error("category picker has no listbox popup")
 	}
 }
+
+// The add form swaps itself in place instead of boosting a full navigation,
+// and still posts normally without scripts.
+func TestListItemFormPostsInPlace(t *testing.T) {
+	doc := renderListItemForm(t, packing.NewCreateItemForm("list"))
+	form := findElement(doc, hasAttr("id", "add-item"))
+	if form == nil {
+		t.Fatal("add item form has no id to swap")
+	}
+	for key, want := range map[string]string{"method": "POST", "action": "/packing-lists/list/add-item", "hx-post": "/packing-lists/list/add-item", "hx-target": "this", "hx-swap": "outerHTML", "hx-sync": "this:drop"} {
+		if got, _ := attr(form, key); got != want {
+			t.Errorf("%s = %q, want %q", key, got, want)
+		}
+	}
+	if _, boosted := attr(form, "hx-boost"); boosted {
+		t.Error("add item form is still boosted")
+	}
+}
+
+// Delete removes only its row and drops a repeated request.
+func TestItemRowDeletesItsRow(t *testing.T) {
+	var out bytes.Buffer
+	item := packing.NewItem("Tent", "Shelter")
+	if err := ItemRow("list", item).Render(context.Background(), &out); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := html.Parse(&out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	button := findElement(doc, hasAttr("hx-delete", "/packing-lists/list/remove-item/"+item.ID))
+	if button == nil {
+		t.Fatal("row has no delete button")
+	}
+	for key, want := range map[string]string{"hx-target": "closest li", "hx-swap": "delete", "hx-sync": "closest li:drop"} {
+		if got, _ := attr(button, key); got != want {
+			t.Errorf("%s = %q, want %q", key, got, want)
+		}
+	}
+}

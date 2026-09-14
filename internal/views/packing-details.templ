@@ -18,7 +18,7 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 						if list.Description != "" {
 							<p class="text-xl max-w-[48ch] mb-3">{ list.Description }</p>
 						}
-						<p class="text-sm text-pine-100">{ itemSummary(list.Items) }</p>
+						@ListSummary(list.Items, false)
 					</div>
 					<div class="flex flex-wrap items-end gap-2 sm:pt-6">
 						@StartTripForm(StartTrip{List: list, Name: list.Name + " – " + time.Now().Format("Jan 2, 2006"), Members: list.TripMemberChoices(auth.Subject(ctx))}, csrfToken)
@@ -35,68 +35,131 @@ templ PackingDetails(name string, list packing.PackingList, form packing.CreateI
 			</div>
 			<p class="text-muted max-w-[60ch]">Starting a trip copies this list. Your reusable list stays unchanged as you pack.</p>
 		</section>
+		@ListRevision(list, false)
 		<section class="mt-8">
 			@ListItemForm(form, csrfToken)
 		</section>
 		<section class="mt-8">
 			<div class="card">
-				if len(list.Items) == 0 {
-					<p class="text-muted mb-3">No items yet. Add your first item above.</p>
-				}
-				<ul class="columns-[17rem] gap-x-8">
+				@ListEmpty(list.Items, false)
+				<ul id="list-items" class="columns-[17rem] gap-x-8" data-empty-focus="item-name-new">
 					for _, item := range list.Items {
-						@ItemRow(list.ID, item, csrfToken)
+						@ItemRow(list.ID, item)
 					}
 				</ul>
 			</div>
 		</section>
 		<section class="mt-8">
-			<section class="card" x-data="{ editing: false }">
-				<div class="flex flex-wrap justify-between items-start gap-4 max-sm:flex-col">
-					<div class="min-w-0 max-sm:flex-none sm:flex-[1_1_240px]">
-						<h2>Prepare before your next trip</h2>
-						<p class="text-muted mb-3">Tasks from trip reviews and your own notes. Mark one done once it is handled; done tasks start every new trip as handled.</p>
-					</div>
-					if len(list.Tasks) > 0 {
-						<div class="flex flex-wrap items-center gap-2 max-sm:w-full">
-							<button type="button" class="btn btn-secondary btn-sm" x-on:click="editing = !editing" x-bind:aria-pressed="editing" x-text="editing ? 'Done editing' : 'Edit tasks'">Edit tasks</button>
-						</div>
-					}
-				</div>
-				if len(list.Tasks) == 0 {
-					<p class="text-muted mb-3">No tasks yet.</p>
-				} else {
-					@PreparationTasks(list, csrfToken)
-				}
-				<form class="flex flex-wrap items-end gap-3 my-3" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" }>
-					<input type="hidden" name="_csrf" value={ csrfToken }/><input type="hidden" name="revision" value={ list.Revision() }/>
-					<div class="grid gap-1 grow basis-56"><label class="sr-only" for="new-task">New preparation task</label><input id="new-task" name="name" placeholder="Add a task, like buying fuel" required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-					<div class="grid gap-1">
-						<label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)
-					</div>
-					<button class="btn btn-secondary">Add task</button>
-				</form>
-				<p class="text-muted">Doing a task packs nothing: buying fuel does not mark your stove as packed.</p>
-				if len(list.Changes) > 0 {
-					<h3>Improvements from trip reviews</h3>
-					<ul>
-						for _, change := range list.Changes {
-							<li class="py-2 border-b border-sand-100 font-bold last:border-b-0">{ change }</li>
-						}
-					</ul>
-				}
-			</section>
+			@ListPreparation(list, csrfToken, false, "")
 		</section>
 	}
 }
 
-// PreparationTasks is the task list on the reusable list page. Mark done swaps
-// only this list, because every row carries the list revision the toggle
-// just changed; static/revision.js advances the other controls on the page.
-templ PreparationTasks(list packing.PackingList, csrfToken string) {
+// ListRevision holds the list revision the page shows, once. Every save on the
+// page is conditioned on it: static/revision.js sends it in place of the copy
+// a control was rendered with, and each save swaps in the revision it made.
+templ ListRevision(list packing.PackingList, oob bool) {
+	<input
+		type="hidden"
+		id="list-revision"
+		value={ list.Revision() }
+		if oob {
+			hx-swap-oob="true"
+		}
+	/>
+}
+
+// ListSummary is the item count in the list's hero card.
+templ ListSummary(items []packing.PackingItem, oob bool) {
+	<p
+		id="list-summary"
+		class="text-sm text-pine-100"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>{ itemSummary(items) }</p>
+}
+
+// ListEmpty is the empty items text. It stays in the page, hidden while the
+// list has items, so adding the first item or deleting the last can toggle it.
+templ ListEmpty(items []packing.PackingItem, oob bool) {
+	<p
+		id="list-empty"
+		class="text-muted mb-3"
+		hidden?={ len(items) > 0 }
+		if oob {
+			hx-swap-oob="true"
+		}
+	>No items yet. Add your first item above.</p>
+}
+
+// ItemsAppended adds rows to the end of the items list out of band.
+templ ItemsAppended(listID string, items []packing.PackingItem) {
+	<ul hx-swap-oob="beforeend:#list-items">
+		for _, item := range items {
+			@ItemRow(listID, item)
+		}
+	</ul>
+}
+
+// ListPreparation is the "Prepare before your next trip" card. Every control
+// in it swaps the whole card, because a save changes the done count, the edit
+// toggle and the empty text. editing seeds the card's edit mode so a rename or
+// removal keeps it open, and focus is the id of the field to focus after the
+// swap. Each form also posts normally and redirects when scripts are off.
+templ ListPreparation(list packing.PackingList, csrfToken string, editing bool, focus string) {
+	<section id="list-preparation" class="card p-0" x-data={ "{ editing: " + strconv.FormatBool(editing) + " }" }>
+		<div class="px-4 pt-4 sm:px-6 sm:pt-5">
+			<h2>Prepare before your next trip</h2>
+			<p class="text-muted max-w-[60ch]">Done tasks start every new trip as handled. They never mark gear as packed.</p>
+			if len(list.Tasks) > 0 {
+				<div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+					<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ preparationSummary(list.Tasks) }</span>
+					<button type="button" class="btn btn-secondary btn-sm" x-on:click="editing = !editing" x-bind:aria-pressed="editing" x-text="editing ? 'Done editing' : 'Edit tasks'">Edit tasks</button>
+				</div>
+			}
+		</div>
+		<div class="px-4 sm:px-6 py-2">
+			if len(list.Tasks) == 0 {
+				<p class="py-2 text-muted">No tasks yet. Add one below, like buying fuel before you leave.</p>
+			} else {
+				@PreparationTasks(list, csrfToken, editing, focus)
+			}
+		</div>
+		<form
+			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-t border-sand-100 bg-sand-50 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:px-6 rounded-b-card [&.htmx-request]:opacity-60"
+			method="post"
+			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			{ preparationSwap(list)... }
+		>
+			<input type="hidden" name="_csrf" value={ csrfToken }/>
+			<input type="hidden" name="revision" value={ list.Revision() }/>
+			<input type="hidden" name="editing" x-bind:value="editing"/>
+			<label class="sr-only" for="new-task">New preparation task</label>
+			<input id="new-task" name="name" placeholder="Like buying fuel" required maxlength="200" autofocus?={ focus == "new-task" } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+			<div class="max-sm:order-last max-sm:w-48">
+				<label class="sr-only" for="new-task-scope">Who is this for?</label>@ScopeSelect("scope", "new-task-scope", "", false)
+			</div>
+			<button class="btn btn-secondary min-h-11">Add task</button>
+		</form>
+		if len(list.Changes) > 0 {
+			<div class="border-t border-sand-100 px-4 pb-4 sm:px-6">
+				<h3>Improvements from trip reviews</h3>
+				<ul>
+					for _, change := range list.Changes {
+						<li class="py-2 border-b border-sand-100 font-bold last:border-b-0">{ change }</li>
+					}
+				</ul>
+			</div>
+		}
+	</section>
+}
+
+// PreparationTasks is the task list on the reusable list page.
+templ PreparationTasks(list packing.PackingList, csrfToken string, editing bool, focus string) {
 	<ul id="preparation-tasks">
-		for _, task := range list.Tasks {
-			@PreparationTaskRow(list, task, csrfToken)
+		for i, task := range list.Tasks {
+			@PreparationTaskRow(list, task, csrfToken, editing, focus, nextTaskID(list.Tasks, i))
 		}
 	</ul>
 }
@@ -285,18 +348,17 @@ templ StartTripPage(s StartTrip, csrfToken string) {
 // PreparationTaskRow is one task on the reusable list. Normally it is a
 // checklist row that toggles done like a packing row; while the card is in
 // edit mode it becomes a rename field with Save and Remove. Everything posts
-// to the existing preparation endpoint.
-templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string) {
-	<li class="item-row py-0">
+// to the existing preparation endpoint. The server seeds edit mode, so the
+// hidden variant is cloaked until Alpine starts instead of flashing.
+templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, csrfToken string, editing bool, focus string, next string) {
+	<li class="border-b border-sand-100 last:border-b-0">
 		<form
-			class="pack-form w-full"
+			class="pack-form w-full [&.htmx-request]:opacity-60"
 			method="post"
 			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
-			hx-post={ "/packing-lists/" + list.ID + "/preparation/edit" }
-			hx-target="#preparation-tasks"
-			hx-swap="outerHTML"
-			hx-sync="#preparation-tasks:drop"
+			{ preparationSwap(list)... }
 			x-show="!editing"
+			x-cloak?={ editing }
 		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ list.Revision() }/>
@@ -305,7 +367,7 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 			<input type="hidden" name="scope" value={ task.Scope }/>
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(!task.Done) }/>
-			<button id={ "task-done-" + task.ID } type="submit" class={ "pack-row", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
+			<button id={ "task-done-" + task.ID } type="submit" class={ "pack-row py-2", templ.KV("packed", task.Done) } aria-pressed={ strconv.FormatBool(task.Done) } aria-label={ "Toggle done for " + task.Name }>
 				<span class="tick" aria-hidden="true"></span>
 				<span class="pack-name">{ task.Name }</span>
 				<span class="pack-action">
@@ -317,18 +379,27 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 				</span>
 			</button>
 		</form>
-		<form class="flex flex-wrap items-end gap-3 my-2 w-full" method="post" action={ "/packing-lists/" + list.ID + "/preparation/edit" } x-show="editing" x-cloak>
+		<form
+			class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_auto_auto] [&.htmx-request]:opacity-60"
+			method="post"
+			action={ "/packing-lists/" + list.ID + "/preparation/edit" }
+			{ preparationSwap(list)... }
+			x-show="editing"
+			x-cloak?={ !editing }
+		>
 			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			<input type="hidden" name="revision" value={ list.Revision() }/>
 			<input type="hidden" name="taskId" value={ task.ID }/>
 			<input type="hidden" name="action" value="save"/>
 			<input type="hidden" name="done" value={ strconv.FormatBool(task.Done) }/>
-			<div class="grid gap-1 grow basis-56"><label class="sr-only" for={ "task-" + task.ID }>Task name</label><input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/></div>
-			<div class="grid gap-1">
+			<input type="hidden" name="editing" x-bind:value="editing"/>
+			<label class="sr-only" for={ "task-" + task.ID }>Task name</label>
+			<input id={ "task-" + task.ID } name="name" value={ task.Name } required maxlength="200" autofocus?={ focus == "task-"+task.ID } class="w-full min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0"/>
+			<div class="max-sm:order-last max-sm:w-48">
 				<label class="sr-only" for={ "task-scope-" + task.ID }>Who is this for?</label>@ScopeSelect("scope", "task-scope-"+task.ID, task.Scope, false)
 			</div>
-			<button class="btn btn-primary btn-sm">Save</button>
-			<button type="button" class="btn btn-danger btn-sm" { removeTaskAttrs(list, task)... }>Remove</button>
+			<button class="btn btn-secondary btn-sm min-h-11">Save</button>
+			<button type="button" class="btn btn-danger btn-sm max-sm:order-last justify-self-end sm:min-h-11" { removeTaskAttrs(list, next)... }>Remove</button>
 		</form>
 	</li>
 }
@@ -340,40 +411,58 @@ templ PreparationTaskRow(list packing.PackingList, task packing.PreparationTask,
 templ ListItemForm(form packing.CreateItemForm, csrfToken string) {
 	<h2 class="mb-3">Add an item</h2>
 	<div class="card">
-		<form action={ form.Action } method="POST" hx-boost="true">
-			<input type="hidden" name="_csrf" value={ csrfToken }/>
-			<input type="hidden" name="revision" value={ form.Revision }/>
-			<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_auto]">
-				<label for="item-name-new" class="sr-only">Item name</label>
-				<input
-					type="text"
-					id="item-name-new"
-					name="name"
-					placeholder="Like a headlamp"
-					value={ form.Name }
-					class="col-span-2 sm:col-span-1 min-w-0 min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
-					if form.NameHasError() {
-						aria-invalid="true"
-					}
-				/>
-				<label for="item-category-new" class="sr-only">Category</label>
-				@CategoryPicker("item-category-new", "item-category-new-options", form.Category, "Category", form.Categories)
-				<button type="submit" class="btn btn-primary min-h-11 shrink-0">{ form.SubmitButtonText }</button>
-			</div>
-			if len(form.Error) > 0 {
-				<div class="mt-3">
-					@ErrorBanner(form.Error)
-				</div>
-			}
-			<details class="mt-1" open?={ form.Scope != "" && form.Scope != "shared" }>
-				<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Who it's for</summary>
-				<div class="grid gap-1 pb-1 sm:max-w-80">
-					<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
-					@ScopeSelect("scope", "item-scope-new", form.Scope, false)
-				</div>
-			</details>
-		</form>
+		@AddItemForm(form, csrfToken, false)
 	</div>
+}
+
+// AddItemForm is the form inside ListItemForm. htmx swaps it for a fresh form
+// after an add, or for the form with its errors, and appends the new row out
+// of band; focus puts the cursor back in the name field. Without scripts it
+// posts normally and redirects.
+templ AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) {
+	<form
+		id="add-item"
+		action={ form.Action }
+		method="POST"
+		hx-post={ form.Action }
+		hx-target="this"
+		hx-swap="outerHTML"
+		hx-sync="this:drop"
+		class="[&.htmx-request]:opacity-60"
+	>
+		<input type="hidden" name="_csrf" value={ csrfToken }/>
+		<input type="hidden" name="revision" value={ form.Revision }/>
+		<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_auto]">
+			<label for="item-name-new" class="sr-only">Item name</label>
+			<input
+				type="text"
+				id="item-name-new"
+				name="name"
+				placeholder="Like a headlamp"
+				value={ form.Name }
+				class="col-span-2 sm:col-span-1 min-w-0 min-h-11 rounded-sm border border-sand-300 bg-white px-3 py-2 focus-visible:border-pine-700 focus-visible:outline-offset-0 aria-invalid:border-red-300"
+				if form.NameHasError() {
+					aria-invalid="true"
+				}
+				autofocus?={ focus }
+			/>
+			<label for="item-category-new" class="sr-only">Category</label>
+			@CategoryPicker("item-category-new", "item-category-new-options", form.Category, "Category", form.Categories)
+			<button type="submit" class="btn btn-primary min-h-11 shrink-0">{ form.SubmitButtonText }</button>
+		</div>
+		if len(form.Error) > 0 {
+			<div class="mt-3">
+				@ErrorBanner(form.Error)
+			</div>
+		}
+		<details class="mt-1" open?={ form.Scope != "" && form.Scope != "shared" }>
+			<summary class="w-fit cursor-pointer py-3 text-sm font-bold text-pine-700">Who it's for</summary>
+			<div class="grid gap-1 pb-1 sm:max-w-80">
+				<label for="item-scope-new" class="text-sm font-bold">Who is this for?</label>
+				@ScopeSelect("scope", "item-scope-new", form.Scope, false)
+			</div>
+		</details>
+	</form>
 }
 
 // ItemFields is the name, category and scope set of the edit forms. The name
@@ -408,19 +497,20 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 	</div>
 }
 
-// ItemRow is one item on the details page. Edit swaps it for ItemEditRow in place.
-templ ItemRow(listID string, item packing.PackingItem, csrfToken string) {
-	@itemRow(listID, item, csrfToken, false)
+// ItemRow is one item on the details page. Edit swaps it for ItemEditRow in
+// place; Delete removes the row and static/removal-focus.js moves focus on.
+templ ItemRow(listID string, item packing.PackingItem) {
+	@itemRow(listID, item, false)
 }
 
 // FocusedItemRow is the row htmx swaps back after Save or Cancel. Its Edit
 // link takes focus, so the keyboard stays on the item instead of the page.
-templ FocusedItemRow(listID string, item packing.PackingItem, csrfToken string) {
-	@itemRow(listID, item, csrfToken, true)
+templ FocusedItemRow(listID string, item packing.PackingItem) {
+	@itemRow(listID, item, true)
 }
 
-templ itemRow(listID string, item packing.PackingItem, csrfToken string, focusEdit bool) {
-	<li class="item-row break-inside-avoid" id={ "item-" + item.ID }>
+templ itemRow(listID string, item packing.PackingItem, focusEdit bool) {
+	<li class="item-row break-inside-avoid [&.htmx-request]:opacity-60" id={ "item-" + item.ID }>
 		<span class="font-bold min-w-0 wrap-anywhere">{ item.Name }</span>
 		if item.Category != "" {
 			<span class="inline-block whitespace-nowrap text-xs font-bold tracking-tag uppercase text-pine-700 bg-pine-100 px-2 py-0.5 rounded-full">{ item.Category }</span>
@@ -440,7 +530,11 @@ templ itemRow(listID string, item packing.PackingItem, csrfToken string, focusEd
 			<button
 				class="btn btn-danger btn-sm"
 				hx-delete={ "/packing-lists/" + listID + "/remove-item/" + item.ID }
-				hx-headers={ templ.JSONString(map[string]string{"X-CSRF-Token": csrfToken, "X-Camplist-Revision": item.SourceRevision}) }
+				hx-headers={ templ.JSONString(map[string]string{"X-Camplist-Revision": item.SourceRevision}) }
+				hx-target="closest li"
+				hx-swap="delete"
+				hx-indicator="closest li"
+				hx-sync="closest li:drop"
 				hx-confirm="Delete this item?"
 				data-confirm-action="Delete item"
 			>Delete</button>
@@ -450,7 +544,7 @@ templ itemRow(listID string, item packing.PackingItem, csrfToken string, focusEd
 
 // ItemEditRow replaces ItemRow while an item is being edited: the row becomes
 // a stacked form inside its column.
-templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csrfToken string) {
+templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm) {
 	<li class="item-row block break-inside-avoid" id={ "item-" + itemID }>
 		<form
 			class="w-full"
@@ -461,7 +555,6 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm, csr
 			hx-swap="outerHTML"
 			hx-sync="this:drop"
 		>
-			<input type="hidden" name="_csrf" value={ csrfToken }/>
 			@ItemFields(form, itemID, true)
 			if len(form.Error) > 0 {
 				@ErrorBanner(form.Error)

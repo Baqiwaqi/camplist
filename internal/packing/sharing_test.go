@@ -105,7 +105,7 @@ func TestTemplateEditorCreatesPrivateSnapshotAndLosesWriteAccessOnRemoval(t *tes
 	if err = store.SavePackingList(ctx, stale); !errors.Is(err, packing.ErrAccessRemoved) {
 		t.Fatalf("stale write after removal: %v", err)
 	}
-	if err = store.AddItem(ctx, list.ID, "editor", packing.NewItem("Stove", "")); !errors.Is(err, packing.ErrAccessRemoved) {
+	if _, _, err = store.AddItem(ctx, list.ID, "editor", packing.NewItem("Stove", "")); !errors.Is(err, packing.ErrAccessRemoved) {
 		t.Fatalf("add after removal: %v", err)
 	}
 	if _, err = store.GetPackingSession(ctx, trip.ID, "editor"); err != nil {
@@ -169,7 +169,7 @@ func TestSharedTemplateFormsRejectStaleEditsAndEditorsManagePreparation(t *testi
 	owner, _ := store.GetPackingList(ctx, list.ID, "owner")
 	owner.Description = "Changed"
 	store.SavePackingList(ctx, owner)
-	if err := store.UpdateItem(ctx, list.ID, "editor", item); !errors.Is(err, packing.ErrConflict) {
+	if _, _, err := store.UpdateItem(ctx, list.ID, "editor", item); !errors.Is(err, packing.ErrConflict) {
 		t.Fatal("stale item form accepted", err)
 	}
 	current, _ := store.GetPackingList(ctx, list.ID, "editor")

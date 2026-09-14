@@ -39,8 +39,8 @@ func TestItemRowFocusesEditOnlyAfterASwap(t *testing.T) {
 		row   templ.Component
 		focus bool
 	}{
-		{"page row", ItemRow("list", item, "token"), false},
-		{"swapped row", FocusedItemRow("list", item, "token"), true},
+		{"page row", ItemRow("list", item), false},
+		{"swapped row", FocusedItemRow("list", item), true},
 	} {
 		edit := findElement(renderDoc(t, test.row), hasAttr("id", "edit-"+item.ID))
 		if edit == nil {
@@ -54,7 +54,7 @@ func TestItemRowFocusesEditOnlyAfterASwap(t *testing.T) {
 
 func TestItemEditRowFocusesNameAndDropsRepeatSaves(t *testing.T) {
 	item := packing.NewItem("Tent", "Shelter")
-	doc := renderDoc(t, ItemEditRow("list", item.ID, packing.EditItemForm("list", item), "token"))
+	doc := renderDoc(t, ItemEditRow("list", item.ID, packing.EditItemForm("list", item)))
 	name := findElement(doc, hasAttr("id", "item-name-"+item.ID))
 	if name == nil || !hasAttrKey(name, "autofocus") {
 		t.Error("inline edit does not move focus to the name field")

@@ -514,3 +514,45 @@ func TestBulkAddRemembersEveryCategoryInOneWrite(t *testing.T) {
 		t.Fatalf("remembered %q, %v", got, err)
 	}
 }
+
+// The list page's live region keeps announcing the last bulk add, so an item
+// write after it must clear the summary rather than leave it contradicting the
+// list.
+func TestItemWritesClearTheBulkAddStatus(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("user", "Weekend", "")
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+	const cleared = `<p id="list-add-status" role="status" class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden" hx-swap-oob="innerHTML"></p>`
+
+	opened, _ := store.GetPackingList(ctx, list.ID, "user")
+	w := httptest.NewRecorder()
+	h.AddSeveralHandler(w, htmxRequest(sharingRequest("POST", "/", "user", map[string]string{"id": list.ID}, url.Values{"lines": {"Documents:\nPassport\nPaper map"}, "revision": {opened.Revision()}})))
+	if body := w.Body.String(); !strings.Contains(body, "Added 2 items to Documents.") {
+		t.Fatalf("bulk add: %s", body)
+	}
+
+	saved, _ := store.GetPackingList(ctx, list.ID, "user")
+	r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/remove-item/"+saved.Items[1].ID, nil), list.ID, saved.Items[1].ID)
+	r.Method = "DELETE"
+	r.Header.Set("HX-Request", "true")
+	r.Header.Set("X-Camplist-Revision", saved.Revision())
+	w = httptest.NewRecorder()
+	h.RemoveItemHandler(w, r)
+	if body := w.Body.String(); w.Header().Get("HX-Refresh") != "" || !strings.Contains(body, cleared) {
+		t.Errorf("delete left the bulk add summary: %s", body)
+	}
+
+	saved, _ = store.GetPackingList(ctx, list.ID, "user")
+	edit := url.Values{"name": {"Passport"}, "category": {"Travel"}, "scope": {"shared"}, "revision": {saved.Revision()}}
+	r = withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+saved.Items[0].ID, edit), list.ID, saved.Items[0].ID)
+	r.Header.Set("HX-Request", "true")
+	w = httptest.NewRecorder()
+	h.EditItemHandler(w, r)
+	if body := w.Body.String(); w.Header().Get("HX-Refresh") != "" || !strings.Contains(body, cleared) {
+		t.Errorf("edit left the bulk add summary: %s", body)
+	}
+}

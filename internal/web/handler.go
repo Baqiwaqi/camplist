@@ -415,7 +415,7 @@ func (h *handler) RemoveItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, listItemsChanged(list))
+	render(w, r, templ.Join(listItemsChanged(list), views.ListAddStatus("", true)))
 }
 
 // listItemsChanged is the out-of-band update after an item write on the list

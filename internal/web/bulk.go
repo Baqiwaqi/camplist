@@ -151,7 +151,7 @@ func (h *handler) AddFromListItemsPage(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	h.renderAddFromList(w, r, views.AddFromList{List: list, Source: source})
+	h.renderAddFromList(w, r, views.NewAddFromList(list, source))
 }
 
 // AddFromListHandler copies the ticked items of a source list into this list.
@@ -171,7 +171,8 @@ func (h *handler) AddFromListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	selected := r.PostForm["item"]
-	step := views.AddFromList{List: list, Source: source, Selected: map[string]bool{}}
+	step := views.NewAddFromList(list, source)
+	step.Selected = map[string]bool{}
 	for _, id := range selected {
 		step.Selected[id] = true
 	}

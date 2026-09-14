@@ -17,27 +17,33 @@ type AddFromList struct {
 	List, Source packing.PackingList
 	Selected     map[string]bool
 	Errors       []string
+	onList       map[string]bool
 }
 
-// onList reports the names already on list, compared as AddItems compares them.
-func onList(list packing.PackingList) map[string]bool {
+// NewAddFromList builds the step, reading the destination's item names once so
+// rendering a long source list does not rebuild them for every row.
+func NewAddFromList(list, source packing.PackingList) AddFromList {
 	names := map[string]bool{}
 	for _, item := range list.Items {
-		names[strings.ToLower(strings.TrimSpace(item.Name))] = true
+		names[itemNameKey(item.Name)] = true
 	}
-	return names
+	return AddFromList{List: list, Source: source, onList: names}
+}
+
+// itemNameKey is how item names compare, as AddItems compares them.
+func itemNameKey(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
 }
 
 func (a AddFromList) alreadyOnList(item packing.PackingItem) bool {
-	return onList(a.List)[strings.ToLower(strings.TrimSpace(item.Name))]
+	return a.onList[itemNameKey(item.Name)]
 }
 
 // addable counts the source items not yet on the destination list.
 func (a AddFromList) addable() int {
-	names := onList(a.List)
 	count := 0
 	for _, item := range a.Source.Items {
-		if !names[strings.ToLower(strings.TrimSpace(item.Name))] {
+		if !a.onList[itemNameKey(item.Name)] {
 			count++
 		}
 	}

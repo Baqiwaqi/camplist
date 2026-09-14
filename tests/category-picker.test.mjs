@@ -92,20 +92,19 @@ test('only remembered custom categories offer rename and remove', () => {
 })
 
 test('a rename updates every picker and a removal drops the option', () => {
-  const { listeners, datalists, dispatched } = load([
+  const { listeners, datalists } = load([
     [...defaults, { value: 'Fishnig', custom: true }],
     [...defaults, { value: 'Fishnig', custom: true }, { value: 'Fishing' }],
   ])
-  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, message: 'Renamed' } })
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true} })
   for (const datalist of datalists) {
     assert.deepEqual(datalist.options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishing', true]])
   }
-  assert.equal(dispatched.at(-1).detail.message, 'Renamed')
 
-  listeners['categories-changed']({ detail: { from: 'fishing', to: '', custom: false, message: 'Removed' } })
+  listeners['categories-changed']({ detail: { from: 'fishing', to: '', custom: false} })
   assert.deepEqual(datalists[0].options.map(option => option.value), ['Shelter', 'Clothing', 'Kitchen and cooking'])
 
-  listeners['categories-changed']({ detail: { from: 'Shleter', to: 'Shelter', custom: false, message: 'Merged' } })
+  listeners['categories-changed']({ detail: { from: 'Shleter', to: 'Shelter', custom: false} })
   assert.deepEqual(datalists[1].options.map(option => option.value), ['Shelter', 'Clothing', 'Kitchen and cooking'])
 })
 
@@ -115,12 +114,12 @@ test('a rename leaves open fields alone and keeps the categories items in view u
     [...defaults, { value: 'Fishnig', custom: true, used: true }],
     [...defaults, { value: 'Fishnig', trip: true }, { value: 'Tarps', custom: true, used: true }],
   ], [editing])
-  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, message: 'Renamed' } })
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true} })
   assert.equal(editing.value, 'Fishnig')
   assert.deepEqual(datalists[0].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishnig', false], ['Fishing', true]])
   assert.deepEqual(datalists[1].options.map(option => option.value).slice(3), ['Fishnig', 'Tarps', 'Fishing'])
 
-  listeners['categories-changed']({ detail: { from: 'Tarps', to: '', custom: false, message: 'Removed' } })
+  listeners['categories-changed']({ detail: { from: 'Tarps', to: '', custom: false} })
   assert.deepEqual(datalists[1].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishnig', false], ['Tarps', false], ['Fishing', true]])
 })
 
@@ -129,7 +128,7 @@ test('a rename that moved the items in view drops the old name there but leaves 
   const { listeners, datalists } = load([
     [...defaults, { value: 'Fishnig', custom: true, used: true }],
   ], [editing])
-  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, renamedInView: true, message: 'Renamed' } })
+  listeners['categories-changed']({ detail: { from: 'Fishnig', to: 'Fishing', custom: true, renamedInView: true} })
   assert.equal(editing.value, 'Fishnig')
   assert.deepEqual(datalists[0].options.map(option => [option.value, 'custom' in option.dataset]).slice(3), [['Fishing', true]])
 })

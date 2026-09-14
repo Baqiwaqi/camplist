@@ -237,7 +237,8 @@ type RenamedList struct {
 // RenameCategory renames a remembered custom category for userID and moves the
 // items filed under it, in any capitalisation, on the lists userID owns. A new
 // name that matches a default, another remembered category or a category on
-// those lists' items merges into it.
+// those lists' items merges into it, and items already spelled in another
+// capitalisation of the new name join the merged spelling.
 // Lists shared with userID by someone else and trips already started keep
 // their own copy. Defaults cannot be renamed.
 func (s *Store) RenameCategory(ctx context.Context, userID, from, to string) (CategoryRename, error) {
@@ -321,7 +322,7 @@ func (s *Store) renameInList(ctx context.Context, listID, userID, from, to strin
 		}
 		now := s.clock().UTC()
 		for i, item := range list.Items {
-			if categoryKey(item.Category) == categoryKey(from) && item.Category != to {
+			if movedByRename(item.Category, from, to) {
 				list.Items[i].Category = to
 				list.Items[i].UpdatedAt = now
 			}
@@ -340,15 +341,23 @@ func (s *Store) renameInList(ctx context.Context, listID, userID, from, to strin
 	return RenamedList{}, 0, ErrConflict
 }
 
-// countCategory counts the items filed under from that renaming to to changes.
+// countCategory counts the items that renaming from to to changes.
 func countCategory(items []PackingItem, from, to string) int {
 	count := 0
 	for _, item := range items {
-		if categoryKey(item.Category) == categoryKey(from) && item.Category != to {
+		if movedByRename(item.Category, from, to) {
 			count++
 		}
 	}
 	return count
+}
+
+// movedByRename reports whether renaming from to to moves an item filed under
+// category: the ones under from, and the ones already spelled in another
+// capitalisation of to, so a merge leaves a single spelling.
+func movedByRename(category, from, to string) bool {
+	key := categoryKey(category)
+	return (key == categoryKey(from) || key == categoryKey(to)) && category != to
 }
 
 func indexCategory(categories []string, category string) int {

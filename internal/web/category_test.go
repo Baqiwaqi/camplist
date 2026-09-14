@@ -186,7 +186,7 @@ func categoryRequest(path string, values url.Values, htmx bool, currentURL strin
 
 type categoriesChanged struct {
 	Changed struct {
-		From, To, Message     string
+		From, To              string
 		Custom, RenamedInView bool
 	} `json:"categories-changed"`
 }
@@ -243,11 +243,8 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 	if w.Code != 200 || w.Header().Get("HX-Refresh") != "" {
 		t.Fatalf("rename: %d %v %s", w.Code, w.Header(), w.Body.String())
 	}
-	if header := w.Header().Get("HX-Trigger"); strings.ContainsFunc(header, func(r rune) bool { return r > 127 }) {
-		t.Errorf("HX-Trigger is not ASCII: %q", header)
-	}
 	event := triggered(t, w)
-	if event.Changed.From != "Fishnig" || event.Changed.To != "Fishing" || !event.Changed.Custom || !event.Changed.RenamedInView || event.Changed.Message != "Renamed “Fishnig” to “Fishing” on 2 items in 1 list." {
+	if event.Changed.From != "Fishnig" || event.Changed.To != "Fishing" || !event.Changed.Custom || !event.Changed.RenamedInView {
 		t.Errorf("categories-changed = %+v", event.Changed)
 	}
 	saved, err := store.GetPackingList(ctx, own.ID, "user")
@@ -283,12 +280,15 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 		t.Fatal(err)
 	}
 	w = httptest.NewRecorder()
-	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"Fishing"}, "to": {"Angling"}}, true, "http://camplist.test/trips"))
-	if event := triggered(t, w); w.Code != 200 || w.Body.Len() != 0 || event.Changed.To != "Angling" || event.Changed.RenamedInView {
+	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"Fishing"}, "to": {"Fiske – ørret"}}, true, "http://camplist.test/trips"))
+	if header := w.Header().Get("HX-Trigger"); strings.ContainsFunc(header, func(r rune) bool { return r > 127 }) {
+		t.Errorf("HX-Trigger is not ASCII: %q", header)
+	}
+	if event := triggered(t, w); w.Code != 200 || w.Body.Len() != 0 || event.Changed.To != "Fiske – ørret" || event.Changed.RenamedInView {
 		t.Errorf("rename from trips page: %d %q", w.Code, w.Body.String())
 	}
 	w = httptest.NewRecorder()
-	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"Angling"}, "to": {"Fishing"}, "revision": {own.Revision()}}, true, "http://camplist.test/packing-lists/"+own.ID))
+	h.RenameCategory(w, categoryRequest("/categories/rename", url.Values{"from": {"Fiske – ørret"}, "to": {"Fishing"}, "revision": {own.Revision()}}, true, "http://camplist.test/packing-lists/"+own.ID))
 	if w.Header().Get("HX-Refresh") != "true" {
 		t.Errorf("stale list page was not reloaded: %v", w.Header())
 	}
@@ -352,7 +352,7 @@ func TestRemoveCategoryFromPickerKeepsItems(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.RemoveCategory(w, categoryRequest("/categories/remove", url.Values{"name": {"Fishnig"}}, true, "http://camplist.test/packing-lists/"+own.ID))
 	event := triggered(t, w)
-	if w.Code != 200 || event.Changed.From != "Fishnig" || event.Changed.To != "" || event.Changed.Message == "" {
+	if w.Code != 200 || event.Changed.From != "Fishnig" || event.Changed.To != "" {
 		t.Errorf("remove: %d %+v", w.Code, event.Changed)
 	}
 	if got := itemCategoryNames(t, store, own.ID, "user"); !slices.Equal(got, []string{"Fishnig", "Shelter", "fishnig"}) {

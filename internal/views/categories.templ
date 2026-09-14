@@ -66,19 +66,6 @@ templ CategoryDialog(csrfToken string) {
 	</dialog>
 }
 
-// StatusToast shows short confirmations, such as the result of a category
-// rename, sent as a camplist-status window event. The live region stays in the
-// page so screen readers announce each message.
-templ StatusToast() {
-	<div x-data="{ message: '', shown: false, timer: null }" x-on:camplist-status.window="message = $event.detail.message || ''; shown = !!message; clearTimeout(timer); timer = setTimeout(() => shown = false, 6000)">
-		<p id="status-message" role="status" class="sr-only" x-text="message"></p>
-		<div class="status-toast" aria-hidden="true" hidden x-bind:hidden="!shown">
-			<p class="flex-auto" x-text="message"></p>
-			<button type="button" class="btn btn-link flex-none text-inherit" tabindex="-1" x-on:click="shown = false">Dismiss</button>
-		</div>
-	</div>
-}
-
 // CategoriesPage lists the camper's remembered custom categories with a
 // rename and a remove form each. It is where category pickers send a camper
 // without scripts; errors reports a failed change.

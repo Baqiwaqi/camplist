@@ -115,7 +115,6 @@ templ Layout(title string, csrfToken string) {
 			</div>
 			{ children... }
 		</main>
-		@StatusToast()
 		@CategoryDialog(csrfToken)
 		<dialog
 			id="confirm-dialog"

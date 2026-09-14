@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"unicode/utf16"
 
@@ -92,7 +91,6 @@ func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
-	message := renameMessage(from, result)
 	listID := listInView(r)
 	var inView *packing.RenamedList
 	for i := range result.Lists {
@@ -100,7 +98,7 @@ func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 			inView = &result.Lists[i]
 		}
 	}
-	if err := setCategoriesChanged(w, from, result.Category, inView != nil, message); err != nil {
+	if err := setCategoriesChanged(w, from, result.Category, inView != nil); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
 	if inView == nil {
@@ -146,8 +144,7 @@ func (h *handler) RemoveCategory(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
-	message := "Removed “" + name + "” from your suggestions. Items keep their category."
-	if err := setCategoriesChanged(w, name, "", false, message); err != nil {
+	if err := setCategoriesChanged(w, name, "", false); err != nil {
 		log.Printf("encode categories-changed: %v", err)
 	}
 }
@@ -174,10 +171,10 @@ func categoryError(err error, category, fallback string) (int, string) {
 
 // setCategoriesChanged asks htmx to fire categories-changed, which
 // static/category-picker.js handles: from is replaced by to, or removed when
-// to is empty, and message is shown. renamedInView reports that the items in
-// view no longer use from.
-func setCategoriesChanged(w http.ResponseWriter, from, to string, renamedInView bool, message string) error {
-	detail := map[string]any{"from": from, "to": to, "custom": to != "" && !packing.IsDefaultCategory(to), "renamedInView": renamedInView, "message": message}
+// to is empty. renamedInView reports that the items in view no longer use
+// from.
+func setCategoriesChanged(w http.ResponseWriter, from, to string, renamedInView bool) error {
+	detail := map[string]any{"from": from, "to": to, "custom": to != "" && !packing.IsDefaultCategory(to), "renamedInView": renamedInView}
 	body, err := json.Marshal(map[string]any{"categories-changed": detail})
 	if err != nil {
 		return err
@@ -202,21 +199,6 @@ func asciiJSON(body []byte) string {
 		}
 	}
 	return out.String()
-}
-
-func renameMessage(from string, result packing.CategoryRename) string {
-	message := "Renamed “" + from + "” to “" + result.Category + "”"
-	if result.Items == 0 {
-		return message + "."
-	}
-	return message + " on " + countNoun(result.Items, "item") + " in " + countNoun(len(result.Lists), "list") + "."
-}
-
-func countNoun(n int, noun string) string {
-	if n == 1 {
-		return "1 " + noun
-	}
-	return strconv.Itoa(n) + " " + noun + "s"
 }
 
 // listInView returns the id of the packing list page an htmx request came

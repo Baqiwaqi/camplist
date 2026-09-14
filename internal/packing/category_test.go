@@ -274,3 +274,29 @@ func TestForgetCategoryLeavesItemsUnchanged(t *testing.T) {
 		t.Errorf("forgetting twice: %v", err)
 	}
 }
+
+func TestRenameCategoryUnifiesCaseVariantsOfTheMergedCategory(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	lake := packing.NewList("camper", "Lake", "")
+	lake.Items = []packing.PackingItem{packing.NewItem("Rod", "Fishnig"), packing.NewItem("Bait", "fishing"), packing.NewItem("Tent", "Shelter")}
+	if err := store.SavePackingList(ctx, lake); err != nil {
+		t.Fatal(err)
+	}
+	for _, category := range []string{"Fishnig", "Fishing"} {
+		if err := store.RememberCategory(ctx, "camper", category); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	result, err := store.RenameCategory(ctx, "camper", "Fishnig", "Fishing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Category != "Fishing" || result.Items != 2 {
+		t.Errorf("merged into %q on %d items", result.Category, result.Items)
+	}
+	if got := itemCategories(t, store, lake.ID, "camper"); !slices.Equal(got, []string{"Fishing", "Fishing", "Shelter"}) {
+		t.Errorf("lake categories = %q", got)
+	}
+}

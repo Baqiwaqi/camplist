@@ -49,11 +49,11 @@ function closeCategory(typed, options) {
 // A rename or removal answers with HX-Trigger categories-changed. Every picker
 // on the page stops offering the old name as a remembered category, but keeps
 // it while items in view use it (data-used, or data-trip from the offline
-// scripts) unless the rename moved them (renamedInView); a rename adds the new name unless it is already offered. Values
-// already in the fields stay as they are. The result message goes to the
-// layout's status toast.
+// scripts) unless the rename moved them (renamedInView); a rename adds the new
+// name unless it is already offered. Values already in the fields stay as they
+// are.
 document.addEventListener('categories-changed', event => {
-  const { from, to, custom, renamedInView, message } = event.detail
+  const { from, to, custom, renamedInView } = event.detail
   for (const datalist of document.querySelectorAll('datalist')) {
     for (const option of Array.from(datalist.options)) {
       if (categoryKey(option.value) !== categoryKey(from)) continue
@@ -72,7 +72,6 @@ document.addEventListener('categories-changed', event => {
     else option.dataset.default = ''
     datalist.append(option)
   }
-  window.dispatchEvent(new CustomEvent('camplist-status', { detail: { message } }))
 })
 
 document.addEventListener('alpine:init', () => {

@@ -103,7 +103,9 @@ The teaching-only phase is complete. Default to **implementing requested changes
 - Public pages: `/` is the landing page for visitors (members get their lists
   there via `auth.OptionalAuth`), `/demo` is a packing session held only in
   Alpine state, `/login` is the sign-in page. They use `views.PublicHeader` and
-  `views.PublicFooter` on `Shell`; `Layout` is for signed-in pages only.
+  `views.PublicFooter` on `Shell`; `Layout` is for signed-in pages only. The
+  join page (`views.JoinPage`) is its own no-referrer document without scripts,
+  since its URL carries the invitation token; it still uses `PageHead`.
 - CSRF: `gorilla/csrf`, field name `_csrf`, header `X-CSRF-Token`. `Layout`
   sets the header once via `hx-headers` on `<body>`, so htmx requests (including
   `DELETE`, whose body Go ignores) need no per-element token; keep hidden `_csrf`

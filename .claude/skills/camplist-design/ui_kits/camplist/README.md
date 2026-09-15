@@ -4,7 +4,7 @@ Click-through recreation of every templ view in `camplist/internal/views/`:
 
 - **Login** (`login.templ`) — single "Login with google" link. Source is an unstyled anchor; kit centers it in a Card.
 - **Lists / home** (`packing.templ`) — h1 "Camping", "Here you can find all you lists", Create, per-list Edit / Details / Delete.
-- **New / Edit list** (`new-list-page.templ`) — Name + Description form, error banner, Cancel + Create New / Save.
+- **New / Edit list** (`new-list-page.templ`) — Name + Description form, error banner, Cancel + Create list / Save.
 - **List details** (`packing-details.templ`) — items with Delete, Edit + Start session, Add Item form (Name, Category).
 - **Packing session** (`packing-session.templ`) — item rows with Check / Uncheck toggle.
 - **Sessions overview** (`packing-sessions-page.templ`) — list name, date, "checked items: n / m", Delete Session.

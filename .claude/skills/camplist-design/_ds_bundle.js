@@ -894,7 +894,7 @@ function ListFormScreen({
     style: {
       marginLeft: 'auto'
     }
-  }, list ? 'Save' : 'Create New')))));
+  }, list ? 'Save' : 'Create list')))));
 }
 function ListDetailsScreen({
   list,

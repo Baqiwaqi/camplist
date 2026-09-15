@@ -23,7 +23,7 @@ func TestInvalidNewListPreservesForm(t *testing.T) {
 	h := handler{}
 	h.NewListHandler(w, r)
 	body := w.Body.String()
-	for _, want := range []string{`action="/packing-lists/new"`, "Create New", "Name is required", "Our weekend"} {
+	for _, want := range []string{`action="/packing-lists/new"`, "Create list", "Name is required", "Our weekend"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("missing %q in %s", want, body)
 		}

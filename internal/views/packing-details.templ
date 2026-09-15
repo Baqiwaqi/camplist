@@ -599,8 +599,12 @@ templ ItemEditRow(listID string, itemID string, form packing.CreateItemForm) {
 templ EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfToken string) {
 	@Layout("Edit item", csrfToken) {
 		<section class="max-w-[560px]">
-			<h1>Edit item</h1>
-			<p class="text-muted mb-3">On { list.Name }</p>
+			@PageHead(PageHeading{
+				Title:     "Edit item",
+				Meta:      "On " + list.Name,
+				BackHref:  "/packing-lists/" + list.ID,
+				BackLabel: "Packing list",
+			})
 			<div class="card">
 				<form action={ form.Action } method="POST" hx-boost="true">
 					<input type="hidden" name="_csrf" value={ csrfToken }/>

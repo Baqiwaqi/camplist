@@ -12,6 +12,8 @@ function node(tag, attrs = {}, children = []) {
     tag, attrs, children, parentElement: null,
     dataset: attrs['data-empty-focus'] ? { emptyFocus: attrs['data-empty-focus'] } : {},
     getAttribute(name) { return name in attrs ? attrs[name] : null },
+    hasAttribute(name) { return name in attrs },
+    removeAttribute(name) { delete attrs[name] },
     focus() { focused.current = el },
     descendants() { return el.children.flatMap(child => [child, ...child.descendants()]) },
     contains(other) { return other === el || el.descendants().includes(other) },
@@ -30,6 +32,7 @@ function node(tag, attrs = {}, children = []) {
 function matches(el, selector) {
   return selector.split(',').map(part => part.trim()).some(part => {
     if (part === '[data-empty-focus]') return 'data-empty-focus' in el.attrs
+    if (part === '[autofocus]') return 'autofocus' in el.attrs
     if (part === 'a[href]') return el.tag === 'a' && 'href' in el.attrs
     if (part === 'input:not([type=hidden])') return el.tag === 'input' && el.attrs.type !== 'hidden'
     return el.tag === part
@@ -95,4 +98,28 @@ test('a swap that is not a delete leaves focus alone', () => {
   mugs.children.push(save)
   save.parentElement = mugs
   assert.equal(run(mugs, save), null)
+})
+
+// load runs removal-focus.js and fires htmx:load on target, as htmx does once
+// it has focused the content it swapped in.
+function load(target, body) {
+  const handlers = []
+  const document = { body, addEventListener(event, fn) { if (event === 'htmx:load') handlers.push(fn) } }
+  vm.runInNewContext(source, { document })
+  for (const handler of handlers) handler({ target })
+}
+
+test('swapped content spends its autofocus, so a row the gear keeps cannot take focus again', () => {
+  const name = node('input', { type: 'text', autofocus: '' })
+  const edit = node('a', { id: 'edit-tent', href: '#', autofocus: '' })
+  const gear = node('div', { id: 'list-items' }, [node('ul', {}, [row('mugs', [name]), row('tent', [edit])])])
+  load(gear, node('body'))
+  assert.equal(gear.querySelector('[autofocus]'), null)
+})
+
+test('the page load keeps autofocus for the browser', () => {
+  const field = node('input', { type: 'text', autofocus: '' })
+  const body = node('body', {}, [field])
+  load(body, body)
+  assert.ok(field.hasAttribute('autofocus'))
 })

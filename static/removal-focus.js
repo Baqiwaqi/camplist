@@ -17,3 +17,12 @@ document.addEventListener('htmx:beforeSwap', event => {
   const next = sibling?.querySelector('a[href], button, input:not([type=hidden])') || document.getElementById(list.dataset.emptyFocus)
   next?.focus()
 })
+
+// htmx focuses the first [autofocus] in content it swaps in, and that includes
+// rows the list page's gear keeps with hx-preserve. Once swapped content has
+// been focused its autofocus is spent, so a kept row cannot take focus again.
+document.addEventListener('htmx:load', event => {
+  if (event.target === document.body) return
+  for (const el of event.target.querySelectorAll('[autofocus]')) el.removeAttribute('autofocus')
+  if (event.target.hasAttribute?.('autofocus')) event.target.removeAttribute('autofocus')
+})

@@ -162,7 +162,7 @@ func TestItemEditRowDeletesItsRow(t *testing.T) {
 // count, inside the one element the item saves swap.
 func TestListGearGroupsByCategory(t *testing.T) {
 	list := packing.NewList("user", "Weekend", "")
-	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter"), packing.NewItem("Stove", "Kitchen"), packing.NewItem("Tarp", "Shelter"), packing.NewItem("Map", "")}
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter"), packing.NewItem("Stove", "Kitchen"), packing.NewItem("Tarp", " shelter"), packing.NewItem("Map", "")}
 	doc := renderDoc(t, ListGear(list, list.Items[2].ID, false))
 
 	gear := findElement(doc, hasAttr("id", "list-items"))
@@ -187,6 +187,9 @@ func TestListGearGroupsByCategory(t *testing.T) {
 		if hasAttrKey(edit, "autofocus") != (i == 2) {
 			t.Errorf("%s Edit autofocus = %v", item.Name, hasAttrKey(edit, "autofocus"))
 		}
+		if row := edit.Parent; hasAttrKey(row, "hx-preserve") != (i != 2) {
+			t.Errorf("%s row hx-preserve = %v", item.Name, hasAttrKey(row, "hx-preserve"))
+		}
 	}
 	if strings.Contains(text(doc), "No items yet") {
 		t.Error("gear with items shows the empty text")
@@ -208,6 +211,7 @@ func TestListSummaryCountsItemsAndCategories(t *testing.T) {
 		{[]packing.PackingItem{item("")}, "1 item"},
 		{[]packing.PackingItem{item("Shelter")}, "1 item in 1 category"},
 		{[]packing.PackingItem{item("Shelter"), item("Kitchen"), item("Shelter"), item("")}, "4 items in 2 categories"},
+		{[]packing.PackingItem{item("Fishing"), item(" fishing")}, "2 items in 1 category"},
 	} {
 		if got := listSummary(test.items); got != test.want {
 			t.Errorf("listSummary(%d items) = %q, want %q", len(test.items), got, test.want)

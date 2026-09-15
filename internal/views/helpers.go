@@ -65,16 +65,19 @@ func sharedLabel(list packing.PackingList, actor string) string {
 }
 
 // categories returns the distinct categories in order of first use, at most
-// limit, or all of them when limit is 0.
+// limit, or all of them when limit is 0. Categories compare trimmed and
+// case-insensitively, and the first spelling is shown.
 func categories(items []packing.PackingItem, limit int) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, item := range items {
-		if item.Category == "" || seen[item.Category] {
+		name := strings.TrimSpace(item.Category)
+		key := strings.ToLower(name)
+		if name == "" || seen[key] {
 			continue
 		}
-		seen[item.Category] = true
-		out = append(out, item.Category)
+		seen[key] = true
+		out = append(out, name)
 		if len(out) == limit {
 			break
 		}
@@ -89,21 +92,24 @@ type itemGroup struct {
 
 // groupByCategory groups items by category in order of first use, for the
 // list page's gear and the add-from-list picker. Items without a category come
-// last and are labelled "Other" only when other groups exist.
+// last and are labelled "Other" only when other groups exist. Categories
+// compare trimmed and case-insensitively; a group shows its first spelling.
 func groupByCategory(items []packing.PackingItem) []itemGroup {
 	index := map[string]int{}
 	var groups []itemGroup
 	var other []packing.PackingItem
 	for _, item := range items {
-		if item.Category == "" {
+		name := strings.TrimSpace(item.Category)
+		if name == "" {
 			other = append(other, item)
 			continue
 		}
-		i, ok := index[item.Category]
+		key := strings.ToLower(name)
+		i, ok := index[key]
 		if !ok {
 			i = len(groups)
-			index[item.Category] = i
-			groups = append(groups, itemGroup{Name: item.Category})
+			index[key] = i
+			groups = append(groups, itemGroup{Name: name})
 		}
 		groups[i].Items = append(groups[i].Items, item)
 	}

@@ -93,9 +93,10 @@ templ GearCount(items []packing.PackingItem) {
 
 // ListGear is the gear on the list page, grouped by category, or the empty
 // text. Adding, deleting, recategorising an item or renaming a category can
-// change the groups, so those saves swap all of it, which also closes a row
-// another edit left open. focus names the item whose Edit takes the keyboard
-// afterwards. static/removal-focus.js reads data-empty-focus.
+// change the groups, so those saves swap all of it. Every row but focus carries
+// hx-preserve, so a row open for editing stays open with what was typed; focus
+// names the item whose saved row comes back with its Edit taking the keyboard.
+// static/removal-focus.js reads data-empty-focus.
 templ ListGear(list packing.PackingList, focus string, oob bool) {
 	<div
 		id="list-items"
@@ -118,7 +119,7 @@ templ ListGear(list packing.PackingList, focus string, oob bool) {
 				}
 				<ul>
 					for _, item := range group.Items {
-						@itemRow(list.ID, item, item.ID == focus)
+						@itemRow(list.ID, item, item.ID == focus, item.ID != focus)
 					}
 				</ul>
 			</div>
@@ -515,17 +516,23 @@ templ ItemFields(form packing.CreateItemForm, suffix string, stacked bool) {
 // ItemRow is one item in the gear: its name, a tag when it is packed for each
 // person, and Edit, which swaps the row for ItemEditRow in place.
 templ ItemRow(listID string, item packing.PackingItem) {
-	@itemRow(listID, item, false)
+	@itemRow(listID, item, false, false)
 }
 
 // FocusedItemRow is the row htmx swaps back after Save or Cancel. Its Edit
 // link takes focus, so the keyboard stays on the item instead of the page.
 templ FocusedItemRow(listID string, item packing.PackingItem) {
-	@itemRow(listID, item, true)
+	@itemRow(listID, item, true, false)
 }
 
-templ itemRow(listID string, item packing.PackingItem, focusEdit bool) {
-	<li class="item-row flex-nowrap min-h-12 px-4" id={ "item-" + item.ID }>
+templ itemRow(listID string, item packing.PackingItem, focusEdit bool, preserve bool) {
+	<li
+		class="item-row flex-nowrap min-h-12 px-4"
+		id={ "item-" + item.ID }
+		if preserve {
+			hx-preserve
+		}
+	>
 		<span class="flex-auto min-w-0 font-semibold wrap-anywhere">{ item.Name }</span>
 		if item.Scope == "person" {
 			<span class="tag tag-quiet">For each person</span>

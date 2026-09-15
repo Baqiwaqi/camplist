@@ -385,9 +385,10 @@ func GearCount(items []packing.PackingItem) templ.Component {
 
 // ListGear is the gear on the list page, grouped by category, or the empty
 // text. Adding, deleting, recategorising an item or renaming a category can
-// change the groups, so those saves swap all of it, which also closes a row
-// another edit left open. focus names the item whose Edit takes the keyboard
-// afterwards. static/removal-focus.js reads data-empty-focus.
+// change the groups, so those saves swap all of it. Every row but focus carries
+// hx-preserve, so a row open for editing stays open with what was typed; focus
+// names the item whose saved row comes back with its Edit taking the keyboard.
+// static/removal-focus.js reads data-empty-focus.
 func ListGear(list packing.PackingList, focus string, oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -442,7 +443,7 @@ func ListGear(list packing.PackingList, focus string, oob bool) templ.Component 
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 115, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 116, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -455,7 +456,7 @@ func ListGear(list packing.PackingList, focus string, oob bool) templ.Component 
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(group.Items)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 116, Col: 77}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 117, Col: 77}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -471,7 +472,7 @@ func ListGear(list packing.PackingList, focus string, oob bool) templ.Component 
 				return templ_7745c5c3_Err
 			}
 			for _, item := range group.Items {
-				templ_7745c5c3_Err = itemRow(list.ID, item, item.ID == focus).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = itemRow(list.ID, item, item.ID == focus, item.ID != focus).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -522,7 +523,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue("{ editing: " + strconv.FormatBool(editing) + " }")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 135, Col: 108}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 136, Col: 108}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 		if templ_7745c5c3_Err != nil {
@@ -540,7 +541,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(preparationSummary(list.Tasks))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 141, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 142, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -573,7 +574,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 		var templ_7745c5c3_Var18 templ.SafeURL
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID + "/preparation/edit")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 156, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 157, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -594,7 +595,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 159, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 160, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 		if templ_7745c5c3_Err != nil {
@@ -607,7 +608,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.ResolveAttributeValue(list.Revision())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 160, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 161, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20)
 		if templ_7745c5c3_Err != nil {
@@ -653,7 +654,7 @@ func ListPreparation(list packing.PackingList, csrfToken string, editing bool, f
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(change)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 180, Col: 82}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 181, Col: 82}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
@@ -773,7 +774,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 			var templ_7745c5c3_Var24 templ.SafeURL
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs(startTripPromptPath(s.List.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 229, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 230, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -786,7 +787,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(startTripPromptPath(s.List.ID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 230, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 231, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 			if templ_7745c5c3_Err != nil {
@@ -840,7 +841,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 257, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 258, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
 			if templ_7745c5c3_Err != nil {
@@ -853,7 +854,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.ResolveAttributeValue(s.List.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 257, Col: 110}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 258, Col: 110}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var29)
 			if templ_7745c5c3_Err != nil {
@@ -885,7 +886,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 				var templ_7745c5c3_Var30 templ.SafeURL
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/packing-lists/" + s.List.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 264, Col: 101}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 265, Col: 101}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
@@ -903,7 +904,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 				var templ_7745c5c3_Var31 templ.SafeURL
 				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/packing-lists/" + s.List.ID))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 268, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 269, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 				if templ_7745c5c3_Err != nil {
@@ -916,7 +917,7 @@ func StartTripForm(s StartTrip, csrfToken string) templ.Component {
 				var templ_7745c5c3_Var32 string
 				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.ResolveAttributeValue(string(startTripPromptPath(s.List.ID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 269, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 270, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 				if templ_7745c5c3_Err != nil {
@@ -996,7 +997,7 @@ func startTripName(s StartTrip) templ.Component {
 		var templ_7745c5c3_Var36 string
 		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(s.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 290, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 291, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
 		if templ_7745c5c3_Err != nil {
@@ -1070,7 +1071,7 @@ func startTripMembers(s StartTrip) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.ResolveAttributeValue(member.Subject)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 335, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 336, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var38)
 			if templ_7745c5c3_Err != nil {
@@ -1103,7 +1104,7 @@ func startTripMembers(s StartTrip) templ.Component {
 			var templ_7745c5c3_Var39 string
 			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(memberName(member))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 343, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 344, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 			if templ_7745c5c3_Err != nil {
@@ -1121,7 +1122,7 @@ func startTripMembers(s StartTrip) templ.Component {
 				var templ_7745c5c3_Var40 string
 				templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(member.Email)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 345, Col: 71}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 346, Col: 71}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 				if templ_7745c5c3_Err != nil {
@@ -1196,7 +1197,7 @@ func StartTripPage(s StartTrip, csrfToken string) templ.Component {
 			var templ_7745c5c3_Var43 string
 			templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(s.List.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 369, Col: 51}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 370, Col: 51}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 			if templ_7745c5c3_Err != nil {
@@ -1218,7 +1219,7 @@ func StartTripPage(s StartTrip, csrfToken string) templ.Component {
 				var templ_7745c5c3_Var44 templ.SafeURL
 				templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + s.List.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 372, Col: 78}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 373, Col: 78}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 				if templ_7745c5c3_Err != nil {
@@ -1276,7 +1277,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var46 templ.SafeURL
 		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID + "/preparation/edit")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 388, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 389, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 		if templ_7745c5c3_Err != nil {
@@ -1307,7 +1308,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var47 string
 		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 393, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 394, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var47)
 		if templ_7745c5c3_Err != nil {
@@ -1320,7 +1321,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var48 string
 		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.ResolveAttributeValue(list.Revision())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 394, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 395, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var48)
 		if templ_7745c5c3_Err != nil {
@@ -1333,7 +1334,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var49 string
 		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.ResolveAttributeValue(task.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 395, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 396, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var49)
 		if templ_7745c5c3_Err != nil {
@@ -1346,7 +1347,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var50 string
 		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.ResolveAttributeValue(task.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 396, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 397, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var50)
 		if templ_7745c5c3_Err != nil {
@@ -1359,7 +1360,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var51 string
 		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.ResolveAttributeValue(task.Scope)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 397, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 398, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var51)
 		if templ_7745c5c3_Err != nil {
@@ -1372,7 +1373,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var52 string
 		templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(!task.Done))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 399, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 400, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var52)
 		if templ_7745c5c3_Err != nil {
@@ -1394,7 +1395,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var54 string
 		templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.ResolveAttributeValue("task-done-" + task.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 400, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 401, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var54)
 		if templ_7745c5c3_Err != nil {
@@ -1420,7 +1421,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var56 string
 		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(task.Done))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 400, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 401, Col: 156}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var56)
 		if templ_7745c5c3_Err != nil {
@@ -1433,7 +1434,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var57 string
 		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.ResolveAttributeValue("Toggle done for " + task.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 400, Col: 202}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 401, Col: 202}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var57)
 		if templ_7745c5c3_Err != nil {
@@ -1446,7 +1447,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var58 string
 		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(task.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 402, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 403, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 		if templ_7745c5c3_Err != nil {
@@ -1474,7 +1475,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var59 templ.SafeURL
 		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID + "/preparation/edit")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 415, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 416, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 		if templ_7745c5c3_Err != nil {
@@ -1505,7 +1506,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var60 string
 		templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 420, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 421, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var60)
 		if templ_7745c5c3_Err != nil {
@@ -1518,7 +1519,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var61 string
 		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.ResolveAttributeValue(list.Revision())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 421, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 422, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var61)
 		if templ_7745c5c3_Err != nil {
@@ -1531,7 +1532,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var62 string
 		templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.ResolveAttributeValue(task.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 422, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 423, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var62)
 		if templ_7745c5c3_Err != nil {
@@ -1544,7 +1545,7 @@ func PreparationTaskRow(list packing.PackingList, task packing.PreparationTask, 
 		var templ_7745c5c3_Var63 string
 		templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.FormatBool(task.Done))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 424, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 425, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var63)
 		if templ_7745c5c3_Err != nil {
@@ -1622,7 +1623,7 @@ func AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) temp
 		var templ_7745c5c3_Var65 templ.SafeURL
 		templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinURLErrs(form.Action)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 451, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 452, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 		if templ_7745c5c3_Err != nil {
@@ -1635,7 +1636,7 @@ func AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) temp
 		var templ_7745c5c3_Var66 string
 		templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.ResolveAttributeValue(form.Action)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 453, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 454, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var66)
 		if templ_7745c5c3_Err != nil {
@@ -1648,7 +1649,7 @@ func AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) temp
 		var templ_7745c5c3_Var67 string
 		templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 459, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 460, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var67)
 		if templ_7745c5c3_Err != nil {
@@ -1661,7 +1662,7 @@ func AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) temp
 		var templ_7745c5c3_Var68 string
 		templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(form.Revision)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 460, Col: 60}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 461, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 		if templ_7745c5c3_Err != nil {
@@ -1691,7 +1692,7 @@ func AddItemForm(form packing.CreateItemForm, csrfToken string, focus bool) temp
 		var templ_7745c5c3_Var69 string
 		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(form.SubmitButtonText)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 474, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 475, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 		if templ_7745c5c3_Err != nil {
@@ -1763,7 +1764,7 @@ func ItemFields(form packing.CreateItemForm, suffix string, stacked bool) templ.
 		var templ_7745c5c3_Var71 string
 		templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.ResolveAttributeValue(form.Revision)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 494, Col: 59}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 495, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var71)
 		if templ_7745c5c3_Err != nil {
@@ -1836,7 +1837,7 @@ func ItemFields(form packing.CreateItemForm, suffix string, stacked bool) templ.
 		var templ_7745c5c3_Var76 string
 		templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.ResolveAttributeValue("item-category-" + suffix)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 508, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 509, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var76)
 		if templ_7745c5c3_Err != nil {
@@ -1889,7 +1890,7 @@ func ItemRow(listID string, item packing.PackingItem) templ.Component {
 			templ_7745c5c3_Var77 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = itemRow(listID, item, false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = itemRow(listID, item, false, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1920,7 +1921,7 @@ func FocusedItemRow(listID string, item packing.PackingItem) templ.Component {
 			templ_7745c5c3_Var78 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = itemRow(listID, item, true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = itemRow(listID, item, true, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1928,7 +1929,7 @@ func FocusedItemRow(listID string, item packing.PackingItem) templ.Component {
 	})
 }
 
-func itemRow(listID string, item packing.PackingItem, focusEdit bool) templ.Component {
+func itemRow(listID string, item packing.PackingItem, focusEdit bool, preserve bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1956,85 +1957,95 @@ func itemRow(listID string, item packing.PackingItem, focusEdit bool) templ.Comp
 		var templ_7745c5c3_Var80 string
 		templ_7745c5c3_Var80, templ_7745c5c3_Err = templ.ResolveAttributeValue("item-" + item.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 528, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 531, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var80)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "\"><span class=\"flex-auto min-w-0 font-semibold wrap-anywhere\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, "\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if preserve {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, " hx-preserve")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "><span class=\"flex-auto min-w-0 font-semibold wrap-anywhere\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var81 string
 		templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 529, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 536, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var81))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if item.Scope == "person" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "<span class=\"tag tag-quiet\">For each person</span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "<span class=\"tag tag-quiet\">For each person</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "<a id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "<a id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var82 string
 		templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.ResolveAttributeValue("edit-" + item.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 534, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 541, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var82)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "\" class=\"btn btn-ghost btn-sm shrink-0\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "\" class=\"btn btn-ghost btn-sm shrink-0\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var83 templ.SafeURL
 		templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + listID + "/items/" + item.ID + "/edit")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 536, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 543, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if focusEdit {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, " autofocus")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, " autofocus")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, " hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, " hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var84 string
 		templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.ResolveAttributeValue("/packing-lists/" + listID + "/items/" + item.ID + "/edit")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 540, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 547, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var84)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\">Edit</a></li>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\">Edit</a></li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2066,46 +2077,46 @@ func ItemEditRow(listID string, itemID string, form packing.CreateItemForm) temp
 			templ_7745c5c3_Var85 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "<li class=\"block px-4 py-3 bg-sand-50 border-b border-sand-100 last:border-b-0 [&.htmx-request]:opacity-60\" id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "<li class=\"block px-4 py-3 bg-sand-50 border-b border-sand-100 last:border-b-0 [&.htmx-request]:opacity-60\" id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var86 string
 		templ_7745c5c3_Var86, templ_7745c5c3_Err = templ.ResolveAttributeValue("item-" + itemID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 551, Col: 130}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 558, Col: 130}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var86)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "\"><form class=\"w-full\" action=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "\"><form class=\"w-full\" action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var87 templ.SafeURL
 		templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinURLErrs(form.Action)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 554, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 561, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "\" method=\"POST\" hx-post=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "\" method=\"POST\" hx-post=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var88 string
 		templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.ResolveAttributeValue(form.Action)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 556, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 563, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var88)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\" hx-sync=\"this:drop\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2119,72 +2130,72 @@ func ItemEditRow(listID string, itemID string, form packing.CreateItemForm) temp
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<div class=\"flex flex-wrap items-center gap-2\"><button type=\"button\" class=\"btn btn-ghost btn-sm text-red-700 mr-auto\" hx-delete=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "<div class=\"flex flex-wrap items-center gap-2\"><button type=\"button\" class=\"btn btn-ghost btn-sm text-red-700 mr-auto\" hx-delete=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var89 string
 		templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.ResolveAttributeValue("/packing-lists/" + listID + "/remove-item/" + itemID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 569, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 576, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var89)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "\" hx-headers=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\" hx-headers=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var90 string
 		templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.JSONString(map[string]string{"X-Camplist-Revision": form.Revision}))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 570, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 577, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var90)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "\" hx-target=\"closest li\" hx-swap=\"delete\" hx-indicator=\"closest li\" hx-sync=\"closest li:drop\" hx-confirm=\"Delete this item?\" data-confirm-action=\"Delete item\">Delete item</button> <a class=\"btn btn-ghost btn-sm\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "\" hx-target=\"closest li\" hx-swap=\"delete\" hx-indicator=\"closest li\" hx-sync=\"closest li:drop\" hx-confirm=\"Delete this item?\" data-confirm-action=\"Delete item\">Delete item</button> <a class=\"btn btn-ghost btn-sm\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var91 templ.SafeURL
 		templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + listID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 580, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 587, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var92 string
 		templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.ResolveAttributeValue("/packing-lists/" + listID + "/items/" + itemID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 581, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 588, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var92)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary btn-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "\" hx-target=\"closest li\" hx-swap=\"outerHTML\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary btn-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var93 string
 		templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinStringErrs(form.SubmitButtonText)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 585, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 592, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "</button></div></form></li>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "</button></div></form></li>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -2226,46 +2237,46 @@ func EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTok
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "<section class=\"max-w-[560px]\"><h1>Edit item</h1><p class=\"text-muted mb-3\">On ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "<section class=\"max-w-[560px]\"><h1>Edit item</h1><p class=\"text-muted mb-3\">On ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var96 string
 			templ_7745c5c3_Var96, templ_7745c5c3_Err = templ.JoinStringErrs(list.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 596, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 603, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var96))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "</p><div class=\"card\"><form action=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</p><div class=\"card\"><form action=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var97 templ.SafeURL
 			templ_7745c5c3_Var97, templ_7745c5c3_Err = templ.JoinURLErrs(form.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 598, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 605, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var97))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "\" method=\"POST\" hx-boost=\"true\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "\" method=\"POST\" hx-boost=\"true\"><input type=\"hidden\" name=\"_csrf\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var98 string
 			templ_7745c5c3_Var98, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 599, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 606, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var98)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -2279,33 +2290,33 @@ func EditItemPage(list packing.PackingList, form packing.CreateItemForm, csrfTok
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "<div class=\"flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto\"><a class=\"btn btn-secondary\" href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "<div class=\"flex flex-wrap items-center justify-end gap-2 max-sm:*:flex-auto\"><a class=\"btn btn-secondary\" href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var99 templ.SafeURL
 			templ_7745c5c3_Var99, templ_7745c5c3_Err = templ.JoinURLErrs("/packing-lists/" + list.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 605, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 612, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var99))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 179, "\">Cancel</a> <button type=\"submit\" class=\"btn btn-primary\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var100 string
 			templ_7745c5c3_Var100, templ_7745c5c3_Err = templ.JoinStringErrs(form.SubmitButtonText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 606, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/packing-details.templ`, Line: 613, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var100))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 178, "</button></div></form></div></section>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 180, "</button></div></form></div></section>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

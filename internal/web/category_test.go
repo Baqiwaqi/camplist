@@ -252,12 +252,14 @@ func TestRenameCategoryFromPickerUpdatesTheListInView(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := w.Body.String()
-	// The renamed items regroup under the new name.
+	// The renamed items regroup under the new name. The rename is made from
+	// the picker of a row open for editing, so every row carries hx-preserve:
+	// htmx keeps the open row, and what was typed in it, in place.
 	for _, want := range []string{
 		`<div id="list-items"`,
 		`Fishing <span class="font-semibold text-muted">2</span></h3>`,
-		`id="item-` + saved.Items[0].ID + `"`,
-		`id="item-` + saved.Items[2].ID + `"`,
+		`id="item-` + saved.Items[0].ID + `" hx-preserve>`,
+		`id="item-` + saved.Items[2].ID + `" hx-preserve>`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("rename response missing %q in %s", want, body)

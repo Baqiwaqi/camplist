@@ -57,8 +57,11 @@ templ shell(title string, bodyAttrs templ.Attributes) {
 // Layout adds the app header and the content column around a signed-in page.
 // The nav links render twice: inline for wide screens and inside a disclosure
 // menu on phones. nav-inline and nav-menu are hooks for the noscript style in
-// Shell, which shows the inline copy when Alpine cannot run. The body carries
-// the CSRF header, so every htmx request (DELETE included) sends the token.
+// Shell, which shows the inline copy when Alpine cannot run. The panel starts
+// hidden with an inline style rather than x-cloak: after a boosted form swaps
+// the page, htmx settles #nav-panel back to its markup style, which would undo
+// the display Alpine sets and show the closed panel. The body carries the CSRF
+// header, so every htmx request (DELETE included) sends the token.
 templ Layout(title string, csrfToken string) {
 	@shell(title, csrfHeaders(csrfToken)) {
 		<header class="bg-white border-b border-sand-300 max-sm:relative">
@@ -76,8 +79,8 @@ templ Layout(title string, csrfToken string) {
 					<div
 						id="nav-panel"
 						class="absolute inset-x-0 top-full z-5 bg-white border-b border-sand-300 px-4 pb-2"
+						style="display: none"
 						x-show="open"
-						x-cloak
 						x-transition:enter="drop-enter"
 						x-transition:enter-start="drop-start"
 						x-transition:enter-end="drop-end"

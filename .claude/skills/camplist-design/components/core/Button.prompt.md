@@ -1,7 +1,7 @@
 Pill button. Pine `primary` for creating/saving; ember `accent` for the single "go" action on a page (Start session, Let's pack); secondary for Edit/Details; danger for Delete.
 
 ```jsx
-<Button>Create New</Button>
+<Button>Create list</Button>
 <Button variant="accent" size="lg">Start session</Button>
 <Button variant="secondary">Edit</Button>
 <Button variant="danger" size="sm">Delete</Button>

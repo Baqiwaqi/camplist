@@ -93,7 +93,7 @@ func TestBeforeTripTasksHaveCompletionControls(t *testing.T) {
 	w := httptest.NewRecorder()
 	h := handler{packingStore: store}
 	h.SessionDetailsPage(w, r)
-	if !strings.Contains(w.Body.String(), `/trips/`+session.ID+`/preparation`) || !strings.Contains(w.Body.String(), `Mark done`) {
+	if !strings.Contains(w.Body.String(), `/trips/`+session.ID+`/preparation`) || !strings.Contains(w.Body.String(), `aria-pressed="false"`) {
 		t.Fatal("before-trip tasks are read-only: no completion controls")
 	}
 	submit := func(taskID, done, revision string) *httptest.ResponseRecorder {
@@ -105,7 +105,7 @@ func TestBeforeTripTasksHaveCompletionControls(t *testing.T) {
 	}
 	for _, id := range []string{"car", "sleep"} {
 		response := submit(id, "true", "0")
-		if response.Code != 200 || !strings.Contains(response.Body.String(), "Undo") {
+		if response.Code != 200 || !strings.Contains(response.Body.String(), `id="pack-`+id+`" type="submit" class="pack-row packed" aria-pressed="true"`) {
 			t.Fatalf("complete %s: %d %s", id, response.Code, response.Body.String())
 		}
 	}

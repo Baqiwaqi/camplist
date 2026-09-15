@@ -44,7 +44,7 @@ templ shell(title string, bodyAttrs templ.Attributes) {
 			<script src="/static/trip-cards.js" defer></script>
 			<script src="/static/alpine.min.js" defer></script>
 			<noscript>
-				<style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; } .select-native { display: block !important; } .select-trigger { display: none !important; }</style>
+				<style>.nav-inline { display: contents !important; } .nav-menu { display: none !important; } .menu-trigger { display: none !important; } .menu-popup[x-cloak] { display: grid !important; position: static; } .select-native { display: block !important; } .select-trigger { display: none !important; } dialog[data-noscript-inline] { display: block !important; position: static; width: auto; max-width: none; max-height: none; margin: 2rem 0 0; border: 1px solid var(--color-sand-200); border-radius: var(--radius-card); }</style>
 			</noscript>
 			<script type="module" src="/static/offline/account.mjs"></script>
 		</head>

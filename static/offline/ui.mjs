@@ -25,7 +25,7 @@ async function render(){
  byId('sync-status').textContent=state.text;
  byId('sync-status').classList.toggle('card',view.session.shared&&state.warning);
  const gear=view.session.list.items.filter(item=>item.kind!=='task');
- byId('packing-progress').textContent=`${gear.filter(item=>item.checked).length} of ${gear.length} items packed`;
+ byId('packing-progress').textContent=`${gear.filter(item=>item.checked).length} of ${gear.length} packed`;
  byId('review-trip').href='/trips/'+encodeURIComponent(id)+'/review';
  byId('review-trip').hidden=tripGone(view);
  const toggle=async(itemId,checked)=>{try{await packing.set(account,id,itemId,checked);await render();synchronize();}catch(error){message(error.message);}};

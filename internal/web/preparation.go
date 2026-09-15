@@ -78,7 +78,7 @@ func (h *handler) SetSessionPreparationTask(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if isHTMX(r) {
-		render(w, r, views.SessionPreparation(session, csrf.Token(r)))
+		render(w, r, views.SessionPreparationSaved(session, csrf.Token(r)))
 		return
 	}
 	http.Redirect(w, r, "/trips/"+session.ID, http.StatusSeeOther)

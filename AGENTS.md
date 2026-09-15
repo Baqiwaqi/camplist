@@ -51,7 +51,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   (title with count, at most one text action); `Field(TextField{...})` for
   every input and textarea; `Dialog(id, sheet, attrs)` for every modal (the
   confirm dialog is its centred variant, `sheet` rises from the bottom on
-  phones); `ToastStack`/`Toast` at the bottom edge, ink for a confirmation and
+  phones; a form sheet with `data-noscript-inline` sits inline without
+  scripts); `ToastStack`/`Toast` at the bottom edge, ink for a confirmation and
   red for a failure; `Switch` for a yes/no setting and `Chip` for a pill
   multi-select, both keeping a real checkbox as the submitted field;
   `TabLinks` (page switch, plain links, no script) and `TabGroup`/`TabPanel`
@@ -162,10 +163,14 @@ The teaching-only phase is complete. Default to **implementing requested changes
   count; a resting row is the name, tags and one ghost Edit, and Delete lives
   in the edit row. Item saves there swap all of `#list-items` (`ListGear`),
   since they can regroup it; every row but the saved one carries
-  `hx-preserve`, so a row open for editing keeps what was typed.
+  `hx-preserve`, so a row open for editing keeps what was typed. The trip
+  checklist is built twice, by `PackingChecklist`/`SessionPreparation` and by
+  `renderEntries` in `static/offline/checklist.mjs` (trip page once mounted,
+  and the offline shell), from the same `.pack-*`/`.group-*`/`.person-head`
+  classes; change grouping and row markup in both, with their tests.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
-  classes such as `.error`, `.card` and `.item-row` at runtime, so keep those
+  classes such as `.error`, `.card` and `.pack-row` at runtime, so keep those
   ids and the `offline-page`, `saved-sessions`, `sync-status` and
   `offline-items` hooks when restyling, and add any new static asset to the
   list in `sw.js`. The worker serves those assets network-first (cache only as

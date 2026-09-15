@@ -32,7 +32,8 @@ func (h *handler) RenameTrip(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/trips/"+id, http.StatusSeeOther)
 }
 
-// ArchiveTrip archives a trip from its card on the trips overview.
+// ArchiveTrip archives a trip from its card on the trips overview, or from
+// the trip page's More menu.
 func (h *handler) ArchiveTrip(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userID, err := auth.UserID(ctx)
@@ -66,7 +67,15 @@ func (h *handler) RestoreTrip(w http.ResponseWriter, r *http.Request) {
 // card's own swap removes it; this sends the page's empty state and tab
 // counts out of band. If the recount fails the change still stands, so the
 // card goes and only those extras stay stale.
+//
+// From the trip's own page (from=trip) there is no card: the camper goes to
+// the trips page, where the overview reconciles any copy on this device.
 func (h *handler) tripCardRemoved(w http.ResponseWriter, r *http.Request, userID string, archivePage bool) {
+	if r.URL.Query().Get("from") == "trip" {
+		w.Header().Set("HX-Redirect", "/trips")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	sessions, err := h.packingStore.ListPackingSession(r.Context(), userID)
 	if err != nil {
 		log.Printf("recount trips after card action: %v", err)

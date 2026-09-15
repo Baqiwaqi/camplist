@@ -13,7 +13,7 @@ export async function mountSession(packing, readyForOffline) {
  let ready=false,filesReady=false,filesError=false,removed=false;
  // Disable packing while the trip is gone; re-enable only what this disabled.
  function lock(locked){
-  for(const control of document.querySelectorAll('#packing-checklist button,#session-preparation button,#session-preparation input,#trip-entry-form input,#trip-entry-form select,#trip-entry-form button')){
+  for(const control of document.querySelectorAll('#packing-checklist button,#session-preparation button,#session-preparation input,#trip-entry-open,#trip-entry-form input,#trip-entry-form select,#trip-entry-form button')){
    if(locked&&!control.disabled){control.disabled=true;control.dataset.goneLocked='';}
    else if(!locked&&'goneLocked' in control.dataset){control.disabled=false;delete control.dataset.goneLocked;}
   }
@@ -39,14 +39,12 @@ export async function mountSession(packing, readyForOffline) {
   if(!view.session.shared&&!view.issue&&!view.pending&&!Object.keys(view.conflicts).length&&navigator.onLine){
    status.textContent+=filesReady?' · Available offline on this device':filesError?' · Offline reopening unavailable in this browser':' · Preparing offline access…';
   }
-  let future=document.getElementById('future-save-status');if(!future){future=document.createElement('div');future.id='future-save-status';status.after(future);}
+  const future=document.getElementById('future-save-status');
   renderFutureSaves(future,view,async id=>{await packing.cancelFutureSave(owner,session.id,id);await automatic.notify();});
   const checklist=document.getElementById('packing-checklist');
   const toggle=async(id,checked)=>{try{await automatic.set(id,checked);}catch(error){render(null,error);}};
   const resolve=async(id,choice)=>{try{await packing.resolve(owner,session.id,id,choice);await automatic.notify();await automatic.sync();}catch(error){render(null,error);}};
-  let entries=checklist.querySelector('[data-trip-items]');
-  if(!entries){entries=document.createElement('div');entries.dataset.tripItems='';const card=checklist.querySelector('.card:not(.progress-card)');card.replaceChildren(entries);}
-  renderEntries(entries,view,'',toggle,resolve);
+  renderEntries(checklist.querySelector('[data-trip-items]'),view,'',toggle,resolve);
   let preparation=document.querySelector('#session-preparation [data-trip-tasks]');
   if(!preparation){const fallback=document.querySelector('#session-preparation .item-list');if(fallback){preparation=document.createElement('div');preparation.dataset.tripTasks='';fallback.replaceWith(preparation);}}
   if(preparation)renderEntries(preparation,view,'task',toggle,resolve);
@@ -54,6 +52,8 @@ export async function mountSession(packing, readyForOffline) {
   const gear=view.session.list.items.filter(item=>item.kind!=="task"),total=gear.length,checked=gear.filter(item=>item.checked).length;
   const complete=total>0&&checked===total;
   const count=`${checked} of ${total} items packed`;
+  const tab=document.getElementById('trip-packing-count');
+  if(tab)tab.textContent=`${checked}/${total}`;
   checklist.querySelector('.progress-count').textContent=count;
   // The live region sits outside the checklist; only a changed count is announced.
   const announcement=document.getElementById('packing-progress-status');
@@ -74,7 +74,8 @@ export async function mountSession(packing, readyForOffline) {
  document.addEventListener('submit',async event=>{
   const form=event.target;
   if(!ready||removed)return;
-  if(form.matches('#trip-entry-form')){event.preventDefault();event.stopImmediatePropagation();try{await automatic.add(entryFromForm(form));form.reset();}catch(error){render(null,error);}return;}
+  // The sheet closes either way; a failure shows in the save status.
+  if(form.matches('#trip-entry-form')){event.preventDefault();event.stopImmediatePropagation();try{await automatic.add(entryFromForm(form));form.reset();}catch(error){render(null,error);}form.closest('dialog')?.close();return;}
   if(!form.matches('#packing-checklist .pack-form'))return;
   event.preventDefault();event.stopImmediatePropagation();
   try {await automatic.set(form.elements.itemId.value,form.elements.checked.value==='true');}

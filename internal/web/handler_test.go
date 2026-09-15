@@ -111,7 +111,7 @@ func TestSetItemReturnsSavedRowAndSupportsNormalForms(t *testing.T) {
 			}
 			if htmx {
 				body := w.Body.String()
-				for _, want := range []string{`id="pack-` + list.Items[0].ID + `"`, "Unpack", `value="false"`, `id="packing-progress"`, `hx-swap-oob="true"`, "1 of 1 items packed", `<p id="packing-progress-status" hx-swap-oob="innerHTML">1 of 1 items packed</p>`} {
+				for _, want := range []string{`id="pack-` + list.Items[0].ID + `"`, `aria-pressed="true"`, `value="false"`, `id="packing-progress"`, `hx-swap-oob="true"`, "1 of 1 items packed", `<p id="packing-progress-status" hx-swap-oob="innerHTML">1 of 1 items packed</p>`, `<span id="pack-count-0-0" class="group-count group-done" hx-swap-oob="true">All packed</span>`, `<span id="trip-packing-count" class="tab-count" hx-swap-oob="true">1/1</span>`} {
 					if !strings.Contains(body, want) {
 						t.Errorf("missing %q", want)
 					}

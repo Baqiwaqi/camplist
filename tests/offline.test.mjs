@@ -177,6 +177,26 @@ test('shared status does not claim freshness on reconnect until a server refresh
  assert.equal(packingStatus({...view,pending:0,issue:null,fresh:true,lastSyncedAt:'2026-09-12T12:00:00Z'},true).warning,false);
 });
 
+test('a tick on a synced shared trip keeps the status calm until a sync actually fails', async()=>{
+ const {packingStatus}=await import('../static/offline/status.mjs');
+ const db=await database(),remote=server();
+ remote.state.shared=true;
+ const packing=new OfflinePacking(db,remote);
+ await packing.save('camper',remote.state);
+ assert.equal(packingStatus(await packing.open('camper','trip'),true).warning,true);
+ const synced=packingStatus(await packing.sync('camper','trip'),true);
+ assert.equal(synced.warning,false);
+ const ticked=packingStatus(await packing.set('camper','trip','tent',true),true);
+ assert.equal(ticked.warning,false);
+ assert.doesNotMatch(ticked.text,/Checking|may be missing/);
+ assert.match(ticked.text,/Waiting to sync: 1 change/);
+ remote.send=async()=>{throw new TypeError('Failed to fetch');};
+ const failed=packingStatus(await packing.sync('camper','trip'),true);
+ assert.equal(failed.warning,true);
+ assert.match(failed.text,/Can't sync this shared trip/);
+ assert.equal(packingStatus(await packing.set('camper','trip','stove',true),true).warning,true);
+});
+
 test('offline additions survive reopening and a check while their acknowledgement is lost', async()=>{
  const db=await database(), state=trip(),receipts=new Set();let lose=true;
  const remote={identity:async()=>({userId:'camper'}),getSession:async()=>structuredClone(state),send:async(_a,_b,op)=>{

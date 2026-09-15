@@ -13,10 +13,12 @@ export function packingStatus(view, connected) {
    if(!connected)reason="You're offline. Other people's packing changes may be missing. Changes saved on this device will sync when you reconnect.";
    else if(view.issue==='network')reason="Can't sync this shared trip. Other people's packing changes may be missing. Changes saved on this device will retry automatically.";
    else if(conflicts)reason='Needs review. The shared state has been kept; choose how to resolve your waiting changes below.';
-   else if(view.pending||!view.fresh)reason="Checking this shared trip. Other people's packing changes may be missing until sync succeeds.";
+   else if(!view.fresh)reason="Checking this shared trip. Other people's packing changes may be missing until sync succeeds.";
+   // A tick waiting on a healthy connection is routine; a failed sync sets an issue.
+   else if(view.pending)reason='Shared trip · Saving changes.';
    else reason='Shared trip · All changes saved.';
   }
-  const warning=Boolean(view.issue||conflicts||view.pending||!view.fresh||!connected);
+  const warning=Boolean(view.issue||conflicts||!view.fresh||!connected);
   const review=conflicts&&!reason.startsWith('Needs review')?'Conflicting changes need your review.':'';
   return {text:[notice,reason,pending,last,review].filter(Boolean).join(' '),warning};
  }

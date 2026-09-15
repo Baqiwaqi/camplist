@@ -54,8 +54,9 @@ categories and who each is for are copied, never memberships or tasks.
 
 Opening a trip prepares an account-specific local copy automatically. Shared
 trips explain that local changes are invisible to others until synchronized.
-A persistent status warns about unknown freshness, outages, pending work, and
-conflicts, and shows the last successful sync time. An online browser whose API
+A persistent status warns about unknown freshness, outages, and conflicts, and
+shows pending work and the last successful sync time; changes still saving on a
+fresh, healthy connection stay plain text, not a warning. An online browser whose API
 requests fail says **Can't sync this shared trip**. An online event alone cannot
 clear the warning. Visible shared screens refresh every 15 seconds and on return.
 A disconnected saved trip can reopen at the same URL through the public shell.

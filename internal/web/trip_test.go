@@ -165,7 +165,7 @@ func TestTripFormPartialSaveCanRetryWithoutDuplicatingEntry(t *testing.T) {
 	r = r.WithContext(context.WithValue(r.Context(), auth.USER_ID_KEY, "user"))
 	w := httptest.NewRecorder()
 	h.SessionDetailsPage(w, r)
-	if !strings.Contains(w.Body.String(), "<h3>Alex</h3>") || !strings.Contains(w.Body.String(), "<h3>Sam</h3>") {
+	if !strings.Contains(w.Body.String(), `<h2 class="person-head"><span>Alex</span>`) || !strings.Contains(w.Body.String(), `<h2 class="person-head"><span>Yours</span>`) {
 		t.Fatal("server task fallback lacks participant groups")
 	}
 }
@@ -309,5 +309,35 @@ func TestAddTripTaskSwapsOnlyPreparation(t *testing.T) {
 	body := w.Body.String()
 	if w.Code != http.StatusOK || !strings.Contains(body, `id="session-preparation"`) || !strings.Contains(body, "Buy gas") || strings.Contains(body, `id="packing-checklist"`) {
 		t.Fatalf("task add did not return only the preparation section: %d\n%s", w.Code, body)
+	}
+}
+
+// Archive and Delete in the trip page's More menu have no card to remove, so
+// they send the camper to the trips page; a delete still names the trip for
+// the offline copy.
+func TestTripPageActionsGoToTheTripsPage(t *testing.T) {
+	ctx := context.Background()
+	store, trip := sharedTrip(t)
+	h := handler{packingStore: store}
+
+	w := httptest.NewRecorder()
+	h.ArchiveTrip(w, tripRequest("POST", "/trips/"+trip.ID+"/archive?from=trip", "owner", trip.ID))
+	if w.Code != http.StatusOK || w.Header().Get("HX-Redirect") != "/trips" || w.Body.Len() != 0 {
+		t.Fatalf("archive from the trip page got %d redirect=%q body=%q", w.Code, w.Header().Get("HX-Redirect"), w.Body.String())
+	}
+	if saved, err := store.GetPackingSession(ctx, trip.ID, "owner"); err != nil || saved.ArchivedAt == nil {
+		t.Fatalf("trip not archived: %v", err)
+	}
+
+	w = httptest.NewRecorder()
+	h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+trip.ID+"?from=trip", "member", trip.ID))
+	if w.Code != http.StatusForbidden || w.Header().Get("HX-Redirect") != "" {
+		t.Fatalf("member delete from the trip page got %d redirect=%q", w.Code, w.Header().Get("HX-Redirect"))
+	}
+
+	w = httptest.NewRecorder()
+	h.DeletePackingSession(w, tripRequest("DELETE", "/trips/"+trip.ID+"?from=trip", "owner", trip.ID))
+	if w.Code != http.StatusOK || w.Header().Get("HX-Redirect") != "/trips" || !strings.Contains(w.Header().Get("HX-Trigger"), trip.ID) {
+		t.Fatalf("delete from the trip page got %d redirect=%q trigger=%q", w.Code, w.Header().Get("HX-Redirect"), w.Header().Get("HX-Trigger"))
 	}
 }

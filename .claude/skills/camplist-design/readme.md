@@ -30,7 +30,7 @@ The system should make you want to go. Three levers: **ember** (one orange "go" 
 - **Spacing:** a 4px grid: 4 tag inner, 8 between buttons, 12 section title to sheet and card to card, 16 page gutter and field to field, 24 page head to content, 32 / 48 section to section on phones / desktop. Content column max 900px, centred; nav padding 1rem; main padding 2rem 1rem; card padding 1rem with 1rem bottom margin; rows 0.75rem vertical padding and 0.75rem gap.
 - **Shape:** never use coloured left-border accents on cards or banners. Cards 12px radius; popups and dialogs 12px; buttons, tags, tabs and progress bars are pills; fields, select triggers and options 10px; checkboxes 6px; 1px borders everywhere. Elevation is border-only — **no shadows**, inner or outer. Hero/session-header cards may be solid pine (`tone="brand"`).
 - **Backgrounds:** flat colour only. No images, gradients, patterns, textures, blur or transparency.
-- **Cards:** white, 1px sand border, 12px radius, 1rem padding, stacked with 1rem gap; rows inside separated by hairlines, last row borderless. A list or trip card on an index page opens on tap: its title link (`.card-link`) stretches over the card, More sits beside the title, the status closes the card (tags, then progress or item count; a finished trip card keeps the pine bar and only its "All packed" label turns ember), 12px between cards and two columns from 721px. Gear in a sheet is grouped by category: a group head (meta bold, count muted on the right), then 48px rows of name, tags and one ghost Edit; Delete sits in the row's edit state beside Cancel and Save, never on the resting row.
+- **Cards:** white, 1px sand border, 12px radius, 1rem padding, stacked with 1rem gap; rows inside separated by hairlines, last row borderless. A list or trip card on an index page opens on tap: its title link (`.card-link`) stretches over the card, More sits beside the title, the status closes the card (tags, then progress or item count; a finished trip card keeps the pine bar and only its "All packed" label turns ember), 12px between cards and two columns from 721px. Gear in a sheet is grouped by category: a group head (meta bold, count muted on the right), then 48px rows of name, tags and one ghost Edit; Delete sits in the row's edit state beside Cancel and Save, never on the resting row. A trip checklist is the same sheet with tick rows: the whole row is the button (tick, name, "Packed by Sam" caption only for someone else's change, a "Yours" tag for a personal item), no Pack/Unpack pill; group counts read "2 of 5" until "All packed" turns pine. On a shared trip with personal items each person gets a heading (Shared, Yours, others) and a sheet of their own, with the categories inside.
 - **Motion:** 120ms colour, 150ms switch, 160ms popup drop, 200ms tab marker, 240ms progress width/colour; tick fills instantly; all off under reduced motion. No lifts, bounces or page transitions.
 - **Hover / press:** buttons darken one step (pine 700→900, ember 500→700); secondary tints to page sand with a sand-400 line; quiet steps sand-100→200; links dim to 70%. No shrink or lift.
 - **Layout rules:** header is static (not sticky), full width, content centred at 900px. Page actions sit top-right of the title block via flex space-between.
@@ -70,7 +70,10 @@ Reach for one of these rather than pasting class strings or adding a one-off:
   `static/tabs.js`. Without scripts the `TabGroup` strip stays hidden and its
   panels stay stacked.
 - **Dialog(id, sheet, attrs)** — one modal: centred, or rising from the bottom
-  edge on phones with `sheet`. The confirm dialog is its centred variant.
+  edge on phones with `sheet`. The confirm dialog is its centred variant. A
+  short form in a sheet (add to trip, rename trip) carries
+  `data-noscript-inline`, so without scripts it sits inline at the end of the
+  page and the button that opens it stays hidden (`x-cloak`).
 - **ToastStack / Toast(id, danger, attrs)** — messages at the bottom edge: ink
   for a confirmation, red for a failure (the request error toast).
 - **Switch(name, label, checked, attrs)** for a yes/no setting and

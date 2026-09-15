@@ -47,6 +47,8 @@ templ ProgressBar(checked int, total int, label string) {
 // into full-width bars.
 type PageHeading struct {
 	Title string
+	// TitleID names the title, for a page that swaps it out of band.
+	TitleID string
 	// Meta is the one line under the title: what the page is for, or the
 	// facts that identify it.
 	Meta string
@@ -62,7 +64,11 @@ templ PageHead(head PageHeading) {
 	}
 	<div class="page-head">
 		<div class="min-w-0 flex-[1_1_20rem]">
-			<h1>{ head.Title }</h1>
+			<h1
+				if head.TitleID != "" {
+					id={ head.TitleID }
+				}
+			>{ head.Title }</h1>
 			if head.Meta != "" {
 				<p class="page-meta">{ head.Meta }</p>
 			}
@@ -189,6 +195,9 @@ type Tab struct {
 	Href string
 	// Current marks the tab for the page being shown, on the link variant.
 	Current bool
+	// CountID, on the panel variant, keeps the count in the strip even while
+	// it is empty, so a save can replace it out of band by this id.
+	CountID string
 }
 
 // TabLinks is the tab strip that switches pages. It is plain links, so it
@@ -235,7 +244,9 @@ templ TabGroup(group string, label string, tabs []Tab) {
 					x-on:keydown="key($event)"
 				>
 					{ tab.Label }
-					if tab.Count != "" {
+					if tab.CountID != "" {
+						<span id={ tab.CountID } class="tab-count">{ tab.Count }</span>
+					} else if tab.Count != "" {
 						<span class="tab-count">{ tab.Count }</span>
 					}
 				</button>

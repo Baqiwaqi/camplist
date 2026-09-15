@@ -51,11 +51,16 @@ func sharedLabel(list packing.PackingList, actor string) string {
 	if !list.IsShared() {
 		return ""
 	}
-	if list.UserID == actor {
-		if n := len(list.Sharing.Members); n > 1 {
+	return sharingLabel(list.Sharing, list.UserID == actor)
+}
+
+// sharingLabel names who a shared list or trip is shared with, for its owner.
+func sharingLabel(sharing packing.Sharing, owner bool) string {
+	if owner {
+		if n := len(sharing.Members); n > 1 {
 			return "Shared with " + strconv.Itoa(n) + " people"
 		}
-		for _, member := range list.Sharing.Members {
+		for _, member := range sharing.Members {
 			if member.Name != "" {
 				return "Shared with " + member.Name
 			}
@@ -146,6 +151,106 @@ func tripStatus(s packing.PackingSession) string {
 	return "Keep packing"
 }
 
+// tripMeta is the line under a trip's title, e.g. "Started Sep 13, 2026.
+// Shared with Sam Rivera."
+func tripMeta(s packing.PackingSession, actor string) string {
+	meta := "Started " + s.CreatedAt.Format(startDateLayout) + "."
+	if s.IsShared() {
+		meta += " " + sharingLabel(s.Sharing, s.UserID == actor) + "."
+	}
+	return meta
+}
+
+// tripTabs are the trip page's tabs, each with its done count, e.g. "6/16".
+// A trip without preparation tasks shows no count on Before you go.
+func tripTabs(s packing.PackingSession) []Tab {
+	return []Tab{
+		{Label: "Packing", Count: packingTabCount(s), CountID: "trip-packing-count"},
+		{Label: "Before you go", Count: tasksTabCount(s), CountID: "trip-tasks-count"},
+	}
+}
+
+func packingTabCount(s packing.PackingSession) string {
+	return fmt.Sprintf("%d/%d", s.List.CountChecked(), len(s.List.Items))
+}
+
+func tasksTabCount(s packing.PackingSession) string {
+	if len(s.List.Tasks) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d/%d", doneCount(s.List.Tasks), len(s.List.Tasks))
+}
+
+// groupCount is the count beside a checklist group's name, "2 of 5", or
+// "All packed" (tasks: "All done") once every entry in it is.
+func groupCount(done, total int, task bool) string {
+	switch {
+	case total == 0 || done < total:
+		return fmt.Sprintf("%d of %d", done, total)
+	case task:
+		return "All done"
+	}
+	return "All packed"
+}
+
+func checkedCount(items []packing.PackingItem) int {
+	done := 0
+	for _, item := range items {
+		if item.Checked {
+			done++
+		}
+	}
+	return done
+}
+
+// groupCountClass marks a finished group's count.
+func groupCountClass(done, total int) string {
+	if total > 0 && done == total {
+		return "group-count group-done"
+	}
+	return "group-count"
+}
+
+// packCountID names a group count in the trip checklist, so a toggle can
+// update it out of band: person i, or category j inside person i.
+func packCountID(prefix string, ids ...int) string {
+	id := prefix
+	for _, i := range ids {
+		id += "-" + strconv.Itoa(i)
+	}
+	return id
+}
+
+// changedByCaption names someone else's change under a checklist row, e.g.
+// "Packed by Sam Rivera". Empty for the viewer's own changes.
+func changedByCaption(changedBy, changedByID, actor string, checked, task bool) string {
+	if changedBy == "" || changedByID == actor {
+		return ""
+	}
+	switch {
+	case task && checked:
+		return "Done by " + changedBy
+	case task:
+		return "Marked not done by " + changedBy
+	case checked:
+		return "Packed by " + changedBy
+	}
+	return "Unpacked by " + changedBy
+}
+
+// personName names whose part of a shared trip a group is.
+func personName(assignee, name, actor string) string {
+	switch {
+	case assignee == "":
+		return "Shared"
+	case assignee == actor:
+		return "Yours"
+	case name == "":
+		return "Another camper"
+	}
+	return name
+}
+
 // allPacked reports whether every item in a non-empty session is packed.
 func allPacked(checked, total int) bool {
 	return total > 0 && checked >= total
@@ -209,6 +314,25 @@ func tripCardAction(url string) templ.Attributes {
 	})
 }
 
+// tripPageAction posts an action from the trip page's More menu. The page has
+// no card to remove, so from=trip makes the handler send the camper to the
+// trips page instead.
+func tripPageAction(tripID, action string) templ.Attributes {
+	return templ.Attributes{
+		"hx-post": "/trips/" + tripID + "/" + action + "?from=trip",
+		"hx-swap": "none",
+		"hx-sync": "this:drop",
+	}
+}
+
+// tripPageDelete deletes the trip from its own page, like tripPageAction.
+func tripPageDelete(tripID string) templ.Attributes {
+	attrs := confirmDeleteTrip("/trips/" + tripID + "?from=trip")
+	attrs["hx-swap"] = "none"
+	attrs["hx-sync"] = "this:drop"
+	return attrs
+}
+
 // deleteTripAttrs deletes a trip from its card. On the archive page the
 // request says so, so the response reveals that page's empty state.
 func deleteTripAttrs(tripID string, archived bool) templ.Attributes {
@@ -216,7 +340,11 @@ func deleteTripAttrs(tripID string, archived bool) templ.Attributes {
 	if archived {
 		url += "?view=archive"
 	}
-	return removesTripCard(confirmDelete(url, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays."))
+	return removesTripCard(confirmDeleteTrip(url))
+}
+
+func confirmDeleteTrip(url string) templ.Attributes {
+	return confirmDelete(url, "Delete this trip?", "Delete trip", "Packing progress for this trip is lost. The list itself stays.")
 }
 
 // removesTripCard swaps away only the action's own card, so the rest of the
@@ -269,33 +397,39 @@ func nextTaskID(tasks []packing.PreparationTask, i int) string {
 
 // preparationSummary counts done tasks, e.g. "1 of 3 done".
 func preparationSummary(tasks []packing.PreparationTask) string {
-	done := 0
-	for _, task := range tasks {
-		if task.Done {
-			done++
-		}
-	}
-	return fmt.Sprintf("%d of %d done", done, len(tasks))
+	return fmt.Sprintf("%d of %d done", doneCount(tasks), len(tasks))
 }
 
-func groupByParticipant(items []packing.PackingItem) []itemGroup {
+// groupByPerson splits a shared trip's items by who they are for: the shared
+// items, the viewer's ("Yours") and each other person's, in order of first
+// use. A trip that is private, or has no personal items, stays one unnamed
+// group, whose personal items carry a Yours tag instead.
+func groupByPerson(items []packing.PackingItem, shared bool, actor string) []itemGroup {
+	if !splitByPerson(items, shared) {
+		return []itemGroup{{Items: items}}
+	}
 	var groups []itemGroup
-	indexes := map[string]int{}
+	index := map[string]int{}
 	for _, item := range items {
-		key := item.Assignee
-		name := item.AssigneeName
-		if key == "" {
-			name = "Shared"
-		}
-		i, ok := indexes[key]
+		i, ok := index[item.Assignee]
 		if !ok {
 			i = len(groups)
-			indexes[key] = i
-			groups = append(groups, itemGroup{Name: name})
+			index[item.Assignee] = i
+			groups = append(groups, itemGroup{Name: personName(item.Assignee, item.AssigneeName, actor)})
 		}
 		groups[i].Items = append(groups[i].Items, item)
 	}
 	return groups
+}
+
+// splitByPerson reports whether a trip's checklist groups its items by person.
+func splitByPerson(items []packing.PackingItem, shared bool) bool {
+	for _, item := range items {
+		if shared && item.Assignee != "" {
+			return true
+		}
+	}
+	return false
 }
 
 type preparationGroup struct {
@@ -303,24 +437,38 @@ type preparationGroup struct {
 	Tasks []packing.PreparationTask
 }
 
-func groupPreparation(tasks []packing.PreparationTask) []preparationGroup {
-	var groups []preparationGroup
-	indexes := map[string]int{}
+// groupPreparationByPerson splits a trip's preparation tasks the way
+// groupByPerson splits its items.
+func groupPreparationByPerson(tasks []packing.PreparationTask, shared bool, actor string) []preparationGroup {
+	byPerson := false
 	for _, task := range tasks {
-		key := task.Assignee
-		name := task.AssigneeName
-		if key == "" {
-			name = "Shared"
-		}
-		i, ok := indexes[key]
+		byPerson = byPerson || shared && task.Assignee != ""
+	}
+	if !byPerson {
+		return []preparationGroup{{Tasks: tasks}}
+	}
+	var groups []preparationGroup
+	index := map[string]int{}
+	for _, task := range tasks {
+		i, ok := index[task.Assignee]
 		if !ok {
 			i = len(groups)
-			indexes[key] = i
-			groups = append(groups, preparationGroup{Name: name})
+			index[task.Assignee] = i
+			groups = append(groups, preparationGroup{Name: personName(task.Assignee, task.AssigneeName, actor)})
 		}
 		groups[i].Tasks = append(groups[i].Tasks, task)
 	}
 	return groups
+}
+
+func doneCount(tasks []packing.PreparationTask) int {
+	done := 0
+	for _, task := range tasks {
+		if task.Done {
+			done++
+		}
+	}
+	return done
 }
 
 // oobSwap marks a fragment's element for htmx's out-of-band swap by id.

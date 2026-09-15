@@ -15,7 +15,7 @@ The system should make you want to go. Three levers: **ember** (one orange "go" 
 
 - **Voice:** plain, second person, short imperative sentences with forward motion: "Where to next?", "Let's get packing.", "Pick a list and start a session — your list stays untouched.", "All packed. Go!" Source copy was terse and had typos ("all you lists", "Keep is simple!"); the kit rewrites those lines — port them back to the templates.
 - **No eyebrows:** page heads are a title, one meta line and actions. The nav already says where you are, so there is no uppercase label above the title.
-- **Casing:** sentence case everywhere: titles, buttons, labels and tags ("Start trip", "Add an item", "Available offline"). No uppercase tracked labels. Some older strings are still Title Case ("Add Item", "Create New"); fix them when you touch them.
+- **Casing:** sentence case everywhere: titles, buttons, labels and tags ("Start trip", "Add an item", "Available offline"). No uppercase tracked labels. Some older strings are still Title Case ("Create New"); fix them when you touch them.
 - **Buttons are verbs:** Create, Edit, Details, Delete, Save, Check / Uncheck, Start session.
 - **Confirmations** are terse questions: "Delete this list?", "Delete this item?", "Delete this session".
 - **Errors** are short declaratives without periods: "Name is required", "Storing packing list failed".

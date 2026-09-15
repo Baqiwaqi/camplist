@@ -157,7 +157,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   one sheet grouped by category (`groupByCategory`), each group head with its
   count; a resting row is the name, tags and one ghost Edit, and Delete lives
   in the edit row. Item saves there swap all of `#list-items` (`ListGear`),
-  since they can regroup it.
+  since they can regroup it; every row but the saved one carries
+  `hx-preserve`, so a row open for editing keeps what was typed.
 - The offline shell `static/offline/offline.html` is static HTML on the same
   stylesheet. Its scripts in `static/offline/` look up elements by id and set
   classes such as `.error`, `.card` and `.item-row` at runtime, so keep those

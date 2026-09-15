@@ -408,9 +408,10 @@ func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
 	body := w.Body.String()
 	for _, want := range []string{
 		`<p id="list-add-status" role="status" class="mt-3 rounded-card bg-pine-100 px-4 py-3 text-pine-900 empty:hidden" hx-swap-oob="innerHTML">Added 1 item to Documents. Skipped 1 already on this list or repeated: chalk bag.</p>`,
-		`<ul hx-swap-oob="beforeend:#list-items">`,
+		`<div id="list-items"`,
+		`Documents <span class="font-semibold text-muted">1</span></h3>`,
 		`id="list-summary"`,
-		`id="list-empty"`,
+		`hx-swap-oob="innerHTML:#gear .section-count"`,
 		`id="list-revision" value="` + html.EscapeString(saved.Revision()) + `" hx-swap-oob="true"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -418,7 +419,7 @@ func TestBulkAddsUpdateTheListPageInPlace(t *testing.T) {
 		}
 	}
 	// Everything is out of band, which leaves the dialog's panel empty and closes it.
-	if strings.Contains(body, "<html") || strings.Count(body, "Passport") != 1 || w.Header().Get("HX-Refresh") != "" {
+	if strings.Contains(body, "<html") || strings.Count(body, ">Passport<") != 1 || w.Header().Get("HX-Refresh") != "" {
 		t.Fatalf("add several response: %s", body)
 	}
 
@@ -457,7 +458,7 @@ func TestListPageOffersBulkAddAndNewListOpensIt(t *testing.T) {
 	h.ListDetailsPage(w, sharingRequest("GET", "/packing-lists/"+lists[0].ID, "camper", map[string]string{"id": lists[0].ID}, nil))
 	body := w.Body.String()
 	for _, want := range []string{
-		`<div id="list-empty" class="mb-3">`,
+		`<p class="px-4 pt-4 pb-2 text-muted">No items yet.`,
 		`<dialog id="bulk-add"`,
 		`<p id="list-add-status" role="status"`,
 	} {

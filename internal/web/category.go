@@ -15,7 +15,6 @@ import (
 	"camplist/internal/packing"
 	"camplist/internal/views"
 
-	"github.com/a-h/templ"
 	"github.com/gorilla/csrf"
 )
 
@@ -71,8 +70,8 @@ func (h *handler) renderCategories(w http.ResponseWriter, r *http.Request, statu
 
 // RenameCategory renames one of the camper's remembered categories and the
 // items under it on the lists they own. htmx gets a categories-changed event
-// for the pickers and, when the list in view changed, its new category tags
-// and revision out of band.
+// for the pickers and, when the list in view changed, its regrouped gear and
+// revision out of band.
 func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 	userID, err := auth.UserID(r.Context())
 	if err != nil {
@@ -116,13 +115,8 @@ func (h *handler) RenameCategory(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("HX-Refresh", "true")
 		return
 	}
-	var parts []templ.Component
-	for _, item := range inView.List.Items {
-		if item.Category == result.Category {
-			parts = append(parts, views.ItemCategoryTag(item, true))
-		}
-	}
-	render(w, r, templ.Join(append(parts, views.ListRevision(inView.List, true))...))
+	// A rename can merge two groups, so the gear swaps whole.
+	render(w, r, listItemsChanged(inView.List))
 }
 
 // RemoveCategory drops a remembered category from the camper's suggestions.

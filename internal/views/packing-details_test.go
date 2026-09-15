@@ -1,8 +1,7 @@
 package views
 
 import (
-	"bytes"
-	"context"
+	"strings"
 	"testing"
 
 	"golang.org/x/net/html"
@@ -12,15 +11,7 @@ import (
 
 func renderListItemForm(t *testing.T, form packing.CreateItemForm) *html.Node {
 	t.Helper()
-	var out bytes.Buffer
-	if err := ListItemForm(form, "token").Render(context.Background(), &out); err != nil {
-		t.Fatal(err)
-	}
-	doc, err := html.Parse(&out)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return doc
+	return renderDoc(t, AddItemForm(form, "token", false))
 }
 
 func findElement(n *html.Node, match func(*html.Node) bool) *html.Node {
@@ -51,17 +42,9 @@ func hasAttr(key, val string) func(*html.Node) bool {
 	}
 }
 
-func detailsOpen(t *testing.T, doc *html.Node) bool {
-	t.Helper()
-	details := findElement(doc, func(n *html.Node) bool { return n.Data == "details" })
-	if details == nil {
-		t.Fatal("add item form has no optional fields toggle")
-	}
-	_, open := attr(details, "open")
-	return open
-}
-
-func TestListItemFormKeepsWhoItIsForFolded(t *testing.T) {
+// The add form shows every field at once: who the item is for is no longer
+// folded behind a toggle.
+func TestListItemFormShowsEveryField(t *testing.T) {
 	doc := renderListItemForm(t, packing.NewCreateItemForm("list"))
 
 	label := findElement(doc, func(n *html.Node) bool { return n.Data == "label" && hasAttr("for", "item-name-new")(n) })
@@ -80,27 +63,17 @@ func TestListItemFormKeepsWhoItIsForFolded(t *testing.T) {
 			t.Errorf("add item form missing %q field", field)
 		}
 	}
-	if detailsOpen(t, doc) {
-		t.Error("who it's for is open on an empty form")
+	if findElement(doc, func(n *html.Node) bool { return n.Data == "details" }) != nil {
+		t.Error("add item form still folds a field behind a toggle")
 	}
-}
-
-func TestListItemFormOpensWhoItIsForWhenFilled(t *testing.T) {
-	if !detailsOpen(t, renderListItemForm(t, packing.CreateItemForm{Scope: "person"})) {
-		t.Error("who it's for stays folded after the form comes back with a scope")
-	}
-	if detailsOpen(t, renderListItemForm(t, packing.CreateItemForm{Category: "Light"})) {
-		t.Error("a category alone opened the toggle")
+	if findElement(doc, func(n *html.Node) bool { return n.Data == "button" && text(n) == "Add item" }) == nil {
+		t.Error("add item form has no sentence case Add item button")
 	}
 }
 
 func TestListItemFormShowsCategoryPicker(t *testing.T) {
 	doc := renderListItemForm(t, packing.CreateItemForm{Category: "Light", Categories: packing.CategoryOptions([]string{"Shelter", "Light"}, nil, []string{"Light"})})
 
-	details := findElement(doc, func(n *html.Node) bool { return n.Data == "details" })
-	if findElement(details, hasAttr("name", "category")) != nil {
-		t.Error("category is hidden behind the toggle")
-	}
 	input := findElement(doc, hasAttr("id", "item-category-new"))
 	if input == nil {
 		t.Fatal("add item form has no category field")
@@ -149,24 +122,121 @@ func TestListItemFormPostsInPlace(t *testing.T) {
 	}
 }
 
-// Delete removes only its row and drops a repeated request.
-func TestItemRowDeletesItsRow(t *testing.T) {
-	var out bytes.Buffer
+// A resting row carries one ghost Edit and nothing else to press.
+func TestItemRowHasOnlyEdit(t *testing.T) {
 	item := packing.NewItem("Tent", "Shelter")
-	if err := ItemRow("list", item).Render(context.Background(), &out); err != nil {
-		t.Fatal(err)
+	item.Scope = "person"
+	doc := renderDoc(t, ItemRow("list", item))
+	controls := findAll(doc, func(n *html.Node) bool { return n.Data == "a" || n.Data == "button" })
+	if len(controls) != 1 || text(controls[0]) != "Edit" {
+		t.Fatalf("row controls = %d, want only Edit", len(controls))
 	}
-	doc, err := html.Parse(&out)
-	if err != nil {
-		t.Fatal(err)
+	if v, _ := attr(controls[0], "class"); !strings.Contains(v, "btn-ghost") {
+		t.Errorf("Edit class = %q, want a ghost button", v)
 	}
+	if findElement(doc, hasAttr("hx-delete", "/packing-lists/list/remove-item/"+item.ID)) != nil {
+		t.Error("resting row still deletes")
+	}
+	if !strings.Contains(text(doc), "For each person") {
+		t.Error("row does not tag an item packed for each person")
+	}
+}
+
+// Delete item sits in the edit row, removes only its row and drops a repeated
+// request.
+func TestItemEditRowDeletesItsRow(t *testing.T) {
+	item := packing.NewItem("Tent", "Shelter")
+	doc := renderDoc(t, ItemEditRow("list", item.ID, packing.EditItemForm("list", item)))
 	button := findElement(doc, hasAttr("hx-delete", "/packing-lists/list/remove-item/"+item.ID))
-	if button == nil {
-		t.Fatal("row has no delete button")
+	if button == nil || text(button) != "Delete item" {
+		t.Fatal("edit row has no Delete item button")
 	}
-	for key, want := range map[string]string{"hx-target": "closest li", "hx-swap": "delete", "hx-sync": "closest li:drop"} {
+	for key, want := range map[string]string{"type": "button", "hx-target": "closest li", "hx-swap": "delete", "hx-sync": "closest li:drop", "data-confirm-action": "Delete item"} {
 		if got, _ := attr(button, key); got != want {
 			t.Errorf("%s = %q, want %q", key, got, want)
 		}
+	}
+}
+
+// The gear groups by category in order of first use, each group with its
+// count, inside the one element the item saves swap.
+func TestListGearGroupsByCategory(t *testing.T) {
+	list := packing.NewList("user", "Weekend", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter"), packing.NewItem("Stove", "Kitchen"), packing.NewItem("Tarp", " shelter"), packing.NewItem("Map", "")}
+	doc := renderDoc(t, ListGear(list, list.Items[2].ID, false))
+
+	gear := findElement(doc, hasAttr("id", "list-items"))
+	if gear == nil {
+		t.Fatal("gear has no swap target")
+	}
+	if v, _ := attr(gear, "data-empty-focus"); v != "item-name-new" {
+		t.Errorf("data-empty-focus = %q", v)
+	}
+	var heads []string
+	for _, h := range findAll(doc, func(n *html.Node) bool { return n.Data == "h3" }) {
+		heads = append(heads, strings.Join(strings.Fields(text(h)), " "))
+	}
+	if want := []string{"Shelter 2", "Kitchen 1", "Other 1"}; strings.Join(heads, "|") != strings.Join(want, "|") {
+		t.Errorf("group heads = %q, want %q", heads, want)
+	}
+	for i, item := range list.Items {
+		edit := findElement(doc, hasAttr("id", "edit-"+item.ID))
+		if edit == nil {
+			t.Fatalf("no row for %s", item.Name)
+		}
+		if hasAttrKey(edit, "autofocus") != (i == 2) {
+			t.Errorf("%s Edit autofocus = %v", item.Name, hasAttrKey(edit, "autofocus"))
+		}
+		if row := edit.Parent; hasAttrKey(row, "hx-preserve") != (i != 2) {
+			t.Errorf("%s row hx-preserve = %v", item.Name, hasAttrKey(row, "hx-preserve"))
+		}
+	}
+	if strings.Contains(text(doc), "No items yet") {
+		t.Error("gear with items shows the empty text")
+	}
+
+	empty := renderDoc(t, ListGear(packing.NewList("user", "Empty", ""), "", true))
+	if !strings.Contains(text(empty), "No items yet") || findElement(empty, func(n *html.Node) bool { return n.Data == "h3" }) != nil {
+		t.Error("empty gear does not show only the empty text")
+	}
+}
+
+func TestListSummaryCountsItemsAndCategories(t *testing.T) {
+	item := func(category string) packing.PackingItem { return packing.NewItem("Thing", category) }
+	for _, test := range []struct {
+		items []packing.PackingItem
+		want  string
+	}{
+		{nil, "No items yet"},
+		{[]packing.PackingItem{item("")}, "1 item"},
+		{[]packing.PackingItem{item("Shelter")}, "1 item in 1 category"},
+		{[]packing.PackingItem{item("Shelter"), item("Kitchen"), item("Shelter"), item("")}, "4 items in 2 categories"},
+		{[]packing.PackingItem{item("Fishing"), item(" fishing")}, "2 items in 1 category"},
+	} {
+		if got := listSummary(test.items); got != test.want {
+			t.Errorf("listSummary(%d items) = %q, want %q", len(test.items), got, test.want)
+		}
+	}
+	if got := gearCount(nil); got != "0 items" {
+		t.Errorf("gearCount(nil) = %q", got)
+	}
+}
+
+// Only the owner sees who a list is shared with.
+func TestSharedLabelNamesMembersForTheOwner(t *testing.T) {
+	list := packing.NewList("owner", "Weekend", "")
+	if got := sharedLabel(list, "owner"); got != "" {
+		t.Errorf("private list label = %q", got)
+	}
+	list.Sharing.Members = map[string]packing.Member{"sam": {Subject: "sam", Name: "Sam Rivera"}}
+	if got := sharedLabel(list, "owner"); got != "Shared with Sam Rivera" {
+		t.Errorf("owner label = %q", got)
+	}
+	if got := sharedLabel(list, "sam"); got != "Shared" {
+		t.Errorf("member label = %q", got)
+	}
+	list.Sharing.Members["jo"] = packing.Member{Subject: "jo", Name: "Jo"}
+	if got := sharedLabel(list, "owner"); got != "Shared with 2 people" {
+		t.Errorf("owner label with two members = %q", got)
 	}
 }

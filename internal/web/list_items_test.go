@@ -57,10 +57,11 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 		`<form id="add-item"`,
 		`id="item-name-new"`,
 		`" autofocus>`,
-		`<ul hx-swap-oob="beforeend:#list-items"><li class="item-row`,
+		`data-empty-focus="item-name-new" hx-swap-oob="true">`,
+		`Night hike <span class="font-semibold text-muted">1</span></h3>`,
 		`id="item-` + saved.Items[0].ID + `"`,
-		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">1 item</p>`,
-		`<div id="list-empty" class="mb-3" hidden hx-swap-oob="true">`,
+		`<p id="list-summary" class="text-meta text-muted" hx-swap-oob="true">1 item in 1 category</p>`,
+		`<span hx-swap-oob="innerHTML:#gear .section-count">1 item</span>`,
 		`<option value="Night hike" data-custom data-used>`,
 	} {
 		if !strings.Contains(body, want) {
@@ -92,7 +93,7 @@ func TestAddItemAppendsTheRowAndSupportsNormalForms(t *testing.T) {
 }
 
 // Delete used to answer HX-Refresh. htmx removes the row itself; the response
-// updates the count, the empty text and the list revision.
+// updates the counts, the grouped gear or its empty text, and the list revision.
 // Private lists have no revision conflicts, so a stale page still deletes and
 // edits, but reloads rather than advance its revision past the unseen write.
 func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
@@ -144,11 +145,63 @@ func TestRemoveItemUpdatesThePageInPlace(t *testing.T) {
 		t.Errorf("list revision %q, want %q", got, saved.Revision())
 	}
 	for _, want := range []string{
-		`<p id="list-summary" class="text-sm text-pine-100" hx-swap-oob="true">No items yet</p>`,
-		`<div id="list-empty" class="mb-3" hx-swap-oob="true"><p class="text-muted">No items yet.`,
+		`<p id="list-summary" class="text-meta text-muted" hx-swap-oob="true">No items yet</p>`,
+		`<span hx-swap-oob="innerHTML:#gear .section-count">0 items</span>`,
+		`data-empty-focus="item-name-new" hx-swap-oob="true"><p class="px-4 pt-4 pb-2 text-muted">No items yet.`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("delete response missing %q", want)
 		}
+	}
+}
+
+// A save that changes an item's category moves it to another group, so the
+// gear swaps whole with the item's Edit focused; any other save swaps only the
+// row.
+func TestEditItemRegroupsTheGearWhenTheCategoryChanges(t *testing.T) {
+	ctx := context.Background()
+	store := packing.NewStore(testsupport.NewDocuments())
+	list := packing.NewList("user", "Weekend", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Tent", "Shelter"), packing.NewItem("Stove", "Kitchen")}
+	if err := store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+	save := func(name, category string) *httptest.ResponseRecorder {
+		current, _ := store.GetPackingList(ctx, list.ID, "user")
+		values := url.Values{"name": {name}, "category": {category}, "scope": {"shared"}, "revision": {current.Revision()}}
+		r := withItemRoute(packingRequest("/packing-lists/"+list.ID+"/edit-item/"+list.Items[0].ID, values), list.ID, list.Items[0].ID)
+		r.Header.Set("HX-Request", "true")
+		w := httptest.NewRecorder()
+		h.EditItemHandler(w, r)
+		return w
+	}
+
+	w := save("Big tent", "Shelter")
+	if body := w.Body.String(); w.Code != 200 || w.Header().Get("HX-Retarget") != "" || !strings.HasPrefix(body, `<li class="item-row`) || strings.Contains(body, `id="list-items"`) {
+		t.Fatalf("rename: %d %v %s", w.Code, w.Header(), body)
+	}
+
+	w = save("Big tent", "Kitchen")
+	saved, _ := store.GetPackingList(ctx, list.ID, "user")
+	body := w.Body.String()
+	if w.Code != 200 || w.Header().Get("HX-Retarget") != "#list-items" || w.Header().Get("HX-Reswap") != "outerHTML" {
+		t.Fatalf("recategorise: %d %v", w.Code, w.Header())
+	}
+	for _, want := range []string{
+		`<div id="list-items" class=`,
+		`Kitchen <span class="font-semibold text-muted">2</span></h3>`,
+		`id="edit-` + list.Items[0].ID + `" class="btn btn-ghost btn-sm shrink-0" href="/packing-lists/` + list.ID + `/items/` + list.Items[0].ID + `/edit" autofocus`,
+		`<p id="list-summary" class="text-meta text-muted" hx-swap-oob="true">2 items in 1 category</p>`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("recategorise response missing %q in %s", want, body)
+		}
+	}
+	if strings.Contains(body, "Shelter") {
+		t.Error("recategorise response keeps the emptied group")
+	}
+	if got := listRevision(t, body); got != saved.Revision() {
+		t.Errorf("list revision %q, want %q", got, saved.Revision())
 	}
 }

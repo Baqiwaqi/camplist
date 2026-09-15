@@ -117,8 +117,21 @@ func (h *handler) EditItemHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("HX-Refresh", "true")
 			return
 		}
+		// A new category moves the item to another group, so the gear swaps
+		// whole with the item's Edit focused; otherwise only the row changes.
+		if categoryChanged {
+			w.Header().Set("HX-Retarget", "#list-items")
+			w.Header().Set("HX-Reswap", "outerHTML")
+			render(w, r, templ.Join(
+				views.ListGear(saved, item.ID, false),
+				views.ListSummary(saved.Items, true),
+				views.ListRevision(saved, true),
+				views.ListAddStatus("", true),
+			))
+			return
+		}
 		item, _ = saved.FindItem(item.ID)
-		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), listItemsChanged(saved), views.ListAddStatus("", true)))
+		render(w, r, templ.Join(views.FocusedItemRow(saved.ID, item), views.ListRevision(saved, true), views.ListAddStatus("", true)))
 		return
 	}
 	http.Redirect(w, r, "/packing-lists/"+list.ID, http.StatusSeeOther)

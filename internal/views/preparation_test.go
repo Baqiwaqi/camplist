@@ -38,7 +38,7 @@ func TestPreparationRowsToggleRenameAndRemove(t *testing.T) {
 		`name="editing" x-bind:value="editing"`,
 		`id="task-done-fuel"`,
 		`<input type="hidden" id="list-revision" value="">`,
-		`<ul id="list-items" class="columns-[17rem] gap-x-8" data-empty-focus="item-name-new">`,
+		`<div id="list-items" class="-mt-px pb-2 md:columns-2 md:gap-x-6" data-empty-focus="item-name-new">`,
 		`<script src="/static/revision.js" defer></script>`,
 		`<script src="/static/removal-focus.js" defer></script>`,
 	} {

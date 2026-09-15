@@ -223,8 +223,8 @@ func (h *handler) rememberItemCategories(ctx context.Context, userID string, ite
 
 // renderBulkAdded answers a bulk add from the list page's dialog. Everything
 // in the answer is out of band, so the dialog's panel is left empty, which
-// closes it: the summary, the new rows, and the item count, empty state and
-// revision the write made. When another write landed after the revision the
+// closes it: the summary, and the counts, regrouped gear and revision the
+// write made. When another write landed after the revision the
 // page showed, the page is out of date around the new rows, so it reloads
 // instead, as a single add does.
 func (h *handler) renderBulkAdded(w http.ResponseWriter, r *http.Request, submitted string, result packing.AddItemsResult, summary string) {
@@ -234,12 +234,7 @@ func (h *handler) renderBulkAdded(w http.ResponseWriter, r *http.Request, submit
 	}
 	parts := []templ.Component{views.ListAddStatus(summary, true)}
 	if len(result.Added) > 0 {
-		added := make([]packing.PackingItem, 0, len(result.Added))
-		for _, item := range result.Added {
-			saved, _ := result.List.FindItem(item.ID)
-			added = append(added, saved)
-		}
-		parts = append(parts, views.ItemsAppended(result.List.ID, added), listItemsChanged(result.List))
+		parts = append(parts, listItemsChanged(result.List))
 	}
 	render(w, r, templ.Join(parts...))
 }

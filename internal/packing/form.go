@@ -77,7 +77,7 @@ func NewCreateItemForm(listId string) CreateItemForm {
 	return CreateItemForm{
 		Action:           "/packing-lists/" + listId + "/add-item",
 		Initial:          true,
-		SubmitButtonText: "Add Item",
+		SubmitButtonText: "Add item",
 	}
 }
 

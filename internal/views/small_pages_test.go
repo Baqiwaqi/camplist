@@ -1,6 +1,7 @@
 package views
 
 import (
+	"strings"
 	"testing"
 
 	"camplist/internal/auth"
@@ -42,6 +43,17 @@ func TestJoinPageUsesPageHeadAndOneActionPerStatus(t *testing.T) {
 			})
 			if len(referrer) != 1 {
 				t.Error("join page lost its no-referrer meta")
+			}
+			external := findAll(doc, func(n *html.Node) bool {
+				for _, key := range []string{"href", "src", "action"} {
+					if v, ok := attr(n, key); ok && (strings.Contains(v, "://") || strings.HasPrefix(v, "//")) {
+						return true
+					}
+				}
+				return false
+			})
+			if len(external) != 0 {
+				t.Errorf("join page references %d external hosts; invitation pages load no third-party assets", len(external))
 			}
 
 			actions := findAll(doc, func(n *html.Node) bool {

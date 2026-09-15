@@ -3,6 +3,7 @@ package web
 import (
 	"camplist/internal/packing"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -22,6 +23,10 @@ func storeErrorDetails(err error, fallback string) (int, string) {
 	}
 	if errors.Is(err, packing.ErrListFull) {
 		return http.StatusUnprocessableEntity, "A list holds at most 2,000 items and preparation tasks together. Remove some before adding more."
+	}
+	var tooLarge packing.TripTooLargeError
+	if errors.As(err, &tooLarge) {
+		return http.StatusUnprocessableEntity, fmt.Sprintf("A trip holds at most 2,000 items and preparation tasks. Items and tasks for each person are copied for every camper, which would put this trip %d over. Remove some, or share the trip with fewer people.", tooLarge.Over)
 	}
 	if errors.Is(err, packing.ErrInvalid) {
 		return http.StatusBadRequest, "Please check the submitted values."

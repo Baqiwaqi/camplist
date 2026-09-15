@@ -28,6 +28,16 @@ const (
 // ErrListFull reports an add that would take a list past MaxListEntries.
 var ErrListFull = errors.New("the list has reached its item limit")
 
+// TripTooLargeError reports a trip start whose entries, once person-scoped
+// entries are copied for every camper, exceed the trip limit by Over.
+type TripTooLargeError struct{ Over int }
+
+func (e TripTooLargeError) Error() string {
+	return fmt.Sprintf("the trip would be %d entries over its limit", e.Over)
+}
+
+func (e TripTooLargeError) Unwrap() error { return ErrInvalid }
+
 // ErrItemsGone reports a copy whose selected items are no longer on the source.
 var ErrItemsGone = fmt.Errorf("the selected items are no longer on the source list: %w", ErrInvalid)
 

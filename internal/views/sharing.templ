@@ -105,11 +105,7 @@ templ InviteCard(view packing.SharingView, link string, token string) {
 				hx-sync="this:drop"
 			>
 				<input type="hidden" name="_csrf" value={ token }/>
-				if link!="" {
-					<button class="btn btn-secondary" type="submit">Create another link</button>
-				} else {
-					<button class="btn btn-primary" type="submit">Create invitation link</button>
-				}
+				<button class="btn btn-primary" type="submit">Create invitation link</button>
 			</form>
 		</div>
 	</section>

@@ -72,3 +72,19 @@ func TestLayoutWiresTheErrorToastBeforeAlpineStarts(t *testing.T) {
 		t.Error("request-error.js must load before Alpine starts")
 	}
 }
+
+// A boosted form that re-renders with an error swaps in a new #nav-panel.
+// Alpine hides it with an inline display, then htmx settles the same-id element
+// back to the style attribute in the markup, so the markup itself must hide it.
+func TestPhoneNavPanelStaysClosedAfterASwap(t *testing.T) {
+	body := renderWithPath(t, "/packing-lists/new")
+	start := strings.Index(body, `id="nav-panel"`)
+	if start == -1 {
+		t.Fatal("phone nav panel is missing")
+	}
+	tag := body[strings.LastIndex(body[:start], "<"):]
+	tag = tag[:strings.Index(tag, ">")]
+	if !strings.Contains(tag, `x-show="open"`) || !strings.Contains(tag, `style="display: none"`) {
+		t.Errorf("phone nav panel must start hidden inline so an htmx settle keeps it closed: %s", tag)
+	}
+}

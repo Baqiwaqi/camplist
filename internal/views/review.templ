@@ -30,7 +30,7 @@ templ ReviewPage(session packing.PackingSession, list packing.PackingList, avail
 			</section>
 		}
 		if !available {
-			<section class={ templ.KV(reviewSectionGap, session.UserID==auth.Subject(ctx)) }>
+			<section class={ templ.KV(reviewSectionGap, session.UserID == auth.Subject(ctx)) }>
 				@SectionHead("The reusable list is unavailable", "")
 				<div class="card mb-0">
 					<p>Your trip and observations are still here.</p>

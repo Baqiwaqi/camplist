@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -306,5 +307,37 @@ func TestListMemberCannotAddMembersToANewTrip(t *testing.T) {
 	}
 	if n := len(ownedTrips(t, store, "sam")); n != 0 {
 		t.Fatalf("forbidden start still created %d trips", n)
+	}
+}
+
+func TestStartTripNamesPersonCopiesThatExceedTheTripLimit(t *testing.T) {
+	store, shared, _ := sharedList(t)
+	ctx := context.Background()
+	list, err := store.GetPackingList(ctx, shared.ID, "owner")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 1,995 entries fit on the list; copying the 10 person-scoped ones for Sam makes 2,005.
+	for i := 0; i < packing.MaxListEntries-5; i++ {
+		item := packing.NewItem(fmt.Sprintf("Item %d", i), "Misc")
+		if i < 10 {
+			item.Scope = "person"
+		}
+		list.Items = append(list.Items, item)
+	}
+	if err = store.SavePackingList(ctx, list); err != nil {
+		t.Fatal(err)
+	}
+	h := handler{packingStore: store}
+	w := startSharedTrip(h, "owner", list.ID, []string{"sam"}, true)
+	body := w.Body.String()
+	if w.Code != http.StatusUnprocessableEntity || !strings.Contains(body, "copied for every camper") || !strings.Contains(body, "5 over") {
+		t.Fatalf("got %d %q, want the person copies and how far over the limit", w.Code, body)
+	}
+	if n := len(ownedTrips(t, store, "owner")); n != 0 {
+		t.Fatalf("an oversized trip still started %d trips", n)
+	}
+	if w = startSharedTrip(h, "owner", list.ID, nil, true); w.Header().Get("HX-Redirect") == "" {
+		t.Fatalf("the same list without members did not start: %d %s", w.Code, w.Body.String())
 	}
 }

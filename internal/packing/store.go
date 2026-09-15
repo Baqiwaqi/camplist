@@ -95,8 +95,8 @@ func (s *Store) createPackingSession(ctx context.Context, listID, userID, ownerN
 		session.Sharing.Members = members
 	}
 	session.expandPersonalEntries()
-	if len(session.List.Items)+len(session.List.Tasks) > 2000 {
-		return PackingSession{}, ErrInvalid
+	if entries := len(session.List.Items) + len(session.List.Tasks); entries > 2000 {
+		return PackingSession{}, TripTooLargeError{Over: entries - 2000}
 	}
 	// Changes are append-only; keep the full log in the snapshot for the next boundary.
 	firstNew := 0

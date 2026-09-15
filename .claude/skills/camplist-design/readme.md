@@ -52,6 +52,9 @@ Reach for one of these rather than pasting class strings or adding a one-off:
   at natural width. No eyebrow, no full-width action bars.
 - **SectionHead(title, count)** with at most one text action as children, then
   one white sheet of hairline rows.
+- **People rows** (sharing page) — the name, the email under it in meta, a
+  sentence-case status tag ("Waiting for approval", "Not used yet"), then one
+  More menu. Only a pending request keeps its Approve button on the row.
 - **Field(TextField{…})** — the one input and textarea: `.label`, `.field`,
   `.hint`. Every text control in the app is `.field`, so it matches the select
   trigger beside it.

@@ -36,3 +36,24 @@ func TestTripObservationsDescribeChangesAsSentences(t *testing.T) {
 		}
 	}
 }
+
+func TestCurrentReviewListIsASheetOfRows(t *testing.T) {
+	list := packing.NewList("user", "Camping", "")
+	list.Items = []packing.PackingItem{packing.NewItem("Stove", "Kitchen"), packing.NewItem("Matches", "")}
+	list.Tasks = []packing.PreparationTask{{ID: "fuel", Name: "Buy fuel"}}
+	doc := renderDoc(t, CurrentReviewList(list, nil))
+	if strings.Contains(text(doc), "—") {
+		t.Errorf("current list still joins names and categories with a dash: %q", text(doc))
+	}
+	if count := findElement(doc, byClass("section-count")); count == nil || text(count) != "2 items" {
+		t.Error("current list does not count its items")
+	}
+	gear := findElement(doc, hasAttr("aria-label", "Gear"))
+	if gear == nil || len(findAll(gear, byTag("li"))) != 2 || !strings.Contains(text(gear), "Kitchen") {
+		t.Fatal("gear rows missing")
+	}
+	tasks := findElement(doc, hasAttr("aria-label", "Preparation tasks"))
+	if tasks == nil || text(tasks) != "Buy fuel" {
+		t.Error("task rows missing")
+	}
+}

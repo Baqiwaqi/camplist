@@ -212,8 +212,8 @@ func TestDecideInvitationSwapsRowAndSupportsNormalForms(t *testing.T) {
 					return
 				}
 				body := w.Body.String()
-				status := map[string]string{"approve": "approved", "revoke": "revoked"}[decision]
-				for _, want := range []string{`id="invitation-` + link.Hash() + `"`, `tabindex="-1" autofocus`, status + " · Expires"} {
+				status := map[string]string{"approve": "Approved", "revoke": "Revoked"}[decision]
+				for _, want := range []string{`id="invitation-` + link.Hash() + `"`, `tabindex="-1" autofocus`, ">" + status + "</span>"} {
 					if !strings.Contains(body, want) {
 						t.Errorf("missing %q", want)
 					}
@@ -221,8 +221,8 @@ func TestDecideInvitationSwapsRowAndSupportsNormalForms(t *testing.T) {
 				if strings.Contains(body, "<html") || strings.Contains(body, `name="decision"`) {
 					t.Fatalf("decision should return the decided row:\n%s", body)
 				}
-				members := strings.Contains(body, `id="members" class="card mt-8" hx-swap-oob="true"`)
-				if members != (decision == "approve") || members && (!strings.Contains(body, "Robin · robin@example.com") || !strings.Contains(body, "Sam")) {
+				members := strings.Contains(body, `id="members" class="mt-8 md:mt-12" hx-swap-oob="true"`)
+				if members != (decision == "approve") || members && (!strings.Contains(body, `Robin</p><p class="wrap-anywhere text-meta text-muted">robin@example.com</p>`) || !strings.Contains(body, "Sam")) {
 					t.Fatalf("member card out of band only after approval:\n%s", body)
 				}
 			})

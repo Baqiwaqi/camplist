@@ -67,6 +67,8 @@ The teaching-only phase is complete. Default to **implementing requested changes
   `static/menu.js`, loaded before Alpine; it flips the popup right
   (`.menu-popup-start`) or up (`.menu-popup-up`) to stay on screen. Build
   destructive items with the `confirmDelete` helper so the confirm dialog stays consistent;
+  an item that must also post without scripts is a submit `.option` with
+  `role="menuitem"` inside `<form class="contents">` (Sign out, sharing rows);
   `confirmDeleteCard` removes a card in place (the handler branches on `HX-Target`).
 - Form dropdowns: `views.Select` (stacked field) or `views.SelectField`
   (grids and inline rows; `ScopeSelect` wraps it) render a listbox

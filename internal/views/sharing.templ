@@ -5,132 +5,179 @@ import (
 	"camplist/internal/packing"
 	"net/url"
 	"sort"
+	"strconv"
 )
 
 // SharingPage lists invitations and members. trips are the owner's current trips
 // from a shared list; approving names the invitation whose trip prompt is open.
+// Sections stack 2rem apart on phones and 3rem from 721px (sharingSectionGap).
 templ SharingPage(view packing.SharingView, link string, token string, trips []packing.PackingSession, approving string) {
 	@Layout("Sharing", token) {
 		{{ backLabel := "Packing list" }}
 		if view.Kind=="packing-session" {
 			{{ backLabel = "Trip" }}
 		}
-		<section class="max-w-[560px]">
-			@PageHead(PageHeading{
-				Title:     "Pack together.",
-				BackHref:  "/" + view.Kind + "/" + view.ID,
-				BackLabel: backLabel,
-			})
-			if view.Kind=="packing-session" {
-				<p class="mb-3">Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips.</p>
-				<p class="text-muted mb-3">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>
-			} else {
-				<p class="mb-3">Editors can update the reusable list and its preparation tasks, and start their own private trips. Existing trips stay unchanged and are shared separately.</p>
-			}
-			if view.Actor==view.Owner {
-				@InviteCard(view, link, token)
-				<section class="card mt-8">
-					<h2>Invitations and requests</h2>
-					<div id="invitation-rows">
+		@PageHead(PageHeading{
+			Title:     "Pack together.",
+			Meta:      sharingMeta(view),
+			BackHref:  "/" + view.Kind + "/" + view.ID,
+			BackLabel: backLabel,
+		})
+		if view.Actor==view.Owner {
+			@InviteCard(view, link, token)
+			<section class={ sharingSectionGap }>
+				@SectionHead("Invitations and requests", "")
+				<div class="card mb-0 py-1">
+					<div id="invitation-rows" class="peer">
 						for _, invitation:= range view.Sharing.Invitations {
 							@InvitationRow(view, invitation, trips, invitation.Hash == approving && invitation.Status == "pending" && len(trips) > 0, false, token)
 						}
 					</div>
-				</section>
-				@MemberList(view, false, false, token)
-			} else {
-				<p class="mb-3">The owner manages invitations and membership.</p>
-				<form
-					method="post"
-					action={ memberRemovePath(view, view.Actor) }
-					hx-post={ string(memberRemovePath(view, view.Actor)) }
-					hx-sync="this:drop"
-					hx-confirm="Leave this shared resource?"
-					data-confirm-action="Leave"
-					data-confirm-detail={ leaveDetail(view) }
-				>
-					<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-secondary" type="submit">Leave this shared resource</button>
-				</form>
-			}
-		</section>
+					<p class="hidden py-3 text-muted peer-empty:block">No invitations yet. Create a link above to invite someone.</p>
+				</div>
+			</section>
+			@MemberList(view, false, false, token)
+		} else {
+			<p class="mb-3">The owner manages invitations and membership.</p>
+			@sharingOfflineNote(view)
+			<form
+				class="mt-4"
+				method="post"
+				action={ memberRemovePath(view, view.Actor) }
+				hx-post={ string(memberRemovePath(view, view.Actor)) }
+				hx-sync="this:drop"
+				hx-confirm="Leave this shared resource?"
+				data-confirm-action="Leave"
+				data-confirm-detail={ leaveDetail(view) }
+			>
+				<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-secondary" type="submit">Leave this shared resource</button>
+			</form>
+		}
 	}
 }
 
-// InviteCard is the owner's invitation card. Creating a link swaps this card in
-// place, so the one-time link shows without the address bar moving to the POST
-// URL; the new invitation row is appended out of band. The link field takes
-// focus because the pressed button is replaced.
+// sharingSectionGap is the space above every sharing section after the first.
+const sharingSectionGap = "mt-8 md:mt-12"
+
+// sharingMeta says what sharing gives a member, under the page title.
+func sharingMeta(view packing.SharingView) string {
+	if view.Kind == "packing-session" {
+		return "Members can see this trip’s checklist and mark gear packed or unpacked. This does not share the reusable list or other trips."
+	}
+	return "Editors can update the reusable list and its preparation tasks, and start their own private trips. Existing trips stay unchanged and are shared separately."
+}
+
+// sharingOfflineNote warns that removal cannot reach a trip's offline copies.
+templ sharingOfflineNote(view packing.SharingView) {
+	if view.Kind=="packing-session" {
+		<p class="text-meta text-muted mt-3">Offline copies may remain on members’ devices after removal. Removal stops future server access.</p>
+	}
+}
+
+// InviteCard is the owner's invitation section. Creating a link swaps this
+// section in place, so the one-time link shows without the address bar moving
+// to the POST URL; the new invitation row is appended out of band. The link
+// field takes focus because the pressed button is replaced.
 templ InviteCard(view packing.SharingView, link string, token string) {
-	<section id="invite-card" class="card">
-		<h2>Invite someone</h2>
-		<p class="mb-3">Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
-		if link!="" {
-			<div class="grid gap-2 mb-4" x-data="invitationShare">
-				<label for="invitation-link" class="label mb-0">Invitation link</label>
-				<input id="invitation-link" type="text" readonly autofocus value={ link } class="field" x-ref="invitationLink"/>
-				<div class="flex flex-wrap gap-2 justify-self-start">
-					<button type="button" class="btn btn-primary" x-show="supported" x-cloak x-on:click="shareInvitation">Share invitation</button>
-					<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
+	<section id="invite-card">
+		@SectionHead("Invite someone", "")
+		<div class="card mb-0">
+			<p class="text-muted max-w-[60ch]">Send a separate link to each person. They sign in with Google and request access. Approve only an account you recognize. Links expire after seven days.</p>
+			if link!="" {
+				<div class="grid gap-2 mt-4" x-data="invitationShare">
+					<label for="invitation-link" class="label mb-0">Invitation link</label>
+					<input id="invitation-link" type="text" readonly autofocus value={ link } class="field" x-ref="invitationLink"/>
+					<div class="flex flex-wrap gap-2 justify-self-start">
+						<button type="button" class="btn btn-primary" x-show="supported" x-cloak x-on:click="shareInvitation">Share invitation</button>
+						<button type="button" class="btn btn-secondary" x-on:click="navigator.clipboard.writeText(document.getElementById('invitation-link').value).then(() => copied = true).catch(() => document.getElementById('invitation-link').select())" x-text="copied ? 'Copied' : 'Copy link'">Copy link</button>
+					</div>
+					<p class="text-muted text-sm" role="alert" x-show="shareError" x-cloak>Couldn’t open sharing options. Copy the link instead.</p>
+					<p class="hint">Share or copy this link now. For security, it will not be shown again.</p>
 				</div>
-				<p class="text-muted text-sm" role="alert" x-show="shareError" x-cloak>Couldn’t open sharing options. Copy the link instead.</p>
-			</div>
-			<p class="text-muted mb-3">Share or copy this link now. For security, it will not be shown again.</p>
-		}
-		<form
-			method="post"
-			action={ invitationsPath(view) }
-			hx-post={ string(invitationsPath(view)) }
-			hx-target="#invite-card"
-			hx-swap="outerHTML"
-			hx-sync="this:drop"
-		>
-			<input type="hidden" name="_csrf" value={ token }/>
-			<button class="btn btn-primary" type="submit">Create invitation link</button>
-		</form>
+			}
+			<form
+				class="mt-4"
+				method="post"
+				action={ invitationsPath(view) }
+				hx-post={ string(invitationsPath(view)) }
+				hx-target="#invite-card"
+				hx-swap="outerHTML"
+				hx-sync="this:drop"
+			>
+				<input type="hidden" name="_csrf" value={ token }/>
+				<button class="btn btn-primary" type="submit">Create invitation link</button>
+			</form>
+		</div>
 	</section>
 }
 
-// MemberList is the owner's member card. Removing access swaps the card, with
-// focus on its heading because the removed row held the pressed button.
-// Approving a request sends it out of band so the new member shows.
+// MemberList is the owner's member section. Removing access swaps the
+// section, with focus on its head because the removed row held the pressed
+// button. Approving a request sends it out of band so the new member shows.
 templ MemberList(view packing.SharingView, oob bool, focus bool, token string) {
 	<section
 		id="members"
-		class="card mt-8"
+		class={ sharingSectionGap }
 		if oob {
 			hx-swap-oob="true"
 		}
 	>
-		<h2
+		<div
 			id="members-heading"
 			tabindex="-1"
 			if focus {
 				autofocus
 			}
-		>Members</h2>
-		for _, subject := range memberSubjects(view.Sharing.Members) {
-			<div class="item-row">
-				<p class="mb-3">{ view.Sharing.Members[subject].Name } · { view.Sharing.Members[subject].Email }</p>
-				<form
-					method="post"
-					action={ memberRemovePath(view, subject) }
-					hx-post={ string(memberRemovePath(view, subject)) }
-					hx-target="#members"
-					hx-swap="outerHTML"
-					hx-sync="this:drop"
-					hx-confirm={ "Remove access for " + memberName(view.Sharing.Members[subject]) + "?" }
-					data-confirm-action="Remove access"
-					data-confirm-detail={ removeDetail(view) }
-				>
-					<input type="hidden" name="_csrf" value={ token }/><button class="btn btn-secondary text-red-700" type="submit">Remove access</button>
-				</form>
-			</div>
-		}
+		>
+			@SectionHead("Members", strconv.Itoa(len(view.Sharing.Members)))
+		</div>
+		<div class="card mb-0 py-1">
+			if len(view.Sharing.Members) == 0 {
+				<p class="py-3 text-muted">No one else has access yet.</p>
+			}
+			for _, subject := range memberSubjects(view.Sharing.Members) {
+				{{ member := view.Sharing.Members[subject] }}
+				<div class="item-row flex-nowrap min-h-14">
+					@personLabel(member.Name, member.Email)
+					@Menu("More") {
+						<form
+							class="contents"
+							method="post"
+							action={ memberRemovePath(view, subject) }
+							hx-post={ string(memberRemovePath(view, subject)) }
+							hx-target="#members"
+							hx-swap="outerHTML"
+							hx-sync="this:drop"
+							hx-confirm={ "Remove access for " + memberName(member) + "?" }
+							data-confirm-action="Remove access"
+							data-confirm-detail={ removeDetail(view) }
+						>
+							<input type="hidden" name="_csrf" value={ token }/>
+							<button type="submit" class="option option-danger" role="menuitem">Remove access</button>
+						</form>
+					}
+				</div>
+			}
+		</div>
+		@sharingOfflineNote(view)
 	</section>
 }
 
-// CreatedInvitation answers an htmx create: the invite card with the one-time
-// link, and the new invitation row appended to the list out of band.
+// personLabel names an account on a people row: its name, with the email
+// underneath. Either may be missing.
+templ personLabel(name string, email string) {
+	<div class="min-w-0 flex-auto">
+		if name != "" {
+			<p class="font-semibold wrap-anywhere">{ name }</p>
+		}
+		if email != "" {
+			<p class={ "wrap-anywhere", templ.KV("text-meta text-muted", name != "") }>{ email }</p>
+		}
+	</div>
+}
+
+// CreatedInvitation answers an htmx create: the invite section with the
+// one-time link, and the new invitation row appended to the list out of band.
 templ CreatedInvitation(view packing.SharingView, link string, hash string, token string) {
 	@InviteCard(view, link, token)
 	for _, invitation := range view.Sharing.Invitations {
@@ -143,7 +190,7 @@ templ CreatedInvitation(view packing.SharingView, link string, hash string, toke
 }
 
 // DecidedInvitation answers an htmx approve or revoke: the decided row with
-// focus, plus the member card out of band after an approval.
+// focus, plus the member section out of band after an approval.
 templ DecidedInvitation(view packing.SharingView, invitation packing.Invitation, approved bool, token string) {
 	@InvitationRow(view, invitation, nil, false, true, token)
 	if approved {
@@ -151,30 +198,42 @@ templ DecidedInvitation(view packing.SharingView, invitation packing.Invitation,
 	}
 }
 
-// InvitationRow is one invitation. For a list with current trips, approving first
-// swaps in InvitationRow with the trip prompt open, so the owner can also share
-// trips with the same account. Trips stay unshared unless they are ticked.
-// Approving or revoking swaps the row in place; focus moves to the decided row
-// because its buttons are gone.
+// InvitationRow is one invitation: who asked (or the unused link), its status
+// tag and expiry, and its actions. A pending request keeps Approve on the row;
+// Revoke sits in the More menu. For a list with current trips, approving first
+// swaps in InvitationRow with the trip prompt open, so the owner can also
+// share trips with the same account. Trips stay unshared unless they are
+// ticked; the first trip takes focus because the pressed Approve is replaced.
+// Approving or revoking swaps the row in place; focus moves to the decided
+// row because its buttons are gone.
 templ InvitationRow(view packing.SharingView, invitation packing.Invitation, trips []packing.PackingSession, approving bool, focus bool, token string) {
 	<div
-		class="item-row"
+		class="item-row min-h-14"
 		id={ "invitation-" + invitation.Hash }
 		if focus {
 			tabindex="-1"
 			autofocus
 		}
 	>
-		<div>
-			<p class="mb-3">{ invitation.Status } · Expires { invitation.Expires.Format("Jan 2, 2006") }</p>
+		<div class="min-w-0 flex-[1_1_14rem] grid gap-1 py-1">
+			if invitation.Applicant != nil {
+				@personLabel(invitation.Applicant.Name, invitation.Applicant.Email)
+			} else {
+				<p class="font-semibold">Invitation link</p>
+			}
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+				<span class={ "tag", templ.KV("tag-quiet", invitation.Status != "approved") }>{ invitationStatus(invitation.Status) }</span>
+				if invitation.Status=="pending"||invitation.Status=="open" {
+					<span class="text-caption text-muted">Expires { invitation.Expires.Format("Jan 2, 2006") }</span>
+				}
+			</div>
 			if invitation.Applicant!=nil {
-				<p class="mb-3">{ invitation.Applicant.Name } · { invitation.Applicant.Email }</p>
-				<p class="text-muted mb-3">Google account: { invitation.Applicant.Subject }</p>
+				<p class="text-caption text-muted wrap-anywhere">Google account: { invitation.Applicant.Subject }</p>
 			}
 		</div>
-		if invitation.Status=="pending"||invitation.Status=="open" {
+		if approving {
 			<form
-				class={ templ.KV("basis-full", approving) }
+				class="basis-full pb-2"
 				method="post"
 				action={ invitationPath(view, invitation) }
 				hx-post={ string(invitationPath(view, invitation)) }
@@ -183,41 +242,81 @@ templ InvitationRow(view packing.SharingView, invitation packing.Invitation, tri
 				hx-sync="this:drop"
 			>
 				<input type="hidden" name="_csrf" value={ token }/>
-				if approving {
-					<fieldset class="grid gap-2 mb-3">
-						<legend class="font-bold mb-2">Also share trips with { applicantName(invitation) }?</legend>
-						<p class="text-muted text-sm">Trips started from this list are shared separately. Leave them unticked to share only the list.</p>
-						for _, trip := range trips {
-							<label class="flex items-center gap-2 min-h-11"><input type="checkbox" name="trip" value={ trip.ID } class="min-h-8 align-middle shrink-0"/><span class="min-w-0 wrap-anywhere">{ trip.DisplayName() }</span></label>
-						}
-					</fieldset>
-					<div class="flex flex-wrap gap-2 max-sm:*:flex-auto">
-						<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
-						<a
-							class="btn btn-secondary"
-							href={ templ.SafeURL("/sharing/" + view.Kind + "/" + view.ID) }
-							hx-get={ string(invitationPath(view, invitation)) }
-							hx-target={ "#invitation-" + invitation.Hash }
-							hx-swap="outerHTML"
-						>Cancel</a>
-					</div>
-				} else {
-					if invitation.Status=="pending" && view.Kind=="packing-list" && len(trips)>0 {
-						<a
-							class="btn btn-primary"
-							href={ invitationPath(view, invitation) + "/approve" }
-							hx-get={ string(invitationPath(view, invitation)) + "/approve" }
-							hx-target={ "#invitation-" + invitation.Hash }
-							hx-swap="outerHTML"
-						>Approve account</a>
-					} else if invitation.Status=="pending" {
-						<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
+				<fieldset class="grid gap-2 mb-3">
+					<legend class="font-bold mb-2">Also share trips with { applicantName(invitation) }?</legend>
+					<p class="text-muted text-sm">Trips started from this list are shared separately. Leave them unticked to share only the list.</p>
+					for i, trip := range trips {
+						<label class="flex items-center gap-2 min-h-11"><input type="checkbox" name="trip" value={ trip.ID } class="min-h-8 align-middle shrink-0" autofocus?={ i == 0 }/><span class="min-w-0 wrap-anywhere">{ trip.DisplayName() }</span></label>
 					}
-					<button class="btn btn-secondary" name="decision" value="revoke">Revoke invitation</button>
-				}
+				</fieldset>
+				<div class="flex flex-wrap gap-2">
+					<button class="btn btn-primary" name="decision" value="approve">Approve account</button>
+					<a
+						class="btn btn-secondary"
+						href={ templ.SafeURL("/sharing/" + view.Kind + "/" + view.ID) }
+						hx-get={ string(invitationPath(view, invitation)) }
+						hx-target={ "#invitation-" + invitation.Hash }
+						hx-swap="outerHTML"
+					>Cancel</a>
+				</div>
 			</form>
+		} else if invitation.Status=="pending"||invitation.Status=="open" {
+			<div class="flex items-center gap-2 ml-auto">
+				if invitation.Status=="pending" && view.Kind=="packing-list" && len(trips)>0 {
+					<a
+						class="btn btn-primary btn-sm"
+						href={ invitationPath(view, invitation) + "/approve" }
+						hx-get={ string(invitationPath(view, invitation)) + "/approve" }
+						hx-target={ "#invitation-" + invitation.Hash }
+						hx-swap="outerHTML"
+					>Approve</a>
+				} else if invitation.Status=="pending" {
+					@decideInvitationForm(view, invitation, token, "") {
+						<button class="btn btn-primary btn-sm" name="decision" value="approve">Approve</button>
+					}
+				}
+				@Menu("More") {
+					@decideInvitationForm(view, invitation, token, "contents") {
+						<button type="submit" class="option option-danger" role="menuitem" name="decision" value="revoke">Revoke invitation</button>
+					}
+				}
+			</div>
 		}
 	</div>
+}
+
+// decideInvitationForm posts an approve or revoke from its button and swaps
+// the invitation's row.
+templ decideInvitationForm(view packing.SharingView, invitation packing.Invitation, token string, class string) {
+	<form
+		class={ class }
+		method="post"
+		action={ invitationPath(view, invitation) }
+		hx-post={ string(invitationPath(view, invitation)) }
+		hx-target={ "#invitation-" + invitation.Hash }
+		hx-swap="outerHTML"
+		hx-sync="this:drop"
+	>
+		<input type="hidden" name="_csrf" value={ token }/>
+		{ children... }
+	</form>
+}
+
+// invitationStatus is the sentence-case tag for an invitation's status.
+func invitationStatus(status string) string {
+	switch status {
+	case "open":
+		return "Not used yet"
+	case "pending":
+		return "Waiting for approval"
+	case "approved":
+		return "Approved"
+	case "revoked":
+		return "Revoked"
+	case "rejected":
+		return "Rejected"
+	}
+	return status
 }
 
 func invitationPath(view packing.SharingView, invitation packing.Invitation) templ.SafeURL {
